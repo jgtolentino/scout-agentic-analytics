@@ -88,16 +88,17 @@ serve(async (req) => {
     })
 
     // Get MindsDB configuration from environment
+    const mindsdbApiKey = Deno.env.get('MINDSDB_API_KEY') || 'Postgres_26'
     const mindsdbConfig: MindsDBConfig = {
       host: Deno.env.get('MINDSDB_HOST') || 'cloud.mindsdb.com',
-      user: Deno.env.get('MINDSDB_USER') || '',
-      password: Deno.env.get('MINDSDB_PASSWORD') || '',
+      user: Deno.env.get('MINDSDB_USER') || 'mdb',
+      password: mindsdbApiKey, // Use API key as password for MCP integration
       database: Deno.env.get('MINDSDB_DATABASE') || 'mindsdb',
       timeout: 30000 // 30 seconds
     }
 
-    if (!mindsdbConfig.user || !mindsdbConfig.password) {
-      console.warn('MindsDB credentials not configured, using fallback')
+    if (!mindsdbApiKey) {
+      console.warn('MindsDB API key not configured, using fallback')
       return await handleFallback(operation, requestData, supabase, user, startTime)
     }
 

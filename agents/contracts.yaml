@@ -266,11 +266,12 @@ coordination_patterns:
     trigger: "Competitive analysis requests"
     expected_latency: "< 10s"
     
-  # Forecasting Flow (MindsDB Integration)
+  # Forecasting Flow (MindsDB Cloud API Integration)
   forecasting_flow:
-    sequence: ["QueryAgent", "MindsDB_MCP", "ChartVisionAgent", "NarrativeAgent"]
+    sequence: ["QueryAgent", "MindsDB_Cloud_API", "ChartVisionAgent", "NarrativeAgent"]
     trigger: "Forecast/prediction keywords + confidence ≥ 0.8"
-    fallback: "QueryAgent → SQL seasonal analysis"
+    integration: "Direct API calls to cloud.mindsdb.com with API key authentication"
+    fallback: "QueryAgent → SQL seasonal analysis (moving averages & YoY trends)"
     expected_latency: "< 15s"
 
 # =============================================================================
@@ -376,7 +377,12 @@ integration_architecture:
   mcp_servers:
     mindsdb:
       purpose: "Predictive analytics and forecasting"
+      implementation: "Direct MindsDB Cloud API integration"
+      api_endpoint: "https://cloud.mindsdb.com/api/sql/query"
+      authentication: "Basic auth with API key (Postgres_26)"
       tools: ["mindsdb_query", "mindsdb_train_model", "mindsdb_predict"]
+      edge_functions: ["mindsdb-query", "mindsdb_proxy"]
+      fallback_strategy: "SQL seasonal analysis with moving averages"
       
     context7:
       purpose: "Documentation and framework patterns"
@@ -409,7 +415,10 @@ deployment:
     SUPABASE_URL: "Edge Function runtime"
     SUPABASE_ANON_KEY: "Database access"
     OPENAI_API_KEY: "LLM inference"
-    MINDSDB_HOST: "Predictive analytics"
+    MINDSDB_API_KEY: "MindsDB Cloud API key (default: Postgres_26)"
+    MINDSDB_HOST: "MindsDB Cloud endpoint (default: cloud.mindsdb.com)"
+    MINDSDB_USER: "MindsDB username (default: mdb)"
+    MINDSDB_DATABASE: "MindsDB database (default: mindsdb)"
     
   resource_allocation:
     query_agent: "2GB memory, 2s timeout"
