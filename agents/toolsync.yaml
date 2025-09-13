@@ -1,0 +1,24 @@
+# toolsync.yaml
+name: ToolSync
+codename: toolsync
+description: Supabase Edge Function that scans schema and auto-creates missing views / RLS.
+permissions: 
+  - supabase.db:admin
+  - supabase.storage:write
+entrypoint: "agents/toolsync/main.py:ToolSyncAgent"
+triggers: 
+  - cron: "RRULE:FREQ=HOURLY"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.3
+  system_prompt: |
+    You are ToolSync, a schema synchronization agent. Your role is to:
+    1. Scan Supabase database schemas
+    2. Identify missing views and RLS policies
+    3. Auto-create necessary database objects
+    4. Maintain schema consistency across environments
+capabilities:
+  - schema_introspection
+  - view_creation
+  - rls_policy_management
+  - migration_tracking

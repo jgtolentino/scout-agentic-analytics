@@ -1,0 +1,32 @@
+# DataOS Documentation Extractor Dependencies
+
+# Core dependencies
+playwright==1.40.0
+beautifulsoup4==4.12.2
+markdownify==0.11.6
+deepdiff==6.7.1
+pillow==10.2.0
+requests==2.31.0
+aiohttp==3.9.1
+schedule==1.2.0
+jinja2==3.1.3
+pyyaml==6.0.1
+
+# API dependencies
+fastapi==0.108.0
+uvicorn[standard]==0.25.0
+pydantic==2.5.3
+
+# Optional dependencies for enhanced functionality
+lxml==5.0.0              # Better HTML parsing
+pypdf==3.17.4            # PDF extraction
+python-multipart==0.0.6   # File uploads
+redis==5.0.1             # Task queue (optional)
+celery==5.3.4            # Background tasks (optional)
+
+# Development dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0

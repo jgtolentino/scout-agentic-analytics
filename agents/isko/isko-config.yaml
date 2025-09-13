@@ -1,0 +1,60 @@
+agent:
+  name: isko
+  version: "1.0.0"
+  description: "Intelligent SKU Discovery Agent for FMCG & Tobacco products"
+  author: "InsightPulseAI"
+  
+capabilities:
+  - web_scraping
+  - data_extraction
+  - sku_discovery
+  - database_sync
+  - api_integration
+  
+scraping_targets:
+  - category: "Dairy"
+    url: "https://example-supermarket.com/fmcg/dairy"
+  - category: "Snack"
+    url: "https://example-supermarket.com/fmcg/snacks"
+  - category: "Beverage"
+    url: "https://example-supermarket.com/fmcg/beverages"
+  - category: "Tobacco"
+    url: "https://example-tobacco.com/products"
+
+selectors:
+  product_card: ".product-card"
+  sku_code: ".sku-code"
+  sku_name: ".sku-name"
+  price: ".sku-price"
+  unit: ".sku-unit"
+  
+config:
+  model: claude-3-5-sonnet
+  temperature: 0.7
+  max_tokens: 4096
+  retry_attempts: 3
+  request_timeout: 15
+  rate_limit_delay: 1.0
+  
+endpoints:
+  - path: /scrape
+    method: GET
+    description: "Trigger SKU discovery and return results"
+  - path: /health
+    method: GET
+    description: "Health check endpoint"
+  - path: /stats
+    method: GET
+    description: "Get scraping statistics"
+    
+integrations:
+  - type: database
+    provider: supabase
+    table: sku_catalog
+  - type: mcp
+    provider: pulser
+    
+scheduling:
+  enabled: true
+  cron: "0 2 * * *"  # Daily at 2 AM
+  timezone: "UTC"

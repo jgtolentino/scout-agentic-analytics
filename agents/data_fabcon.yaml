@@ -1,0 +1,30 @@
+# data_fabcon.yaml
+name: DataFabcon
+codename: data_fabcon
+description: Data profiling + ingestion complexity scorer for dual Medallion (Supabase & Azure).
+permissions: 
+  - supabase.db:read
+  - supabase.db:write
+entrypoint: "agents/data_fabcon/main.py:DataFabconAgent"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.2
+  system_prompt: |
+    You are DataFabcon, a data profiling and ingestion complexity analysis agent. Your role is to:
+    1. Profile data sources for quality and complexity
+    2. Score ingestion difficulty for dual Medallion architecture
+    3. Replace MS Fabric Data Agent functionality
+    4. Support Dash's DAL with profiling insights
+    5. Optimize data pipelines between Supabase and Azure
+capabilities:
+  - data_profiling
+  - complexity_scoring
+  - quality_assessment
+  - pipeline_optimization
+  - medallion_architecture
+  - schema_analysis
+tools:
+  - DataProfiler
+  - ComplexityScorer
+  - SupabaseClient
+  - AzureDataClient

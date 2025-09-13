@@ -1,0 +1,154 @@
+agent:
+  name: savage
+  version: "1.0.0"
+  description: "Brand-Aligned Graphic Pattern & Visualization Generator"
+  author: "Visual Talent Oracle"
+  
+capabilities:
+  - pattern_generation
+  - svg_rendering
+  - gif_animation
+  - brand_integration
+  - data_visualization
+  - collaborative_review
+  
+templates:
+  - id: grid-stripes
+    name: "Grid Stripes"
+    category: geometric
+    parameters:
+      - name: spacing
+        type: number
+        default: 10
+        min: 5
+        max: 50
+      - name: rotation
+        type: number
+        default: 45
+        min: 0
+        max: 360
+      - name: strokeWidth
+        type: number
+        default: 2
+        min: 1
+        max: 10
+        
+  - id: dot-matrix
+    name: "Dot Matrix"
+    category: geometric
+    parameters:
+      - name: dotSize
+        type: number
+        default: 4
+        min: 2
+        max: 20
+      - name: spacing
+        type: number
+        default: 20
+        min: 10
+        max: 100
+        
+  - id: wave-flow
+    name: "Wave Flow"
+    category: organic
+    parameters:
+      - name: amplitude
+        type: number
+        default: 20
+        min: 5
+        max: 50
+      - name: frequency
+        type: number
+        default: 0.1
+        min: 0.01
+        max: 1
+        
+  - id: data-bars
+    name: "Data Bars"
+    category: data-driven
+    parameters:
+      - name: barWidth
+        type: number
+        default: 20
+        min: 10
+        max: 50
+      - name: maxHeight
+        type: number
+        default: 100
+        min: 50
+        max: 200
+
+brand_presets:
+  undp:
+    primary_color: "#0468B1"
+    secondary_color: "#FFFFFF"
+    accent_color: "#FFC72C"
+    font_family: "Roboto"
+    
+  ocha:
+    primary_color: "#1A6CE7"
+    secondary_color: "#FFFFFF"
+    accent_color: "#E56A54"
+    font_family: "Source Sans Pro"
+    
+  who:
+    primary_color: "#0093D5"
+    secondary_color: "#FFFFFF"
+    accent_color: "#F15A29"
+    font_family: "Arial"
+    
+  corporate:
+    primary_color: "#2C3E50"
+    secondary_color: "#ECF0F1"
+    accent_color: "#E74C3C"
+    font_family: "Helvetica Neue"
+
+export_formats:
+  - svg
+  - gif
+  - png
+  - pdf
+
+performance:
+  svg_render_timeout_ms: 500
+  gif_encode_timeout_ms: 2000
+  max_concurrent_renders: 100
+  cache_ttl_seconds: 3600
+
+integrations:
+  - type: storage
+    provider: supabase
+    bucket: patterns
+  - type: database
+    provider: supabase
+    schema: public
+  - type: mcp
+    provider: pulser
+    
+endpoints:
+  - path: /patterns/generate
+    method: POST
+    description: "Generate new pattern"
+  - path: /patterns/{pattern_id}
+    method: GET
+    description: "Get pattern details"
+  - path: /patterns/{pattern_id}/export
+    method: POST
+    description: "Export pattern in various formats"
+  - path: /templates
+    method: GET
+    description: "List available templates"
+  - path: /projects
+    method: POST
+    description: "Create new project"
+    
+monitoring:
+  metrics:
+    - pattern_generation_time
+    - export_success_rate
+    - template_usage_distribution
+    - error_rate
+  alerts:
+    - high_error_rate
+    - slow_generation_time
+    - storage_quota_exceeded

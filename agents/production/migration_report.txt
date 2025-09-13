@@ -1,0 +1,43 @@
+============================================================
+AGENT MIGRATION REPORT
+============================================================
+Generated: 2025-07-18T15:20:37.653259+00:00
+
+Total Agents Discovered: 25
+Production-Ready Agents: 10
+
+Agents by Type:
+
+ANALYST (1 agents):
+  ✓ Stacey v1.0.0
+
+DASHBOARD-ENGINEER (1 agents):
+  ✓ Dash v1.0.0
+     Enterprise Creative Intelligence Dashboard Engineer agent. P...
+
+ENGINEER (1 agents):
+  ✓ Fully v1.0.0
+     Fullstack Backend Engineering Agent. Converts structured JSO...
+
+ENV_SYNC (1 agents):
+  ✓ KeyKey v1.0.0
+     Securely fetches, verifies, and applies environment files (....
+
+EXECUTOR (1 agents):
+  ✓ Doer v1.0.0
+
+GENERAL (4 agents):
+  ○ Agent Savage v1.0.0
+     Brand-aligned graphic pattern and visualization generator. C...
+  ○ echo v3.1.2
+     Advanced multimodal agent for audio, image, video processing...
+  ○ reposynth v2.0.0
+     Automated repo QA, schema drift detection, ETL mapping, and ...
+  ○ reposynth v3.0.0
+     Multi-source schema diffing, mapping generation, ETL automat...
+
+ORCHESTRATOR (1 agents):
+  ○ orchestrator v3.0.0
+     Primary orchestration agent that handles task decomposition,...
+
+============================================================

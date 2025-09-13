@@ -1,0 +1,218 @@
+name: ToggleBot
+version: "1.0.0"
+type: ui_orchestration
+status: production
+description: >
+  Orchestrates all toggle and switch states for dashboards and analytic UIs. 
+  Provides AI-driven toggle recommendations, tracks usage patterns, and supports 
+  centralized state management across all UI components.
+
+author: InsightPulseAI
+owner: UI/UX Team Lead
+created_at: 2025-07-18
+updated_at: 2025-07-18
+
+capabilities:
+  - toggle_orchestration
+  - state_synchronization
+  - ai_recommendations
+  - usage_analytics
+  - cross_component_sync
+  - preference_learning
+  - state_persistence
+  - event_broadcasting
+
+configuration:
+  # State management
+  state_store: "redis"
+  persistence_enabled: true
+  sync_interval_ms: 100
+  
+  # AI recommendations
+  recommendation_engine:
+    enabled: true
+    model: "user_behavior_predictor"
+    confidence_threshold: 0.8
+    learning_rate: 0.01
+    
+  # Toggle tracking
+  tracked_components:
+    - dashboard_filters
+    - chart_switchers
+    - view_modes
+    - data_granularity
+    - time_ranges
+    - metric_selections
+    
+  # Event configuration
+  event_bus:
+    enabled: true
+    protocol: "websocket"
+    broadcast_delay_ms: 50
+    
+  # Analytics
+  usage_tracking:
+    enabled: true
+    batch_size: 100
+    flush_interval_seconds: 60
+
+dependencies:
+  javascript: ">=ES2020"
+  libraries:
+    - react: ">=18.0.0"
+    - zustand: ">=4.0.0"
+    - socket.io-client: ">=4.0.0"
+    - "@tanstack/react-query": ">=4.0.0"
+  
+  services:
+    - name: Redis
+      required: true
+      version: ">=7.0"
+      purpose: "State storage and pub/sub"
+    - name: WebSocket Server
+      required: true
+      purpose: "Real-time state sync"
+
+api_endpoints:
+  - method: GET
+    path: /toggle/state/{component_id}
+    description: Get current toggle state for a component
+    response_example:
+      component_id: "dashboard_main"
+      states: {
+        "chart_type": "line",
+        "time_range": "7d",
+        "comparison_mode": false
+      }
+    
+  - method: POST
+    path: /toggle/state/{component_id}
+    description: Update toggle state for a component
+    request_example:
+      state_key: "chart_type"
+      state_value: "bar"
+      user_id: "user123"
+    
+  - method: GET
+    path: /toggle/recommendations/{user_id}
+    description: Get AI-powered toggle recommendations
+    response_example:
+      recommendations: [
+        {
+          component: "dashboard_filters",
+          toggle: "show_advanced",
+          confidence: 0.92,
+          reason: "User frequently uses advanced filters"
+        }
+      ]
+    
+  - method: GET
+    path: /toggle/analytics
+    description: Get toggle usage analytics
+    auth: bearer_token
+    roles: ["admin", "analyst"]
+    
+  - method: POST
+    path: /toggle/learn
+    description: Submit user behavior for learning
+    request_example:
+      user_id: "user123"
+      action: "toggle_clicked"
+      component: "chart_switcher"
+      from_state: "line"
+      to_state: "bar"
+      context: {
+        "time_of_day": "morning",
+        "data_size": "large"
+      }
+
+event_schema:
+  toggle_changed:
+    component_id: string
+    toggle_key: string
+    old_value: any
+    new_value: any
+    user_id: string
+    timestamp: ISO8601
+    
+  preference_learned:
+    user_id: string
+    preference_type: string
+    confidence: number
+    
+  sync_required:
+    components: string[]
+    state_snapshot: object
+
+ui_integration:
+  react_hooks:
+    - useToggle: "Hook for individual toggle state"
+    - useToggleSync: "Hook for synchronized toggles"
+    - useToggleRecommendation: "Hook for AI recommendations"
+    
+  components:
+    - ToggleProvider: "Context provider for toggle state"
+    - SmartToggle: "AI-enhanced toggle component"
+    - ToggleAnalytics: "Usage analytics dashboard"
+
+monitoring:
+  metrics:
+    - name: toggle_changes_total
+      type: counter
+      description: Total toggle state changes
+      labels: ["component", "toggle_key"]
+      
+    - name: toggle_sync_latency_ms
+      type: histogram
+      description: State synchronization latency
+      
+    - name: toggle_recommendation_accuracy
+      type: gauge
+      description: AI recommendation accuracy rate
+      
+    - name: toggle_active_sessions
+      type: gauge
+      description: Active user sessions with toggle state
+
+patterns:
+  state_management:
+    - pattern: "Optimistic Updates"
+      description: "Update UI immediately, sync in background"
+    - pattern: "Conflict Resolution"
+      description: "Last-write-wins with user notification"
+    - pattern: "State Compression"
+      description: "Compress state for efficient storage"
+      
+  ai_learning:
+    - pattern: "Contextual Bandits"
+      description: "Learn preferences based on context"
+    - pattern: "Collaborative Filtering"
+      description: "Learn from similar users"
+    - pattern: "Time-decay"
+      description: "Recent actions weighted higher"
+
+security:
+  state_isolation: "User states are isolated by default"
+  encryption: "State encrypted at rest and in transit"
+  audit_trail: "All state changes are logged"
+  
+testing:
+  unit_tests:
+    - "State synchronization logic"
+    - "Conflict resolution algorithms"
+    - "AI recommendation engine"
+    
+  integration_tests:
+    - "Multi-user state sync"
+    - "WebSocket reliability"
+    - "State persistence"
+    
+  e2e_tests:
+    - "Complete toggle workflow"
+    - "Cross-component synchronization"
+    - "Preference learning accuracy"
+
+documentation:
+  integration_guide: docs/togglebot-integration.md
+  api_reference: docs/api/togglebot-api.md
+  ui_patterns: docs/patterns/toggle-patterns.md

@@ -1,0 +1,2 @@
+[functions.revoke-token]
+verify_jwt = false

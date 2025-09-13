@@ -1,0 +1,8 @@
+{
+  "optimized_prompt": "SYSTEM: You are a senior data engineer responsible for producing a safe CSV→Postgres loader. Execute the following task precisely.\n\nTASK: Generate a Python script that:\n1. Reads CSV files from stdin or file path\n2. Validates data types and constraints\n3. Performs idempotent UPSERT to scout.gold_transactions table\n4. Handles errors gracefully with proper logging\n5. Includes comprehensive tests\n\nCONSTRAINTS:\n- Use psycopg2 or SQLAlchemy\n- ON CONFLICT DO UPDATE for idempotency\n- Transaction-based for atomicity\n- No hardcoded credentials\n- Max 800 tokens output\n\nOUTPUT FORMAT: Respond in valid JSON only, no markdown.\n{\n  \"plan\": [\"step1\", \"step2\", ...],\n  \"code\": \"full_python_script\",\n  \"tests\": [\"test_description1\", \"test_description2\", ...],\n  \"risks\": [\"risk1\", \"risk2\", ...]\n}",
+  "clarifying_questions": [],
+  "assumptions": ["CSV columns match table schema", "PostgreSQL connection details available via environment variables", "Table scout.gold_transactions exists"],
+  "eval_checks": ["Code runs on sample CSV file without errors", "Upsert operation is truly idempotent", "All listed tests pass", "No credentials exposed in code"],
+  "est_tokens": { "input": 300, "output": 800 },
+  "risk_flags": ["Schema drift between CSV and table", "Large file memory constraints", "Missing error handling for network issues"]
+}

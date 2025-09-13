@@ -1,0 +1,274 @@
+# AI Agent Auditor - OATH Compliance Agent
+id: agent_auditor
+name: AI Agent Auditor
+description: |
+  An autonomous agent that continuously audits the operational, security, and ethical compliance 
+  of all other AI agents in the deployment environment. Implements automatic OATH profiling for 
+  each agent—ensuring Operational, Auditable, Trustworthy, and Hardened status.
+version: 1.0.0
+type: compliance_auditor
+status: production
+
+owners:
+  - Security Lead
+  - Head of AI Governance
+  - Data Platform Lead
+
+roles:
+  - Agent Audit
+  - OATH Compliance Verification
+  - Continuous Monitoring
+  - Automated Reporting
+  - Security Assessment
+  - Ethics Review
+
+capabilities:
+  - agent_discovery
+  - operational_validation
+  - audit_trail_verification
+  - trust_assessment
+  - security_hardening_check
+  - automated_reporting
+  - real_time_monitoring
+  - compliance_scoring
+  - issue_escalation
+  - oath_profile_generation
+
+inputs:
+  - source: agent_registry.agents
+    type: database
+    description: Central agent registry
+  - source: agent_registry.audit_log
+    type: database
+    description: Agent operation logs
+  - source: agent_registry.agent_health
+    type: database
+    description: Health monitoring data
+  - source: runtime_logs.json
+    type: file
+    description: Runtime execution logs
+  - source: config/*.yaml
+    type: files
+    description: Agent configuration files
+
+outputs:
+  - destination: audit/audit_report.json
+    type: file
+    format: json
+    description: Comprehensive audit report
+  - destination: audit/agent_audit_logs.json
+    type: file
+    format: json
+    description: Detailed audit logs
+  - destination: settings/oath_profile.json
+    type: file
+    format: json
+    description: OATH compliance profiles
+  - destination: agent_registry.oath_profiles
+    type: database
+    description: Persistent OATH profiles
+
+permissions:
+  read:
+    - All agent configurations
+    - All agent logs
+    - All agent endpoints
+    - System metrics
+    - Security policies
+  write:
+    - Audit reports
+    - OATH profiles
+    - Compliance scores
+    - Issue tickets
+  notify:
+    - Compliance leads
+    - Security team
+    - Agent owners
+    - Operations team
+
+triggers:
+  - type: agent_registration
+    description: New agent added to registry
+    action: full_audit
+  - type: config_change
+    description: Agent configuration modified
+    action: targeted_audit
+  - type: periodic
+    interval: hourly
+    action: incremental_audit
+  - type: periodic
+    interval: daily
+    action: comprehensive_audit
+  - type: manual
+    description: On-demand audit request
+    action: full_audit
+  - type: security_alert
+    description: Security event detected
+    action: emergency_audit
+
+configuration:
+  audit_parameters:
+    operational_threshold: 0.95
+    audit_trail_retention_days: 90
+    trust_score_minimum: 0.85
+    security_scan_depth: comprehensive
+    
+  oath_criteria:
+    operational:
+      uptime_requirement: 0.999
+      error_rate_threshold: 0.01
+      performance_sla_met: true
+      health_check_passing: true
+      
+    auditable:
+      logs_complete: true
+      logs_structured: true
+      traceability_enabled: true
+      retention_policy_met: true
+      
+    trustworthy:
+      ethics_violations_max: 0
+      rlhf_review_passed: true
+      constitution_compliant: true
+      bias_testing_passed: true
+      
+    hardened:
+      security_scan_passed: true
+      penetration_test_passed: true
+      encryption_enabled: true
+      access_controls_verified: true
+      
+  escalation_matrix:
+    critical:
+      - security_breach
+      - ethics_violation
+      - data_exposure
+      channels: ["pagerduty", "slack_critical", "email_security"]
+      
+    high:
+      - oath_failure
+      - compliance_drift
+      - performance_degradation
+      channels: ["slack_alerts", "email_ops"]
+      
+    medium:
+      - audit_gap
+      - configuration_issue
+      channels: ["slack_warnings", "jira"]
+
+monitoring:
+  metrics:
+    - name: auditor_agents_scanned_total
+      type: counter
+      description: Total agents audited
+      
+    - name: auditor_oath_compliance_score
+      type: gauge
+      description: Overall OATH compliance score
+      labels: ["agent", "component"]
+      
+    - name: auditor_issues_detected_total
+      type: counter
+      description: Total compliance issues found
+      labels: ["severity", "type"]
+      
+    - name: auditor_audit_duration_seconds
+      type: histogram
+      description: Time to complete audit
+      
+  alerts:
+    - name: OATHComplianceFailure
+      condition: auditor_oath_compliance_score < 0.8
+      severity: critical
+      
+    - name: AuditBacklog
+      condition: rate(auditor_agents_scanned_total[5m]) < 0.1
+      severity: warning
+
+deployment:
+  type: kubernetes
+  replicas: 2
+  high_availability: true
+  
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+      
+  environment_variables:
+    - name: AUDIT_MODE
+      value: "continuous"
+    - name: OATH_STRICT_MODE
+      value: "true"
+    - name: ANTHROPIC_CONSTITUTION
+      value: "enabled"
+    - name: LOG_LEVEL
+      value: "INFO"
+
+security:
+  authentication:
+    type: "service_account"
+    rotation_days: 30
+    
+  authorization:
+    principle_of_least_privilege: true
+    role_based_access: true
+    
+  encryption:
+    at_rest: "AES-256"
+    in_transit: "TLS-1.3"
+    
+  compliance:
+    frameworks:
+      - "SOC2"
+      - "ISO27001"
+      - "GDPR"
+      - "HIPAA"
+
+api_endpoints:
+  - method: GET
+    path: /audit/status
+    description: Current audit status
+    auth: required
+    
+  - method: POST
+    path: /audit/trigger
+    description: Trigger manual audit
+    auth: required
+    roles: ["admin", "security"]
+    
+  - method: GET
+    path: /audit/report/{agent_id}
+    description: Get agent audit report
+    auth: required
+    
+  - method: GET
+    path: /oath/profile/{agent_id}
+    description: Get OATH profile
+    auth: required
+    
+  - method: GET
+    path: /oath/scores
+    description: Get all OATH scores
+    auth: required
+
+testing:
+  test_coverage_required: 95
+  security_testing: required
+  penetration_testing: quarterly
+  
+  test_scenarios:
+    - "New agent registration"
+    - "Configuration change detection"
+    - "OATH failure scenarios"
+    - "Escalation workflows"
+    - "High load conditions"
+
+documentation:
+  runbook: docs/auditor-runbook.md
+  api_spec: docs/api/auditor-openapi.yaml
+  oath_criteria: docs/oath-compliance-guide.md
+  escalation_guide: docs/escalation-procedures.md

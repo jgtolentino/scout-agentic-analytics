@@ -1,0 +1,105 @@
+name: Fully
+codename: fully
+description: >
+  Fullstack Backend Engineering Agent. Converts structured JSON into deployable Supabase PostgreSQL systems,
+  including schema generation, data seeding, API scaffolds, and UI components. Orchestrates full pipeline from ingestion to deployment.
+
+tags:
+  - fullstack
+  - supabase
+  - json2sql
+  - api-generation
+  - orchestrator
+  - mcp-enabled
+
+context:
+  source: mcp-supabase
+  ref: ctx.project.ref
+  branch: ctx.branch.name
+  token: ctx.tokens.service_role
+  url: ctx.project.rest_url
+
+permissions:
+  - read:json
+  - write:sql
+  - deploy:supabase
+  - orchestrate:*
+  - access:dash
+  - run:basher
+  - log:*
+  - mcp:context
+
+entrypoints:
+  - trigger: ":fully infer-schema"
+    action: "schema.generate_from_json"
+    hooks:
+      on_start: "mcp-log --start 'Inferring schema from JSON'"
+      on_success: "mcp-log --success 'Schema generated successfully'"
+      on_failure: "mcp-log --fail 'Schema generation failed'"
+  - trigger: ":fully seed"
+    action: "data.seed_from_json"
+    hooks:
+      on_start: "mcp-log --start 'Seeding data from JSON'"
+      on_success: "mcp-log --success 'Data seeded successfully'"
+      on_failure: "mcp-log --fail 'Data seeding failed'"
+  - trigger: ":fully generate-api"
+    action: "api.generate_models"
+    hooks:
+      on_start: "mcp-log --start 'Generating API models'"
+      on_success: "mcp-log --success 'API models generated'"
+      on_failure: "mcp-log --fail 'API model generation failed'"
+  - trigger: ":fully deploy"
+    action: "schema.deploy_supabase"
+    hooks:
+      on_start: "mcp-log --start 'Deploying to Supabase'"
+      on_success: "mcp-log --success 'Deployment complete'"
+      on_failure: "mcp-log --fail 'Deployment failed'"
+  - trigger: ":fully generate-ui"
+    action: "ui.generate_component"
+  - trigger: ":fully summarize-schema"
+    action: "schema.describe_structure"
+
+tasks:
+  schema.generate_from_json:
+    lang: python
+    handler: skills/fully/json_to_pg.py
+    description: Infer Supabase-compliant SQL schema from JSON structure with types and foreign keys.
+
+  data.seed_from_json:
+    lang: python
+    handler: skills/fully/seed_supabase.py
+    description: Transform JSON array into SQL INSERT commands and execute via Supabase API.
+
+  api.generate_models:
+    lang: python
+    handler: skills/fully/generate_models.py
+    description: Generate backend model classes (Pydantic, Prisma, Drizzle) from inferred schema.
+
+  schema.deploy_supabase:
+    lang: bash
+    handler: scripts/deploy_supabase_schema.sh
+    description: Apply schema and seed to Supabase instance via secure RPC.
+
+  ui.generate_component:
+    lang: typescript
+    handler: skills/fully/generate_component.ts
+    description: Output React + Tailwind form or table component with binding logic.
+
+  schema.describe_structure:
+    lang: python
+    handler: skills/fully/schema_summary.py
+    description: Summarize tables, field types, relationships, and data completeness.
+
+dependencies:
+  - supabase-py
+  - psycopg2
+  - typer
+  - pydantic
+  - jinja2
+  - openai (optional)
+
+linked_agents:
+  - devstral
+  - dash
+  - basher
+  - learnbot

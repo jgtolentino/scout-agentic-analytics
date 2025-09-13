@@ -1,0 +1,392 @@
+# Socket MCP - Enhanced Build Guardrail & Dependency Validation Agent
+# Error-tolerant local+remote dependency validation system
+# Version: 2.1.0
+
+agent:
+  name: socket-mcp
+  version: "2.1.0"
+  description: |
+    Robust dependency validation and build guardrail agent with local artifact scanning.
+    Handles network errors, package resolution failures, and validates local JARs/wheels/node_modules.
+    Transforms Socket.dev from dependency scorer to comprehensive build reliability system.
+  
+  type: multi-agent-pipeline
+  category: dependency-management
+  author: "TBWA Engineering"
+  entry: "agents/socket-mcp/main.py"
+  
+  capabilities:
+    # Core capabilities
+    - dependency_scoring          # Original Socket.dev scoring
+    - vulnerability_scanning      # Security advisories
+    - license_compliance         # License validation
+    
+    # New error-tolerant capabilities
+    - network_error_recovery     # Exponential backoff retry
+    - local_artifact_scanning    # JAR/wheel/node_modules validation
+    - build_failure_diagnostics  # Smart failure analysis
+    - checksum_validation       # MD5/SHA256 integrity checks
+    - manifest_extraction       # JAR/wheel metadata parsing
+    - registry_diff            # Local vs remote comparison
+    - suggested_fixes          # Actionable error remediation
+    - offline_mode            # Work without network
+    
+  models:
+    default: claude-3-5-sonnet
+    error_analysis: claude-3-haiku    # Fast error diagnosis
+    fix_suggestion: gpt-4            # Creative solutions
+  
+  config:
+    # Error handling configuration
+    error_handling:
+      max_retries: 3
+      initial_delay: 1           # seconds
+      backoff_factor: 2         # exponential backoff
+      timeout_per_request: 30   # seconds
+      circuit_breaker:
+        failure_threshold: 5
+        recovery_timeout: 60
+        
+    # Network configuration
+    network:
+      registries:
+        npm: "https://registry.npmjs.org"
+        pypi: "https://pypi.org/pypi"
+        maven: "https://repo1.maven.org/maven2"
+      fallback_registries:
+        npm: ["https://registry.yarnpkg.com", "https://npm.pkg.github.com"]
+        pypi: ["https://pypi.python.org/pypi"]
+      connection_pool_size: 10
+      dns_cache_ttl: 300
+      
+    # Local artifact scanning
+    local_scanning:
+      paths:
+        node_modules: ["node_modules", "packages/*/node_modules"]
+        python: ["dist", "build", "*.egg-info", "site-packages"]
+        java: ["~/.m2/repository", "build/libs", "target", "*.jar"]
+        general: ["vendor", "lib", "deps"]
+      
+      file_patterns:
+        javascript: ["package.json", "package-lock.json", "yarn.lock"]
+        python: ["setup.py", "pyproject.toml", "requirements.txt", "Pipfile"]
+        java: ["pom.xml", "build.gradle", "build.gradle.kts"]
+        
+      checksum_algorithms: ["sha256", "md5", "sha1"]
+      max_file_size: 500  # MB
+      
+    # Build failure patterns
+    build_diagnostics:
+      common_errors:
+        - pattern: "ENOENT.*package.json"
+          category: "missing_file"
+          fix: "Run 'npm init' or check working directory"
+          
+        - pattern: "Cannot find module"
+          category: "missing_dependency"
+          fix: "Run 'npm install' or check node_modules"
+          
+        - pattern: "pip.*not found"
+          category: "missing_tool"
+          fix: "Install pip or use appropriate Python environment"
+          
+        - pattern: "Could not resolve dependency"
+          category: "version_conflict"
+          fix: "Check version constraints in lockfile"
+          
+        - pattern: "ETIMEDOUT|ECONNREFUSED"
+          category: "network_error"
+          fix: "Check network connection or proxy settings"
+          
+        - pattern: "Checksum.*mismatch"
+          category: "integrity_error"
+          fix: "Clear cache and re-download dependencies"
+          
+    # Security scanning
+    security:
+      vulnerability_databases:
+        - "https://osv.dev/api"
+        - "https://api.snyk.io/v1"
+        - "https://nvd.nist.gov/feeds"
+      severity_threshold: "medium"
+      auto_fix_suggestions: true
+      
+    # Performance settings
+    performance:
+      parallel_scans: 5
+      cache_enabled: true
+      cache_ttl: 3600
+      batch_size: 50
+      stream_results: true
+
+  tools:
+    - name: socket_api
+      type: http_client
+      config:
+        base_url: "https://api.socket.dev/v0"
+        auth_header: "Authorization: Bearer ${SOCKET_API_KEY}"
+        
+    - name: artifact_scanner
+      type: file_scanner
+      config:
+        supported_formats: ["jar", "war", "ear", "whl", "egg", "tar.gz", "zip"]
+        extract_metadata: true
+        
+    - name: checksum_validator
+      type: crypto
+      config:
+        algorithms: ["sha256", "md5", "sha1"]
+        
+    - name: manifest_parser
+      type: parser
+      config:
+        formats: ["pom", "gradle", "package.json", "setup.py", "MANIFEST.MF"]
+
+inputs:
+  - name: packages
+    type: array
+    items:
+      type: string
+    description: "List of package specs to validate (e.g., express@4.18.0)"
+    
+  - name: artifact_paths
+    type: array
+    items:
+      type: string
+    description: "Local artifact paths to validate (JARs, wheels, dirs)"
+    
+  - name: max_retries
+    type: integer
+    default: 3
+    description: "Maximum retry attempts for network operations"
+    
+  - name: timeout_secs
+    type: integer
+    default: 30
+    description: "Timeout per operation in seconds"
+    
+  - name: scan_local
+    type: boolean
+    default: true
+    description: "Enable local artifact scanning"
+    
+  - name: offline_mode
+    type: boolean
+    default: false
+    description: "Run in offline mode (local artifacts only)"
+    
+  - name: error_verbosity
+    type: enum
+    values: ["minimal", "normal", "detailed", "debug"]
+    default: "normal"
+    description: "Error reporting detail level"
+    
+  - name: fix_suggestions
+    type: boolean
+    default: true
+    description: "Generate fix suggestions for errors"
+
+outputs:
+  - name: dependency_scores
+    type: object
+    schema:
+      type: object
+      properties:
+        packages: array
+        total_score: number
+        risk_level: string
+    description: "Original Socket.dev dependency scores"
+    
+  - name: error_report
+    type: object
+    schema:
+      type: object
+      properties:
+        total_errors: integer
+        network_errors: array
+        validation_errors: array
+        build_errors: array
+        recovery_attempts: integer
+    description: "Comprehensive error analysis"
+    
+  - name: local_validation_report
+    type: object
+    schema:
+      type: object
+      properties:
+        scanned_artifacts: integer
+        valid_artifacts: integer
+        invalid_artifacts: array
+        checksums: object
+        manifests: object
+    description: "Local artifact validation results"
+    
+  - name: suggested_fixes
+    type: array
+    items:
+      type: object
+      properties:
+        error_type: string
+        description: string
+        fix_command: string
+        confidence: number
+    description: "Actionable fix suggestions"
+    
+  - name: build_diagnostics
+    type: object
+    description: "Build failure root cause analysis"
+    
+  - name: security_report
+    type: object
+    description: "Vulnerability scan results for all artifacts"
+
+commands:
+  validate:
+    description: "Validate packages and local artifacts"
+    parameters:
+      - packages: array
+      - artifact_paths: array (optional)
+      - scan_local: boolean
+    example: |
+      python3 agents/socket-mcp/main.py validate \
+        --packages "express@4.18.0,lodash@4.17.21" \
+        --artifact-paths "./build/libs/myapp.jar" \
+        --scan-local
+  
+  scan:
+    description: "Deep scan local artifacts"
+    parameters:
+      - path: string
+      - recursive: boolean
+    example: |
+      python3 agents/socket-mcp/main.py scan \
+        --path ./node_modules \
+        --recursive
+  
+  diagnose:
+    description: "Diagnose build failures"
+    parameters:
+      - error_log: string
+      - project_path: string
+    example: |
+      python3 agents/socket-mcp/main.py diagnose \
+        --error-log build.log \
+        --project-path .
+  
+  compare:
+    description: "Compare local vs registry versions"
+    parameters:
+      - local_path: string
+      - package_spec: string
+    example: |
+      python3 agents/socket-mcp/main.py compare \
+        --local-path ./node_modules/express \
+        --package-spec express@latest
+
+error_patterns:
+  # Network errors
+  - id: network_timeout
+    pattern: "ETIMEDOUT|ECONNRESET|ENOTFOUND"
+    handler: exponential_backoff_retry
+    max_attempts: 3
+    fallback: use_local_cache
+    
+  - id: registry_down
+    pattern: "503.*Service Unavailable|Registry.*unavailable"
+    handler: try_fallback_registry
+    fallback: scan_local_artifacts
+    
+  - id: auth_failure
+    pattern: "401.*Unauthorized|403.*Forbidden"
+    handler: refresh_credentials
+    fallback: anonymous_mode
+    
+  # Package errors
+  - id: package_not_found
+    pattern: "404.*Not Found|Package.*not found"
+    handler: search_local_artifacts
+    suggestion: "Check package name or use local artifact"
+    
+  - id: version_mismatch
+    pattern: "Version.*not found|No matching version"
+    handler: find_compatible_version
+    fallback: use_local_version
+    
+  # Build errors
+  - id: missing_dependency
+    pattern: "Cannot resolve|Module not found"
+    handler: dependency_tree_analysis
+    suggestion: "Install missing dependencies"
+    
+  - id: checksum_mismatch
+    pattern: "Checksum.*failed|Integrity.*mismatch"
+    handler: clear_cache_retry
+    suggestion: "Clear cache and reinstall"
+    
+  - id: class_not_found
+    pattern: "ClassNotFoundException|NoClassDefFoundError"
+    handler: scan_classpath
+    suggestion: "Check JAR contents and classpath"
+
+artifact_validators:
+  jar:
+    extensions: [".jar", ".war", ".ear"]
+    validators:
+      - check_manifest
+      - verify_signatures
+      - scan_classes
+      - check_dependencies
+      
+  wheel:
+    extensions: [".whl", ".egg"]
+    validators:
+      - check_metadata
+      - verify_wheel_info
+      - scan_dependencies
+      - check_compatibility
+      
+  npm:
+    paths: ["node_modules"]
+    validators:
+      - check_package_json
+      - verify_lockfile
+      - scan_vulnerabilities
+      - check_peer_deps
+
+monitoring:
+  metrics:
+    - validation_success_rate
+    - average_retry_count
+    - cache_hit_rate
+    - error_recovery_rate
+    - local_artifact_usage
+    
+  alerts:
+    - name: high_error_rate
+      condition: "error_rate > 0.1"
+      severity: high
+      
+    - name: registry_unavailable
+      condition: "registry_failures > 5"
+      severity: critical
+      
+    - name: security_vulnerabilities
+      condition: "critical_vulns > 0"
+      severity: critical
+
+success_criteria:
+  - metric: error_recovery_rate
+    target: ">95%"
+    description: "Percentage of errors successfully recovered"
+    
+  - metric: build_success_rate
+    target: ">90%"
+    description: "Builds completing after validation"
+    
+  - metric: local_validation_speed
+    target: "<100ms per artifact"
+    description: "Local artifact validation performance"
+    
+  - metric: fix_suggestion_accuracy
+    target: ">80%"
+    description: "Suggested fixes that resolve issues"

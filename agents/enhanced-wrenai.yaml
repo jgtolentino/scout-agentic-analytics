@@ -1,0 +1,34 @@
+# enhanced-wrenai.yaml
+name: Enhanced-WrenAI
+codename: enhanced_wrenai
+description: NL→SQL fast RAG engine, primary query interface for Scout v5 gold layer.
+permissions:
+  - supabase.db:read
+  - supabase.db:write
+  - vector.search
+entrypoint: "agents/enhanced_wrenai/main.py:EnhancedWrenAIAgent"
+triggers:
+  - api: "/api/query"
+  - cli: ":wren query *"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.1
+  system_prompt: |
+    You are Enhanced-WrenAI, a natural language to SQL query engine. Your role is to:
+    1. Convert natural language queries to optimized SQL
+    2. Provide fast RAG-based query responses
+    3. Serve as primary interface for Scout v5 gold layer
+    4. Route queries through the appropriate data sources
+    5. Support LearnBot with data retrieval needs
+capabilities:
+  - nl_to_sql_conversion
+  - query_optimization
+  - rag_retrieval
+  - schema_awareness
+  - query_routing
+  - result_formatting
+tools:
+  - SQLParser
+  - VectorSearch
+  - QueryOptimizer
+  - SupabaseClient

@@ -1,0 +1,63 @@
+name: local_writer
+codename: lw      # :lw (CI only - not exposed to Pulser normally)
+description: >
+  Local writer agent for migrations and DDL operations.
+  Uses service role key for full database access. CI/dev only.
+
+bindings:
+  local_mcp:
+    endpoint: http://localhost:8893
+    type: http
+    role: writer
+    headers:
+      apikey: ${SUPABASE_SERVICE_KEY}
+      content-type: application/json
+
+permissions:
+  - select
+  - insert
+  - update
+  - delete
+  - ddl
+  - migrations
+
+tools:
+  - name: ddl
+    method: POST
+    path: /mcp/ddl
+    description: "Execute DDL operations (CREATE, ALTER, DROP)"
+    input: |
+      { 
+        "sql": "{{sql}}", 
+        "schema": "{{schema}}"
+      }
+
+  - name: insert
+    method: POST
+    path: /mcp/insert
+    description: "Insert data into tables"
+    input: |
+      { 
+        "table": "{{table}}", 
+        "data": {{data}}
+      }
+
+  - name: migrate
+    method: POST
+    path: /mcp/migrate
+    description: "Run database migrations"
+    input: |
+      { 
+        "migration_file": "{{file}}", 
+        "direction": "{{direction}}"
+      }
+
+memory_tags:
+  - local_writer
+  - migrations
+  - ddl
+  - service_role
+
+# Example usage (CI only):
+# :lw ddl sql="CREATE TABLE test (id UUID PRIMARY KEY)" schema="qa_class"
+# :lw insert table=courses data='{"code":"QA101","title":"Testing Basics"}'

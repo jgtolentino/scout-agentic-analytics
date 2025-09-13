@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  computer-use:
+    build: .
+    container_name: pulser-computer-use
+    environment:
+      - DISPLAY=:1
+      - DISPLAY_WIDTH=1024
+      - DISPLAY_HEIGHT=768
+      - VNC_PASSWORD=pulser123
+      - ENABLE_RECORDING=true
+    ports:
+      - "5900:5900"  # VNC port
+      - "6080:6080"  # noVNC web interface
+      - "8080:8080"  # API port
+    volumes:
+      - ./workspace:/home/user/workspace
+      - ./recordings:/recordings
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    security_opt:
+      - seccomp:unconfined
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/dri:/dev/dri
+    networks:
+      - pulser-net
+    restart: unless-stopped
+
+  security-proxy:
+    image: nginx:alpine
+    container_name: pulser-security-proxy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8443:443"
+    depends_on:
+      - computer-use
+    networks:
+      - pulser-net
+
+networks:
+  pulser-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

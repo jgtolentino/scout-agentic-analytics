@@ -1,0 +1,425 @@
+---
+# Scout v7.1 Agent Contracts & Specifications
+# Agentic Analytics Platform - Agent System Architecture
+version: "7.1.0"
+framework: "SuperClaude v3.0"
+mcp_integration: true
+
+# =============================================================================
+# AGENT ORCHESTRATION SYSTEM
+# =============================================================================
+
+orchestrator:
+  name: "ScoutOrchestrator"
+  purpose: "Coordinate multi-agent workflows and manage agentic analytics pipeline"
+  activation_patterns:
+    - "Complex NL queries requiring multiple agents"
+    - "Cross-domain analysis (revenue + competitive + forecasting)"
+    - "Executive dashboards with narrative + charts + insights"
+  
+  coordination_strategy:
+    sequential: ["QueryAgent → RetrieverAgent → ChartVisionAgent → NarrativeAgent"]
+    parallel: ["RetrieverAgent + QueryAgent", "ChartVisionAgent + NarrativeAgent"]
+    conditional: "MindsDB → forecast delegation based on confidence ≥0.8"
+  
+  quality_gates:
+    - "SQL validation before execution"
+    - "RLS tenant isolation verification"
+    - "Response coherence across agents"
+    - "Performance within 5s total latency"
+
+# =============================================================================
+# CORE AGENT SPECIFICATIONS
+# =============================================================================
+
+agents:
+  
+  # ---------------------------------------------------------------------------
+  # QUERY AGENT - NL→SQL Pipeline
+  # ---------------------------------------------------------------------------
+  
+  query_agent:
+    name: "QueryAgent"
+    purpose: "Natural language to SQL conversion with semantic awareness"
+    responsibility: "Transform business questions into executable SQL queries"
+    
+    input_contract:
+      natural_language_query: "string (required)"
+      user_context:
+        tenant_id: "uuid (required)"
+        role: "executive|store_manager|analyst (required)"
+        brand_access: "string[] (optional)"
+        location_access: "string[] (optional)"
+      
+    output_contract:
+      generated_sql: "string (validated)"
+      confidence_score: "float (0.0-1.0)"
+      query_intent: "enum[revenue_analysis|competitive_analysis|forecasting|operational]"
+      semantic_entities: "string[] (brands, categories, locations, dates)"
+      guardrails_applied: "string[] (RLS, role_limits, data_constraints)"
+      
+    capabilities:
+      semantic_model_awareness: true
+      filipino_language_support: true
+      query_templates: true
+      intent_classification: true
+      sql_injection_prevention: true
+      
+    integration_points:
+      semantic_model: "/semantic/model.yaml"
+      edge_function: "/supabase/functions/nl2sql"
+      validation_service: "/validators/sql_guard.ts"
+      
+    error_handling:
+      ambiguous_query: "Request clarification with suggestions"
+      unauthorized_access: "Apply RLS constraints, return limited results"
+      complex_query: "Break into sub-queries or delegate to Sequential MCP"
+      
+    performance_targets:
+      response_time: "< 2s"
+      accuracy: "> 85% for common queries"
+      sql_validity: "100% (must parse and execute)"
+
+  # ---------------------------------------------------------------------------
+  # RETRIEVER AGENT - RAG + Knowledge Graph
+  # ---------------------------------------------------------------------------
+  
+  retriever_agent:
+    name: "RetrieverAgent"
+    purpose: "Intelligent context retrieval using hybrid search and knowledge graphs"
+    responsibility: "Provide relevant business context and competitive intelligence"
+    
+    input_contract:
+      query_context: "string (required)"
+      search_scope:
+        include_domains: "string[] (optional)"
+        exclude_domains: "string[] (optional)"
+        time_range: "date_range (optional)"
+      retrieval_depth: "enum[shallow|medium|deep] (default: medium)"
+      
+    output_contract:
+      retrieved_chunks: "rag_chunk[] (ranked by relevance)"
+      knowledge_graph_paths: "kg_relationship[] (entity connections)"
+      competitive_context: "competitor_insight[] (market intelligence)"
+      confidence_scores: "float[] (per chunk relevance)"
+      retrieval_metadata:
+        total_chunks_searched: "integer"
+        hybrid_ranking_applied: "boolean"
+        vector_similarity_threshold: "float"
+        
+    capabilities:
+      hybrid_search: "Vector similarity + BM25 + metadata ranking"
+      knowledge_graph_traversal: true
+      competitive_intelligence: true
+      temporal_awareness: true
+      semantic_expansion: true
+      
+    integration_points:
+      vector_store: "platinum.rag_chunks (pgvector)"
+      knowledge_graph: "platinum.knowledge_graph"
+      edge_function: "/supabase/functions/rag_retrieve"
+      competitive_data: "silver.competitor_analysis"
+      
+    ranking_algorithm:
+      vector_weight: 0.6
+      bm25_weight: 0.3
+      metadata_weight: 0.1
+      recency_boost: 0.05
+      authority_boost: 0.05
+      
+    performance_targets:
+      response_time: "< 1.5s"
+      relevance_score: "> 0.7 for top 5 results"
+      chunk_coverage: "85% of relevant domain knowledge"
+
+  # ---------------------------------------------------------------------------
+  # CHART VISION AGENT - Visualization Intelligence
+  # ---------------------------------------------------------------------------
+  
+  chart_vision_agent:
+    name: "ChartVisionAgent"
+    purpose: "Intelligent chart selection and data visualization optimization"
+    responsibility: "Transform data insights into compelling visual narratives"
+    
+    input_contract:
+      query_results: "sql_result_set (required)"
+      visualization_intent: "enum[trend|comparison|distribution|correlation|composition]"
+      audience_context:
+        executive_summary: "boolean (default: false)"
+        technical_detail: "boolean (default: false)"
+        presentation_mode: "boolean (default: false)"
+      brand_guidelines: "design_system_context (optional)"
+      
+    output_contract:
+      chart_specifications:
+        chart_type: "enum[line|bar|pie|scatter|heatmap|treemap|funnel]"
+        x_axis: "column_config"
+        y_axis: "column_config"
+        grouping: "column_config[]"
+        formatting: "chart_styling"
+      data_transformations: "transformation_step[]"
+      accessibility_metadata: "a11y_config"
+      responsive_breakpoints: "breakpoint_config[]"
+      
+    capabilities:
+      chart_type_recommendation: true
+      data_transformation: true
+      responsive_design: true
+      accessibility_compliance: "WCAG 2.1 AA"
+      brand_consistency: true
+      
+    integration_points:
+      design_system: "/apps/standalone-dashboard/src/lib/design"
+      chart_library: "recharts + d3"
+      accessibility_validator: "/validators/a11y_checker.ts"
+      
+    decision_matrix:
+      temporal_data: "line_chart (primary), bar_chart (secondary)"
+      categorical_comparison: "bar_chart (primary), treemap (large_categories)"
+      part_to_whole: "pie_chart (≤5 categories), stacked_bar (>5 categories)"
+      correlation: "scatter_plot (primary), heatmap (matrix_data)"
+      funnel_analysis: "funnel_chart (conversion), sankey (flow)"
+      
+    performance_targets:
+      recommendation_accuracy: "> 90% for standard cases"
+      rendering_time: "< 1s for datasets ≤10K rows"
+      accessibility_score: "100% WCAG compliance"
+
+  # ---------------------------------------------------------------------------
+  # NARRATIVE AGENT - Business Intelligence Storytelling
+  # ---------------------------------------------------------------------------
+  
+  narrative_agent:
+    name: "NarrativeAgent"
+    purpose: "Generate executive summaries and business intelligence narratives"
+    responsibility: "Transform data insights into actionable business stories"
+    
+    input_contract:
+      data_insights: "insight[] (from QueryAgent + RetrieverAgent)"
+      chart_context: "chart_specification[] (from ChartVisionAgent)"
+      narrative_style:
+        audience: "enum[executive|analyst|store_manager] (required)"
+        tone: "enum[formal|conversational|urgent] (default: formal)"
+        length: "enum[brief|standard|detailed] (default: standard)"
+        language: "enum[en|fil] (default: en)"
+      business_context:
+        current_period: "date_range (required)"
+        comparison_period: "date_range (optional)"
+        strategic_focus: "string[] (optional)"
+        
+    output_contract:
+      executive_summary: "narrative_block"
+      key_insights: "insight_block[]"
+      actionable_recommendations: "recommendation[]"
+      competitive_intelligence: "competitive_insight[]"
+      narrative_metadata:
+        confidence_level: "float (0.0-1.0)"
+        data_coverage: "float (0.0-1.0)"
+        insight_quality: "enum[high|medium|low]"
+        
+    capabilities:
+      multilingual_support: "English + Filipino"
+      executive_summarization: true
+      trend_identification: true
+      anomaly_detection: true
+      competitive_analysis: true
+      recommendation_generation: true
+      
+    integration_points:
+      business_rules: "/semantic/business_rules.yaml"
+      competitive_intelligence: "silver.competitor_analysis"
+      historical_context: "gold.historical_insights"
+      
+    narrative_patterns:
+      trend_analysis: "Period performance → Key drivers → Outlook"
+      competitive_analysis: "Market position → Competitive gaps → Strategic moves"
+      operational_review: "Performance vs targets → Issue identification → Action items"
+      executive_brief: "Executive summary → Strategic insights → Next steps"
+      
+    performance_targets:
+      generation_time: "< 3s for standard narratives"
+      insight_accuracy: "> 85% alignment with data"
+      actionability_score: "> 80% actionable recommendations"
+
+# =============================================================================
+# AGENT COORDINATION PATTERNS
+# =============================================================================
+
+coordination_patterns:
+  
+  # Standard Analytics Flow
+  standard_flow:
+    sequence: ["QueryAgent", "ChartVisionAgent", "NarrativeAgent"]
+    trigger: "Simple revenue/operational queries"
+    expected_latency: "< 5s"
+    
+  # Enhanced Analytics with Context
+  enhanced_flow:
+    sequence: ["QueryAgent", "RetrieverAgent", "ChartVisionAgent", "NarrativeAgent"]
+    trigger: "Complex business questions requiring context"
+    expected_latency: "< 8s"
+    
+  # Competitive Intelligence Flow
+  competitive_flow:
+    parallel_start: ["QueryAgent", "RetrieverAgent"]
+    sequence: ["ChartVisionAgent", "NarrativeAgent"]
+    trigger: "Competitive analysis requests"
+    expected_latency: "< 10s"
+    
+  # Forecasting Flow (MindsDB Integration)
+  forecasting_flow:
+    sequence: ["QueryAgent", "MindsDB_MCP", "ChartVisionAgent", "NarrativeAgent"]
+    trigger: "Forecast/prediction keywords + confidence ≥ 0.8"
+    fallback: "QueryAgent → SQL seasonal analysis"
+    expected_latency: "< 15s"
+
+# =============================================================================
+# QUALITY GATES & VALIDATION
+# =============================================================================
+
+quality_gates:
+  
+  sql_validation:
+    agent: "QueryAgent"
+    checks:
+      - "SQL syntax validation"
+      - "RLS policy application"
+      - "Role-based row limits"
+      - "Injection attack prevention"
+    fail_action: "Return error with explanation"
+    
+  data_consistency:
+    agents: ["QueryAgent", "RetrieverAgent"]
+    checks:
+      - "Cross-reference data sources"
+      - "Temporal consistency"
+      - "Metric definition alignment"
+    fail_action: "Flag inconsistencies in response"
+    
+  narrative_coherence:
+    agent: "NarrativeAgent"
+    checks:
+      - "Insight-data alignment"
+      - "Recommendation feasibility"
+      - "Competitive intelligence accuracy"
+    fail_action: "Request additional context"
+    
+  performance_monitoring:
+    all_agents: true
+    metrics:
+      - "Response time per agent"
+      - "End-to-end latency"
+      - "Error rates"
+      - "User satisfaction scores"
+
+# =============================================================================
+# ERROR HANDLING & FALLBACKS
+# =============================================================================
+
+error_handling:
+  
+  agent_timeout:
+    timeout_threshold: "10s per agent"
+    fallback_strategy: "Graceful degradation with partial results"
+    user_notification: "Some features unavailable, core functionality preserved"
+    
+  data_access_errors:
+    unauthorized_access: "Apply maximum RLS constraints"
+    missing_data: "Acknowledge gaps, provide available insights"
+    invalid_queries: "Suggest corrections with examples"
+    
+  system_integration_failures:
+    mcp_server_down: "Use cached results + notify limitations"
+    database_timeout: "Retry with simplified query"
+    external_api_failure: "Continue with internal data only"
+
+# =============================================================================
+# METRICS & MONITORING
+# =============================================================================
+
+performance_metrics:
+  
+  agent_performance:
+    query_agent:
+      - "SQL generation accuracy"
+      - "Query execution success rate"
+      - "Response time distribution"
+    
+    retriever_agent:
+      - "Retrieval relevance scores"
+      - "Knowledge graph coverage"
+      - "Hybrid ranking effectiveness"
+    
+    chart_vision_agent:
+      - "Chart type recommendation accuracy"
+      - "Rendering performance"
+      - "Accessibility compliance rate"
+    
+    narrative_agent:
+      - "Insight generation quality"
+      - "Recommendation actionability"
+      - "Multilingual accuracy"
+  
+  system_performance:
+    - "End-to-end request latency"
+    - "Agent coordination efficiency"
+    - "Error recovery success rate"
+    - "User satisfaction scores"
+    - "Resource utilization"
+
+# =============================================================================
+# INTEGRATION ARCHITECTURE
+# =============================================================================
+
+integration_architecture:
+  
+  mcp_servers:
+    mindsdb:
+      purpose: "Predictive analytics and forecasting"
+      tools: ["mindsdb_query", "mindsdb_train_model", "mindsdb_predict"]
+      
+    context7:
+      purpose: "Documentation and framework patterns"
+      integration: "Business rule validation and best practices"
+      
+    sequential:
+      purpose: "Complex multi-step reasoning"
+      integration: "Agent coordination and complex query decomposition"
+      
+  edge_functions:
+    nl2sql: "QueryAgent execution runtime"
+    rag_retrieve: "RetrieverAgent execution runtime"
+    sql_exec: "Query execution with RLS"
+    mindsdb_proxy: "MindsDB integration proxy"
+    audit_ledger: "Agent activity logging"
+    
+  data_layer:
+    bronze: "Raw data ingestion"
+    silver: "Cleaned and transformed data"
+    gold: "Business metrics and aggregations"
+    platinum: "Agent knowledge base and RAG store"
+
+# =============================================================================
+# AGENT DEPLOYMENT CONFIGURATION
+# =============================================================================
+
+deployment:
+  
+  environment_variables:
+    SUPABASE_URL: "Edge Function runtime"
+    SUPABASE_ANON_KEY: "Database access"
+    OPENAI_API_KEY: "LLM inference"
+    MINDSDB_HOST: "Predictive analytics"
+    
+  resource_allocation:
+    query_agent: "2GB memory, 2s timeout"
+    retriever_agent: "4GB memory, 5s timeout"
+    chart_vision_agent: "1GB memory, 3s timeout"
+    narrative_agent: "3GB memory, 5s timeout"
+    
+  scaling_policy:
+    concurrent_requests: "10 per agent type"
+    auto_scaling: "Based on queue depth"
+    failover: "Cross-region for critical agents"
+
+---

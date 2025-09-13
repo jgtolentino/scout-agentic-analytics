@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Apply urgent fixes for 406 errors and security issues
+set -euo pipefail
+
+echo "🚨 URGENT: Fixing 406 Errors and Security Issues"
+echo "================================================"
+echo ""
+echo "This script will:"
+echo "1. Convert all views to SECURITY INVOKER"
+echo "2. Drop unnecessary Northwind demo views"
+echo "3. Enable RLS on all public tables"
+echo "4. Add read policies for app tables"
+echo ""
+
+# Apply the SQL fixes
+echo "🔧 Applying database fixes..."
+psql "$DATABASE_URL" -f scripts/fix-406-and-security.sql
+
+echo ""
+echo "✅ Database fixes applied!"
+echo ""
+echo "🎯 MANUAL STEP REQUIRED:"
+echo "======================="
+echo "To fix the 406 errors, you MUST:"
+echo ""
+echo "1. Go to Supabase Dashboard"
+echo "2. Navigate to: Settings → API → API Settings"
+echo "3. In 'Exposed schemas', add: scout"
+echo "4. Keep existing schemas (like 'storage' if used)"
+echo "5. Click 'Save'"
+echo ""
+echo "Direct link to API settings:"
+echo "https://app.supabase.com/project/cxzllzyxwpyptfretryc/settings/api"
+echo ""
+echo "📊 To filter ZIP data in Table Editor:"
+echo "====================================="
+echo "Use one of these filters:"
+echo "• source_type = 'ZIP'"
+echo "• source_file ilike '%.zip'"
+echo ""
+echo "🔍 Verification checklist:"
+echo "========================"
+echo "[ ] Added 'scout' to exposed schemas in Dashboard"
+echo "[ ] App no longer shows 406 errors"
+echo "[ ] Data tabs/charts are loading"
+echo "[ ] ZIP filter works in Table Editor"
+echo ""
+echo "If issues persist, check browser console for errors."

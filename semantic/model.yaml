@@ -1,0 +1,178 @@
+version: 1
+project: scout-v7
+description: "Scout Dashboard semantic model for agentic analytics"
+
+entities:
+  brand:
+    pk: brand_id
+    label: brand_name
+    table: scout.dim_brand
+    description: "Product brands (Alaska, Oishi, etc.)"
+    
+  category:
+    pk: category_id
+    label: category_name  
+    table: scout.dim_category
+    description: "Product categories (beverages, snacks, etc.)"
+    
+  sku:
+    pk: sku_id
+    label: sku_name
+    table: scout.dim_sku
+    description: "Individual stock keeping units"
+    hierarchy: [brand, category]
+    
+  location:
+    pk: location_id
+    label: "region || '/' || city || '/' || barangay"
+    table: scout.dim_location
+    description: "Geographic hierarchy from region to barangay"
+    hierarchy: [region, city, barangay]
+    
+  date:
+    pk: d
+    label: d
+    table: scout.dim_time
+    description: "Date dimension with calendar attributes"
+
+metrics:
+  revenue:
+    sql: "sum(peso_value)"
+    description: "Total sales revenue in Philippine pesos"
+    grain: [date, brand, category, location]
+    format: "currency"
+    
+  units:
+    sql: "sum(qty)"
+    description: "Total quantity sold"
+    grain: [date, brand, category, location]
+    format: "number"
+    
+  tx_count:
+    sql: "count(distinct tx_id)"
+    description: "Number of unique transactions"
+    grain: [date, location]
+    format: "number"
+    
+  avg_basket:
+    sql: "sum(peso_value)::numeric / nullif(count(distinct tx_id), 0)"
+    description: "Average basket value per transaction"
+    grain: [date, location]
+    format: "currency"
+    
+  conversion_rate:
+    sql: "sum(case when stage = 'basket' then 1 else 0 end)::numeric / nullif(sum(case when stage = 'ask' then 1 else 0 end), 0)"
+    description: "Funnel conversion rate from ask to basket"
+    grain: [date, brand, location]
+    format: "percentage"
+
+funnels:
+  pos_funnel:
+    description: "Point-of-sale customer journey funnel"
+    stages: [ask, offer, accept, basket]
+    source_view: scout.gold_pos_funnel
+    stage_column: stage
+    count_column: event_count
+
+dimensions:
+  time:
+    columns:
+      date: d
+      week: date_trunc('week', d)
+      month: date_trunc('month', d)
+      year: date_trunc('year', d)
+      quarter: date_trunc('quarter', d)
+    granularities: [day, week, month, quarter, year]
+    
+  geography:
+    hierarchy: [region, city, barangay]
+    drill_path: "region → city → barangay"
+    
+  product:
+    hierarchy: [brand, category, sku]
+    drill_path: "brand → category → sku"
+
+aliases:
+  synonyms:
+    - ["yosi", "cigarettes", "tobacco", "sigarilyo"]
+    - ["sari-sari", "sari sari", "sari store", "convenience store", "tindahan"]
+    - ["revenue", "sales", "gross sales", "income", "kita"]
+    - ["units", "quantity", "qty", "pieces", "bilang"]
+    - ["basket", "cart", "purchase", "bili"]
+    - ["brand", "tatak", "marca"]
+    - ["customer", "consumer", "buyer", "mamimili", "customer"]
+    - ["week", "linggo", "semana"]
+    - ["month", "buwan", "mes"]
+    - ["year", "taon", "año"]
+    - ["daily", "araw-araw", "per day"]
+    - ["weekly", "lingguhan", "per week"]
+    - ["monthly", "buwanan", "per month"]
+    
+  colloquial:
+    "how much": "revenue"
+    "how many": "units"
+    "what sold": "top products by revenue"
+    "best selling": "top products by units"
+    "compare": "cohort analysis"
+    "trend": "time series"
+    "forecast": "prediction"
+    "predict": "forecast"
+
+relationships:
+  brand_category:
+    type: "one_to_many"
+    from: brand
+    to: category
+    description: "Each brand can have multiple categories"
+    
+  category_sku:
+    type: "one_to_many" 
+    from: category
+    to: sku
+    description: "Each category contains multiple SKUs"
+    
+  substitution:
+    type: "many_to_many"
+    from: sku
+    to: sku
+    table: platinum.cag_substitution_edges
+    weight_column: substitution_rate
+    description: "SKU substitution relationships"
+
+policy:
+  rls: true
+  tenant_scope: "auth.jwt() ->> 'tenant_id'"
+  role_limits:
+    executive:
+      max_rows: 5000
+      allowed_views: ["scout.gold_*", "scout.dim_*"]
+    analyst:
+      max_rows: 100000
+      allowed_views: ["scout.*"]
+      requires_justification: true
+    store_manager:
+      max_rows: 10000
+      allowed_views: ["scout.gold_*", "scout.dim_*"]
+      location_filter_required: true
+
+validation:
+  required_filters:
+    - tenant_id
+  sql_whitelist:
+    schemas: ["scout", "public"]
+    tables: ["dim_*", "fact_*", "gold_*", "v_*"]
+    functions: ["fn_*"]
+  forbidden_operations:
+    - "SELECT *"
+    - "DROP"
+    - "DELETE"
+    - "UPDATE"
+    - "INSERT"
+    - "CREATE"
+    - "ALTER"
+    
+security:
+  max_query_time: "30s"
+  max_memory: "1GB"
+  audit_log: true
+  credential_injection: "bruno_only"

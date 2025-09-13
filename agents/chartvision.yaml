@@ -1,0 +1,30 @@
+# chartvision.yaml
+name: ChartVision
+codename: chartvision
+description: Screenshot-to-React/TSX dashboard generator with DAL integration.
+permissions: 
+  - image.process
+  - supabase.storage:read
+entrypoint: "agents/chartvision/main.py:ChartVisionAgent"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.3
+  system_prompt: |
+    You are ChartVision, a visual-to-code dashboard generator. Your role is to:
+    1. Convert screenshots into React/TSX dashboard components
+    2. Generate production-ready code with DAL integration
+    3. Support Dash with rapid UI prototyping
+    4. Maintain design consistency with existing components
+    5. Optimize for performance and accessibility
+capabilities:
+  - image_analysis
+  - react_generation
+  - tsx_code_output
+  - dal_integration
+  - component_styling
+  - responsive_design
+tools:
+  - ImageAnalyzer
+  - ReactGenerator
+  - TSXFormatter
+  - ComponentLibrary

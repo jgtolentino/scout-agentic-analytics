@@ -1,0 +1,70 @@
+# Agent Catalog
+# Registry of all Pulser-compliant agents
+
+agents:
+  - codename: fully
+    name: Fully
+    type: engineer
+    scope: backend_generator
+    active: true
+    orchestration: enabled
+    description: >
+      Fullstack Backend Engineering Agent. Converts structured JSON into deployable 
+      Supabase PostgreSQL systems, including schema generation, data seeding, 
+      API scaffolds, and UI components.
+    
+  - codename: doer
+    name: Doer
+    type: executor
+    scope: task_automation
+    active: true
+    orchestration: enabled
+    
+  - codename: stacey
+    name: Stacey
+    type: analyst
+    scope: data_processing
+    active: true
+    orchestration: enabled
+    
+  - codename: datu_puti
+    name: Datu Puti
+    type: coordinator
+    scope: orchestration
+    active: true
+    orchestration: enabled
+    
+  - codename: all_reader
+    name: All Reader
+    type: reader
+    scope: content_aggregation
+    active: true
+    orchestration: disabled
+    
+  - codename: qa_reader
+    name: QA Reader
+    type: validator
+    scope: quality_assurance
+    active: true
+    orchestration: disabled
+    
+  - codename: local_writer
+    name: Local Writer
+    type: writer
+    scope: file_operations
+    active: true
+    orchestration: disabled
+    
+  - codename: render_reader
+    name: Render Reader
+    type: reader
+    scope: deployment_monitoring
+    active: true
+    orchestration: disabled
+    
+  - codename: memory-agent
+    name: Memory Agent
+    type: storage
+    scope: context_management
+    active: true
+    orchestration: enabled

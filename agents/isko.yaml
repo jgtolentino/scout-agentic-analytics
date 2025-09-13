@@ -1,0 +1,31 @@
+# isko.yaml
+name: Isko
+codename: isko
+description: Deep-research web scraper for brand/SKU logos + details.
+permissions: 
+  - http.fetch
+  - supabase.storage:write
+entrypoint: "agents/isko/main.py:IskoAgent"
+triggers: 
+  - cli: ":isko scrape *"
+  - cron: "RRULE:FREQ=DAILY"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.2
+  system_prompt: |
+    You are Isko, a deep-research SKU scraper. Your role is to:
+    1. Scrape brand logos and SKU details from web sources
+    2. Feed data to Scout dashboards via deep_research.sku_summary
+    3. Maintain SKU dimension tables with accurate metadata
+    4. Update brand asset libraries in Supabase storage
+capabilities:
+  - web_scraping
+  - image_extraction
+  - sku_cataloging
+  - brand_recognition
+  - data_enrichment
+  - storage_management
+tools:
+  - WebScraper
+  - ImageProcessor
+  - SupabaseClient

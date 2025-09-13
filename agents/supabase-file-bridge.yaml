@@ -1,0 +1,35 @@
+# supabase-file-bridge.yaml
+name: Supabase File Bridge
+codename: supabase_file_bridge
+description: Native AI integration for Supabase File Bridge - list, get, and manage synced files
+permissions:
+  - supabase.db:read
+  - supabase.storage:read
+  - file.read
+entrypoint: "agents/supabase_file_bridge/main.py:SupabaseFileBridgeAgent"
+triggers:
+  - cli: "/supabase list-files"
+  - cli: "/supabase get-file *"
+  - cli: "/supabase search-files *"
+  - api: "/api/files/*"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.2
+  system_prompt: |
+    You are the Supabase File Bridge AI agent. Your role is to:
+    1. List files synced from desktop ~/SupabaseSync folder
+    2. Retrieve files via signed URLs from Supabase Storage
+    3. Search and filter files by name, type, or metadata
+    4. Provide seamless file access to other AI agents
+    5. Monitor sync status and file operations
+capabilities:
+  - file_listing
+  - signed_url_generation
+  - metadata_search
+  - file_retrieval
+  - sync_monitoring
+  - mime_type_detection
+tools:
+  - SupabaseClient
+  - StorageManager
+  - FileSearcher

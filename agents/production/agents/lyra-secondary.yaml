@@ -1,0 +1,250 @@
+name: Lyra-Secondary
+version: "1.0.0"
+type: schema_inference
+status: production
+description: >
+  Secondary Lyra agent providing high-availability failover for schema discovery 
+  and data ingestion. Monitors primary agent health and automatically takes over
+  processing on primary failure with zero data loss.
+
+author: Data Platform Team
+owner: Data Platform Lead
+created_at: 2025-07-18
+updated_at: 2025-07-18
+
+capabilities:
+  - schema_discovery
+  - json_to_sql_inference
+  - data_ingestion
+  - master_data_update
+  - batch_processing
+  - stream_processing
+  - health_monitoring
+  - failover_support
+  - primary_monitoring
+
+configuration:
+  # Core settings
+  is_primary: false
+  failover_enabled: true
+  primary_agent: Lyra-Primary
+  
+  # Monitoring configuration
+  monitor_interval_seconds: 1
+  primary_health_check_url: "http://lyra-primary:8080/pull/health"
+  takeover_delay_seconds: 2
+  
+  # Processing configuration (same as primary for consistency)
+  pull_interval_seconds: 1
+  batch_size: 1000
+  max_concurrent_batches: 5
+  processing_timeout_seconds: 300
+  
+  # Queue settings
+  queue_claim_strategy: "atomic_lock"
+  retry_max_attempts: 3
+  retry_backoff_seconds: [1, 5, 30]
+  
+  # Health monitoring
+  heartbeat_interval_seconds: 1
+  health_check_timeout_seconds: 5
+  
+  # Standby behavior
+  standby_mode:
+    warm_standby: true  # Keep connections warm
+    sync_state_interval: 10  # Sync state with primary
+    pre_claim_validation: true  # Validate before claiming work
+  
+  # Schema inference (identical to primary)
+  schema_inference:
+    sample_size: 100
+    type_detection_confidence: 0.95
+    nullable_threshold: 0.1
+    index_suggestion_enabled: true
+    
+  # Master data sync (identical to primary)
+  master_data:
+    sync_interval_seconds: 60
+    dimensions:
+      - region
+      - category
+      - brand
+      - sku
+      - store_type
+      - payment_method
+    stale_threshold_days: 90
+
+dependencies:
+  python: ">=3.11"
+  libraries:
+    - pandas: ">=2.0.0"
+    - psycopg2: ">=2.9.0"
+    - pydantic: ">=2.0.0"
+    - asyncio: ">=3.11"
+    - supabase: ">=2.0.0"
+  
+  services:
+    - name: PostgreSQL
+      required: true
+      version: ">=14"
+    - name: Redis
+      required: false
+      version: ">=7.0"
+      purpose: "Distributed locking"
+
+api_endpoints:
+  - method: POST
+    path: /pull/ingest
+    description: Submit new JSON payload for ingestion (active only during failover)
+    auth: bearer_token
+    rate_limit: 1000/minute
+    
+  - method: GET
+    path: /pull/status
+    description: Get status of specific batch or agent
+    auth: bearer_token
+    
+  - method: GET
+    path: /pull/health
+    description: Health check endpoint
+    auth: none
+    
+  - method: POST
+    path: /pull/takeover
+    description: Manual failover trigger
+    auth: bearer_token
+    roles: ["admin"]
+
+deployment:
+  type: kubernetes
+  replicas: 1
+  resources:
+    requests:
+      cpu: "250m"  # Lower than primary in standby
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"  # Same as primary when active
+      memory: "4Gi"
+  
+  # Deploy to different zone/node than primary
+  node_selector:
+    zone: "zone-b"
+  
+  anti_affinity:
+    - agent: "Lyra-Primary"
+      type: "required"
+  
+  environment_variables:
+    - name: SUPABASE_URL
+      required: true
+    - name: SUPABASE_SERVICE_ROLE_KEY
+      required: true
+      secret: true
+    - name: REDIS_URL
+      required: false
+    - name: LOG_LEVEL
+      default: "INFO"
+    - name: AGENT_MODE
+      default: "secondary"
+    - name: PRIMARY_AGENT_URL
+      default: "http://lyra-primary:8080"
+  
+  health_checks:
+    liveness:
+      path: /pull/health
+      interval: 10s
+      timeout: 5s
+      failure_threshold: 3
+    
+    readiness:
+      path: /pull/ready
+      interval: 5s
+      timeout: 3s
+      failure_threshold: 2
+
+monitoring:
+  metrics:
+    - name: lyra_secondary_status
+      type: gauge
+      description: Secondary agent status (0=standby, 1=active)
+    - name: lyra_primary_health_checks
+      type: counter
+      description: Number of health checks performed on primary
+    - name: lyra_failover_events
+      type: counter
+      description: Number of failover events triggered
+    - name: lyra_takeover_duration_seconds
+      type: histogram
+      description: Time taken to complete failover
+  
+  alerts:
+    - name: LyraPrimaryDown
+      condition: up{job="lyra-primary"} == 0
+      severity: critical
+      description: Primary Lyra agent is down
+    
+    - name: LyraFailoverTriggered
+      condition: increase(lyra_failover_events[1m]) > 0
+      severity: warning
+      description: Failover event has occurred
+
+security:
+  authentication:
+    type: bearer_token
+    token_validation_url: /auth/validate
+  
+  authorization:
+    roles_required:
+      - data_platform_admin
+      - lyra_operator
+  
+  encryption:
+    at_rest: true
+    in_transit: true
+    key_rotation_days: 90
+
+failover_procedures:
+  automatic_triggers:
+    - primary_heartbeat_missed: 3
+    - primary_health_check_failed: 2
+    - primary_api_timeout: 5
+  
+  takeover_sequence:
+    1: "Verify primary is truly down (not network partition)"
+    2: "Acquire distributed lock on agent leadership"
+    3: "Update agent_registry status to 'active'"
+    4: "Start processing from last completed batch"
+    5: "Send notifications to operators"
+    6: "Log failover event with full context"
+  
+  recovery_sequence:
+    1: "Detect primary recovery"
+    2: "Complete current batch processing"
+    3: "Gracefully hand back control"
+    4: "Return to standby mode"
+    5: "Sync state with primary"
+
+testing:
+  failover_tests:
+    - name: "Primary crash simulation"
+      steps:
+        - "Kill primary agent process"
+        - "Verify secondary takes over within 2s"
+        - "Verify no data loss"
+    
+    - name: "Network partition test"
+      steps:
+        - "Isolate primary from database"
+        - "Verify secondary detects and takes over"
+        - "Verify split-brain prevention"
+    
+    - name: "Graceful failover"
+      steps:
+        - "Trigger manual failover"
+        - "Verify clean handoff"
+        - "Verify primary enters standby"
+
+documentation:
+  failover_runbook: docs/runbooks/lyra-failover.md
+  monitoring_guide: docs/monitoring/lyra-ha.md
+  troubleshooting: docs/troubleshooting/lyra-issues.md

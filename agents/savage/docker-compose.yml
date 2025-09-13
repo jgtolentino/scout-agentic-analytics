@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  savage-agent:
+    build: .
+    container_name: savage-agent
+    ports:
+      - "${SAVAGE_PORT:-8000}:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - ./templates:/app/templates
+      - ./output:/app/output
+    restart: unless-stopped
+    networks:
+      - savage-network
+
+  # Optional: Redis for caching rendered patterns
+  redis:
+    image: redis:7-alpine
+    container_name: savage-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - savage-network
+
+networks:
+  savage-network:
+    driver: bridge
+
+volumes:
+  redis-data:

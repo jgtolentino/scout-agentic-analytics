@@ -1,0 +1,72 @@
+============================================================
+AGENT DISCOVERY REPORT
+============================================================
+Generated: 2025-07-18T15:00:26.128244+00:00
+
+Total Agents Discovered: 25
+Production-Ready Agents: 10
+
+Production Agents by Type:
+
+ANALYST (1 agents):
+  ✓ Stacey v1.0.0
+
+DASHBOARD-ENGINEER (1 agents):
+  ✓ Dash v1.0.0
+     Enterprise Creative Intelligence Dashboard Engineer agent. Powers Power BI–style...
+
+ENGINEER (1 agents):
+  ✓ Fully v1.0.0
+     Fullstack Backend Engineering Agent. Converts structured JSON into deployable  S...
+
+ENV_SYNC (1 agents):
+  ✓ KeyKey v1.0.0
+     Securely fetches, verifies, and applies environment files (.env, .env.production...
+
+EXECUTOR (1 agents):
+  ✓ Doer v1.0.0
+
+GENERAL (4 agents):
+  ○ Agent Savage v1.0.0
+     Brand-aligned graphic pattern and visualization generator. Creates luxury-grade ...
+  ○ echo v3.1.2
+     Advanced multimodal agent for audio, image, video processing with feature extrac...
+  ○ reposynth v2.0.0
+     Automated repo QA, schema drift detection, ETL mapping, and AI/BI integration re...
+  ○ reposynth v3.0.0
+     Multi-source schema diffing, mapping generation, ETL automation, and data pipeli...
+
+ORCHESTRATOR (1 agents):
+  ○ orchestrator v3.0.0
+     Primary orchestration agent that handles task decomposition, agent selection, ex...
+
+============================================================
+ALL DISCOVERED AGENTS:
+============================================================
+Agent Savage (general) - /Users/tbwa/agents/savage/agent.yaml
+All Reader (reader) - /Users/tbwa/agents/agent_catalog.yaml
+ClaudeMemoryAgent (general) - /Users/tbwa/agents/memory-agent.yaml
+Dash (dashboard-engineer) - /Users/tbwa/ces-jampacked-agentic/agents/dash/agent.yaml
+Datu Puti (coordinator) - /Users/tbwa/agents/agent_catalog.yaml
+Deploy AI Agents (general) - /Users/tbwa/scout-dashboard/.github/workflows/deploy-agents.yml
+Doer (executor) - /Users/tbwa/agents/agent_catalog.yaml
+Fully (engineer) - /Users/tbwa/agents/agent_catalog.yaml
+KeyKey (env_sync) - /Users/tbwa/scout-analytics-clean/agents/keykey-agent.yaml
+Local Writer (writer) - /Users/tbwa/agents/agent_catalog.yaml
+Memory Agent (storage) - /Users/tbwa/agents/agent_catalog.yaml
+QA Reader (validator) - /Users/tbwa/agents/agent_catalog.yaml
+Render Reader (reader) - /Users/tbwa/agents/agent_catalog.yaml
+Stacey (analyst) - /Users/tbwa/agents/agent_catalog.yaml
+deployment-configurator (general) - /Users/tbwa/tbwa-expense-clone/agents/documentation-suite/deployment-agent.yaml
+echo (general) - /Users/tbwa/ces-jampacked-agentic/agents/echo/agent.yaml
+gagambi (general) - /Users/tbwa/ces-jampacked-agentic/agents/gagambi/agent.yaml
+keykey (credential_management) - /Users/tbwa/scout-analytics-clean/agents/keykey/agent.yaml
+keykey (general) - /Users/tbwa/enrichment_engine/agents/keykey/agent.yaml
+keykey (general) - /Users/tbwa/ces-jampacked-agentic/agents/keykey/agent.yaml
+learnbot-interactive-tutor (general) - /Users/tbwa/tbwa-expense-clone/agents/documentation-suite/learnbot-agent.yaml
+orchestrator (orchestrator) - /Users/tbwa/ces-jampacked-agentic/agents/orchestrator/agent.yaml
+reposynth (general) - /Users/tbwa/ces-jampacked-agentic/agents/reposynth/agent.yaml
+reposynth (general) - /Users/tbwa/ces-jampacked-agentic/agents/reposynth/upgraded_agent.yaml
+sop-writer (general) - /Users/tbwa/tbwa-expense-clone/agents/documentation-suite/sop-writer-agent.yaml
+
+============================================================

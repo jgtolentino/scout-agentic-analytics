@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://insightpulseai.com/schemas/lyra.contract.json",
+  "title": "LyraInput",
+  "type": "object",
+  "required": ["goal"],
+  "properties": {
+    "goal": { "type": "string", "description": "Principal task in one paragraph." },
+    "domain": { "type": "string", "enum": ["code","data","analytics","marketing","research","product","devops","other"], "default": "other" },
+    "audience": { "type": "string" },
+    "inputs": {
+      "type": "object",
+      "description": "Named inputs Lyra may reference.",
+      "additionalProperties": true
+    },
+    "context": {
+      "type": "object",
+      "description": "Background docs, constraints, links, or snippets.",
+      "additionalProperties": true
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "max_output_tokens": { "type": "integer", "minimum": 128, "default": 1024 },
+        "latency_ms_budget": { "type": "integer" },
+        "determinism": { "type": "string", "enum": ["high","medium","low"], "default": "high" },
+        "max_depth": { "type": "integer", "minimum": 1, "default": 6 }
+      },
+      "additionalProperties": false
+    },
+    "format": {
+      "type": "object",
+      "properties": {
+        "require_json": { "type": "boolean", "default": true },
+        "output_structure_hint": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "style": {
+      "type": "object",
+      "properties": {
+        "brevity": { "type": "string", "enum": ["minimal","normal","expanded"], "default": "minimal" },
+        "tone": { "type": "string", "enum": ["direct","neutral","explainer"], "default": "direct" }
+      },
+      "additionalProperties": false
+    },
+    "target_model": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "default": "gpt-5-thinking" },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.2 },
+        "json_mode": { "type": "boolean", "default": true },
+        "tools_allowed": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "examples": {
+      "type": "array",
+      "items": { "type": "object", "properties": { "in": { "type": "string" }, "out": { "type": "string" } }, "required": ["in"] },
+      "description": "Optional few-shot examples."
+    }
+  },
+  "additionalProperties": false
+}

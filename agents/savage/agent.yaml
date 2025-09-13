@@ -1,0 +1,76 @@
+# Pulser Agent Manifest for Agent Savage
+name: Agent Savage
+codename: savage
+version: 1.0.0
+description: >
+  Brand-aligned graphic pattern and visualization generator.
+  Creates luxury-grade SVG/GIF patterns for UNDP, OCHA, and corporate clients.
+
+author: Visual Talent Oracle
+tags: 
+  - design
+  - visualization
+  - patterns
+  - svg
+  - animation
+  - brand
+
+entrypoint: src/main.py
+config: savage-config.yaml
+runtime: python3.11
+
+capabilities:
+  - pattern_generation
+  - svg_rendering
+  - gif_animation
+  - brand_compliance
+  - data_visualization
+  - collaborative_review
+
+dependencies:
+  python:
+    - fastapi
+    - svgwrite
+    - pillow
+    - supabase
+  system:
+    - libcairo2
+    - libpango1.0
+    
+integrations:
+  supabase:
+    tables:
+      - projects
+      - patterns
+      - pattern_templates
+      - comments
+      - pattern_analytics
+    edge_functions:
+      - savage-render
+  mcp:
+    tools:
+      - pattern:generate
+      - pattern:export
+      - template:list
+      
+permissions:
+  - database:read
+  - database:write
+  - storage:read
+  - storage:write
+  - edge_function:invoke
+  
+monitoring:
+  health_check: /health
+  metrics_endpoint: /stats
+  
+deployment:
+  docker:
+    image: savage-agent:latest
+    ports:
+      - 8000
+  edge_function:
+    name: savage-render
+    runtime: deno
+    
+pulser_compat: ">=4.0.0"

@@ -1,0 +1,42 @@
+name: qa_reader
+codename: qa                 # CLI alias :qa
+description: >
+  QA Class reader agent for quality assurance training program data access.
+  Provides read-only access to qa_class schema via shared MCP server.
+
+bindings:
+  mcp_supabase_qa:
+    endpoint: http://localhost:8888   # shared reader MCP
+    type: supabase
+    role: reader
+    schema: qa_class
+    headers:
+      apikey: ${QA_CLASS_ANON_KEY}
+
+permissions:
+  - select
+  - explain
+  - introspect
+
+tools:
+  - name: query
+    method: POST
+    path: /mcp/select
+    description: "Query QA class data with safe SELECT operations"
+    input: |
+      { 
+        "table": "{{table}}", 
+        "columns": {{columns}}, 
+        "filter": {{filter}},
+        "limit": {{limit}}
+      }
+
+memory_tags:
+  - qa_class
+  - quality_assurance
+  - training
+  - pulser
+
+# Example usage:
+# :qa select table=courses columns='["code","title","instructor"]' limit=5
+# :qa select table=courses filter='{"instructor":"John Doe"}' columns='["*"]'

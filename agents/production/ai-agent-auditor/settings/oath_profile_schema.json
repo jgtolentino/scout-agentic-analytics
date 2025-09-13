@@ -1,0 +1,324 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "OATH Compliance Profile",
+  "description": "Schema for AI Agent OATH (Operational, Auditable, Trustworthy, Hardened) compliance profiles",
+  "type": "object",
+  "required": [
+    "agent_id",
+    "agent_name",
+    "timestamp",
+    "oath_status",
+    "oath_scores",
+    "evidence",
+    "last_audit",
+    "next_audit_due"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier of the agent"
+    },
+    "agent_name": {
+      "type": "string",
+      "description": "Human-readable name of the agent"
+    },
+    "agent_version": {
+      "type": "string",
+      "description": "Current version of the agent"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of profile generation"
+    },
+    "oath_status": {
+      "type": "object",
+      "description": "Overall OATH compliance status",
+      "required": ["operational", "auditable", "trustworthy", "hardened"],
+      "properties": {
+        "operational": {
+          "type": "boolean",
+          "description": "Agent is operationally compliant"
+        },
+        "auditable": {
+          "type": "boolean",
+          "description": "Agent maintains proper audit trails"
+        },
+        "trustworthy": {
+          "type": "boolean",
+          "description": "Agent meets trust and ethics standards"
+        },
+        "hardened": {
+          "type": "boolean",
+          "description": "Agent meets security hardening requirements"
+        }
+      }
+    },
+    "oath_scores": {
+      "type": "object",
+      "description": "Detailed OATH component scores (0-100)",
+      "required": ["operational", "auditable", "trustworthy", "hardened", "overall"],
+      "properties": {
+        "operational": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Operational effectiveness score"
+        },
+        "auditable": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Audit compliance score"
+        },
+        "trustworthy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Trust and ethics score"
+        },
+        "hardened": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Security hardening score"
+        },
+        "overall": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Overall OATH compliance score"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "description": "Supporting evidence for OATH assessment",
+      "properties": {
+        "operational_evidence": {
+          "type": "object",
+          "properties": {
+            "uptime_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "error_rate": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sla_met": {
+              "type": "boolean"
+            },
+            "health_check_status": {
+              "type": "string",
+              "enum": ["healthy", "degraded", "unhealthy"]
+            },
+            "performance_metrics": {
+              "type": "object",
+              "properties": {
+                "avg_response_time_ms": {"type": "number"},
+                "p95_response_time_ms": {"type": "number"},
+                "requests_per_second": {"type": "number"}
+              }
+            }
+          }
+        },
+        "audit_evidence": {
+          "type": "object",
+          "properties": {
+            "logs_available": {
+              "type": "boolean"
+            },
+            "log_completeness_percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "structured_logging": {
+              "type": "boolean"
+            },
+            "traceability_enabled": {
+              "type": "boolean"
+            },
+            "retention_policy_compliant": {
+              "type": "boolean"
+            },
+            "last_log_timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "trust_evidence": {
+          "type": "object",
+          "properties": {
+            "ethics_review_passed": {
+              "type": "boolean"
+            },
+            "rlhf_reviewed": {
+              "type": "boolean"
+            },
+            "bias_testing_passed": {
+              "type": "boolean"
+            },
+            "ethical_violations": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "constitution_compliant": {
+              "type": "boolean"
+            },
+            "boundary_violations": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "security_evidence": {
+          "type": "object",
+          "properties": {
+            "security_scan_passed": {
+              "type": "boolean"
+            },
+            "penetration_test_passed": {
+              "type": "boolean"
+            },
+            "encryption_enabled": {
+              "type": "boolean"
+            },
+            "access_controls_verified": {
+              "type": "boolean"
+            },
+            "vulnerabilities_found": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "last_security_review": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "compliance_frameworks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["SOC2", "ISO27001", "GDPR", "HIPAA", "PCI-DSS"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "description": "List of compliance issues found",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "category", "description", "detected_at"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "category": {
+            "type": "string",
+            "enum": ["operational", "audit", "trust", "security"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolved": {
+            "type": "boolean",
+            "default": false
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "Improvement recommendations",
+      "items": {
+        "type": "object",
+        "required": ["priority", "category", "action"],
+        "properties": {
+          "priority": {
+            "type": "string",
+            "enum": ["immediate", "high", "medium", "low"]
+          },
+          "category": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "expected_impact": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "last_audit": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last completed audit"
+    },
+    "next_audit_due": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled time for next audit"
+    },
+    "audit_frequency": {
+      "type": "string",
+      "enum": ["continuous", "hourly", "daily", "weekly", "monthly"],
+      "description": "Frequency of audits for this agent"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Overall risk assessment"
+    },
+    "compliance_trend": {
+      "type": "string",
+      "enum": ["improving", "stable", "degrading"],
+      "description": "Trend in compliance over recent audits"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Freeform summary of audit findings or corrective actions"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "auditor_version": {
+          "type": "string"
+        },
+        "audit_duration_seconds": {
+          "type": "number"
+        },
+        "tests_performed": {
+          "type": "integer"
+        },
+        "data_sources_checked": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

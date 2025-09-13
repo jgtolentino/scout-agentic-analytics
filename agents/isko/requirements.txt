@@ -1,0 +1,24 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+
+# Database
+supabase==2.0.0
+sqlalchemy==2.0.23
+
+# Scraping
+beautifulsoup4==4.12.2
+requests==2.31.0
+backoff==2.2.1
+
+# Utilities
+python-dotenv==1.0.0
+httpx==0.25.2
+tenacity==8.2.3
+python-json-logger==2.0.7
+
+# Development
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2

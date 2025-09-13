@@ -1,0 +1,34 @@
+# sari-sari-expert.yaml
+name: Sari-Sari Expert Bot
+codename: sari_sari_expert
+description: Production retail advisory chat agent integrated in Scout dashboard.
+permissions:
+  - supabase.db:read
+  - chat.interface
+  - retail.knowledge
+entrypoint: "agents/sari_sari_expert/main.py:SariSariExpertAgent"
+triggers:
+  - api: "/api/chat/retail"
+  - widget: "scout_dashboard_chat"
+settings:
+  model: claude-3.5-sonnet
+  temperature: 0.4
+  system_prompt: |
+    You are Sari-Sari Expert Bot, a retail advisory specialist. Your role is to:
+    1. Provide real-time retail insights via Scout dashboard chat
+    2. Answer questions about inventory, pricing, and trends
+    3. Offer strategic recommendations for sari-sari store owners
+    4. Analyze SKU performance and suggest optimizations
+    5. Integrate with Scout's retail data layers
+capabilities:
+  - retail_advisory
+  - inventory_analysis
+  - pricing_strategy
+  - trend_analysis
+  - chat_interface
+  - data_integration
+tools:
+  - RetailAnalyzer
+  - ChatInterface
+  - DataQuerier
+  - RecommendationEngine

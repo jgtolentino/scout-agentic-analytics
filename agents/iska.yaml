@@ -1,0 +1,316 @@
+name: Iska
+version: "2.0.0"
+description: >
+  Enterprise agent for scraping, ingesting, QA, and surfacing all master data, assets, and documentation (including SOPs, regulatory manuals, guidelines). Auto-updates agent/system knowledge, audit logs, and enables seamless agent routing.
+author: "InsightPulseAI"
+category: "documentation_intelligence"
+priority: "high"
+
+roles:
+  - Continuous web/document/asset scraping (brands, SKUs, images, docs)
+  - PDF/DOCX/manual/SOP ingestion, parsing, enrichment
+  - Change detection (new/updated docs)
+  - QA with Caca; audit and timestamp all events
+  - Update claude.md, SOP/, docs/, and knowledge base
+  - Trigger downstream agent workflows; support CLI/scheduled/webhook operation
+  - Push embeddings to ChromaDB/pgvector for RAG search
+
+capabilities:
+  - web_scraping
+  - document_ingestion
+  - asset_parsing
+  - qa_validation
+  - audit_logging
+  - knowledge_base_updates
+  - agent_orchestration
+  - semantic_search
+  - change_detection
+  - sop_management
+  - regulatory_compliance
+
+tags:
+  - ingestion
+  - docs
+  - SOP
+  - audit
+  - master-data
+  - enrichment
+  - semantic-search
+  - automation
+
+config:
+  model: claude-3-5-sonnet-20241022
+  temperature: 0.3
+  max_tokens: 8192
+  retry_attempts: 5
+  request_timeout: 30
+  rate_limit_delay: 2.0
+
+# Document and Asset Sources
+ingestion_sources:
+  web_scraping:
+    - category: "Brand Assets"
+      url: "https://brand-portal.tbwa.com/assets"
+      selectors:
+        asset_container: ".asset-card"
+        asset_name: ".asset-title"
+        asset_type: ".asset-type"
+        asset_url: ".asset-download"
+    - category: "SKU Catalog"
+      url: "https://catalog.tbwa.com/products"
+      selectors:
+        product_card: ".product-item"
+        sku_code: ".sku-id"
+        sku_name: ".product-name"
+        price: ".price"
+    - category: "Documentation"
+      url: "https://docs.tbwa.com/manuals"
+      selectors:
+        doc_container: ".doc-card"
+        doc_title: ".doc-title"
+        doc_url: ".doc-link"
+        doc_type: ".doc-category"
+  
+  document_sources:
+    - type: "SOPs"
+      path: "/Users/tbwa/SOP/"
+      extensions: [".pdf", ".docx", ".md", ".txt"]
+      watch: true
+    - type: "Regulatory Docs"
+      path: "/Users/tbwa/regulatory/"
+      extensions: [".pdf", ".docx"]
+      watch: true
+    - type: "Brand Guidelines"
+      path: "/Users/tbwa/brand-guidelines/"
+      extensions: [".pdf", ".docx", ".ai", ".psd"]
+      watch: true
+    - type: "Agent Documentation"
+      path: "/Users/tbwa/agents/"
+      extensions: [".md", ".yaml", ".yml"]
+      watch: true
+
+  api_sources:
+    - name: "Supabase Tables"
+      type: "database"
+      connection: "supabase_enterprise"
+      tables: ["brands", "skus", "campaigns", "assets"]
+    - name: "SharePoint"
+      type: "sharepoint"
+      site: "https://tbwa.sharepoint.com/sites/knowledge"
+      libraries: ["Documents", "SOPs", "Templates"]
+    - name: "Google Drive"
+      type: "gdrive"
+      folder_id: "tbwa-master-docs"
+      file_types: ["pdf", "docx", "xlsx", "pptx"]
+
+# QA and Validation
+qa_workflow:
+  enabled: true
+  caca_integration: true
+  validation_rules:
+    - name: "Duplicate Detection"
+      type: "similarity_check"
+      threshold: 0.85
+    - name: "Completeness Check"
+      type: "field_validation"
+      required_fields: ["title", "content", "source", "timestamp"]
+    - name: "Format Validation"
+      type: "format_check"
+      allowed_formats: ["pdf", "docx", "md", "txt", "html"]
+    - name: "Content Quality"
+      type: "content_analysis"
+      min_length: 100
+      max_length: 100000
+
+# Audit and Logging
+audit_config:
+  enabled: true
+  log_level: "info"
+  log_file: "/Users/tbwa/agents/logs/iska_audit.json"
+  retention_days: 90
+  fields:
+    - timestamp
+    - source_type
+    - source_url
+    - document_type
+    - action
+    - agent_trigger
+    - qa_status
+    - error_message
+    - processing_time
+    - file_size
+    - checksum
+
+# Knowledge Base Integration
+knowledge_base:
+  claude_md_update: true
+  claude_md_path: "/Users/tbwa/CLAUDE.md"
+  sop_directory: "/Users/tbwa/SOP/"
+  docs_directory: "/Users/tbwa/docs/"
+  
+  # Supabase Integration
+  supabase_tables:
+    documents: "agent_repository.documents"
+    assets: "agent_repository.assets"
+    audit_log: "agent_repository.audit_log"
+    embeddings: "agent_repository.embeddings"
+  
+  # Semantic Search Integration
+  vector_db:
+    enabled: true
+    provider: "supabase_vector"
+    embedding_model: "text-embedding-3-small"
+    chunk_size: 1000
+    chunk_overlap: 200
+    collection_name: "iska_knowledge_base"
+
+# Agent Orchestration
+agent_routing:
+  enabled: true
+  downstream_agents:
+    - name: "Caca"
+      trigger: "qa_validation"
+      conditions: ["new_document", "document_update"]
+    - name: "Claudia"
+      trigger: "documentation_update"
+      conditions: ["claude_md_update", "sop_update"]
+    - name: "Dash"
+      trigger: "analytics_update"
+      conditions: ["new_metrics", "performance_data"]
+    - name: "Maya"
+      trigger: "content_analysis"
+      conditions: ["brand_asset_update", "creative_content"]
+    - name: "Echo"
+      trigger: "system_update"
+      conditions: ["agent_config_change", "system_maintenance"]
+
+# Scheduling and Triggers
+scheduling:
+  enabled: true
+  cron: "0 */6 * * *"  # Every 6 hours
+  timezone: "UTC"
+  
+  # Trigger Methods
+  triggers:
+    - type: "scheduled"
+      frequency: "hourly"
+      action: "incremental_sync"
+    - type: "webhook"
+      endpoint: "/ingest"
+      auth: "bearer_token"
+    - type: "file_watcher"
+      directories: ["/Users/tbwa/SOP/", "/Users/tbwa/docs/"]
+    - type: "agent_request"
+      allowed_agents: ["Claudia", "Dash", "Caca", "Maya", "Echo"]
+
+# API Endpoints
+endpoints:
+  - path: /ingest
+    method: POST
+    description: "Trigger manual ingestion with optional source filter"
+    auth: "bearer_token"
+  - path: /health
+    method: GET
+    description: "Health check endpoint"
+  - path: /status
+    method: GET
+    description: "Get current ingestion status and statistics"
+  - path: /audit
+    method: GET
+    description: "Get audit log entries with filtering"
+    auth: "bearer_token"
+  - path: /search
+    method: POST
+    description: "Semantic search across ingested content"
+    auth: "bearer_token"
+  - path: /qa-report
+    method: GET
+    description: "Get QA validation report"
+    auth: "bearer_token"
+
+# Security and Compliance
+security:
+  authentication:
+    enabled: true
+    methods: ["bearer_token", "api_key"]
+  
+  data_protection:
+    encrypt_at_rest: true
+    encrypt_in_transit: true
+    pii_detection: true
+    sensitive_data_masking: true
+  
+  compliance:
+    gdpr_compliant: true
+    retention_policy: "90_days"
+    audit_trail: true
+    access_logging: true
+
+# Integration with Unified Agent Repository
+agent_repository:
+  enabled: true
+  register_on_startup: true
+  heartbeat_interval: 300  # 5 minutes
+  
+  # Database Schema Integration
+  supabase_integration:
+    project_ref: "cxzllzyxwpyptfretryc"
+    schema: "agent_repository"
+    tables:
+      agents: "agents"
+      agent_logs: "agent_logs"
+      agent_metrics: "agent_metrics"
+      documents: "documents"
+      assets: "assets"
+
+# Verification Requirements (Following CLAUDE.md standards)
+verification:
+  mandatory_checks:
+    - console_errors: false
+    - screenshot_proof: true
+    - automated_testing: true
+    - evidence_based_reporting: true
+  
+  verification_tools:
+    - puppeteer_screenshots: true
+    - playwright_cross_browser: true
+    - headless_testing: true
+    - audit_trail_verification: true
+  
+  success_criteria:
+    - zero_console_errors: true
+    - functional_ui_elements: true
+    - data_integrity_checks: true
+    - downstream_agent_notifications: true
+
+# Performance and Monitoring
+performance:
+  max_concurrent_ingestions: 5
+  batch_size: 100
+  memory_limit: "2GB"
+  timeout_seconds: 300
+  
+  monitoring:
+    metrics_enabled: true
+    prometheus_endpoint: "/metrics"
+    health_check_interval: 60
+    alerting:
+      slack_webhook: "${SLACK_WEBHOOK_URL}"
+      email_notifications: true
+      threshold_errors: 10
+      threshold_processing_time: 60
+
+# Environment Variables
+environment:
+  required:
+    - SUPABASE_URL
+    - SUPABASE_SERVICE_ROLE_KEY
+    - SUPABASE_ANON_KEY
+    - OPENAI_API_KEY
+  optional:
+    - SLACK_WEBHOOK_URL
+    - SHAREPOINT_CLIENT_ID
+    - SHAREPOINT_CLIENT_SECRET
+    - GOOGLE_DRIVE_CREDENTIALS
+    - ISKA_LOG_LEVEL
+    - ISKA_DEBUG_MODE

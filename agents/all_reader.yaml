@@ -1,0 +1,52 @@
+name: all_reader
+codename: all      # :all "query across all schemas"
+description: >
+  Cross-schema reader agent using Render-hosted MCP server.
+  Provides read-only access to all TBWA product schemas.
+
+bindings:
+  render_mcp:
+    endpoint: https://mcp-supabase-clean.onrender.com/mcp
+    type: http
+    role: reader
+    headers:
+      apikey: ${SUPABASE_ANON_KEY}
+      content-type: application/json
+
+permissions:
+  - select
+  - explain
+  - introspect
+
+search_path:
+  - scout_dash
+  - hr_admin
+  - financial_ops
+  - operations
+  - corporate
+  - face_ops
+  - creative_ops
+  - qa_class
+
+tools:
+  - name: select
+    method: POST
+    path: /select
+    description: "Execute SELECT queries across all TBWA schemas"
+    input: |
+      { 
+        "table": "{{table}}", 
+        "columns": {{columns}}, 
+        "filter": {{filter}},
+        "limit": {{limit}}
+      }
+
+memory_tags:
+  - cross_schema
+  - all_products
+  - remote_reader
+  - pulser
+
+# Example usage:
+# :all select table=scout_dash.transactions columns='["id","amount"]' limit=5
+# :all select table=financial_ops.budgets columns='["*"]' filter='{"year":2024}'

@@ -1,0 +1,9 @@
+{
+  "goal": "Generate a safe, fast data-cleaning script for CSV → Postgres with idempotent upsert and a test plan.",
+  "domain": "data",
+  "constraints": { "max_output_tokens": 900, "determinism": "high" },
+  "format": { "require_json": true, "output_structure_hint": "Return fields: plan[], code, tests[], risks[]" },
+  "style": { "brevity": "minimal", "tone": "direct" },
+  "target_model": { "name": "gpt-5-thinking", "temperature": 0.2, "json_mode": true },
+  "context": { "table": "scout.gold_transactions" }
+}

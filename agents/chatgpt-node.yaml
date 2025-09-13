@@ -1,0 +1,46 @@
+# chatgpt-node.yaml
+name: ChatGPT Reasoning Node
+codename: chatgpt_node
+description: Strategic planning and reasoning node in Pulser co-orchestration system
+permissions:
+  - supabase.db:read
+  - supabase.db:write
+  - mcp:call
+  - embeddings:search
+entrypoint: "agents/chatgpt_node/main.py:ChatGPTNodeAgent"
+triggers:
+  - routing: "embeddings_search"
+  - routing: "strategic_planning" 
+  - routing: "data_analysis"
+  - cli: ":gpt *"
+settings:
+  model: gpt-4-turbo
+  temperature: 0.7
+  max_tokens: 4096
+  system_prompt: |
+    You are the ChatGPT Reasoning Node in the Pulser co-orchestration system. Your role is to:
+    1. Perform strategic planning and high-level reasoning
+    2. Search and synthesize context from shared memory embeddings
+    3. Route complex tasks to appropriate execution agents
+    4. Collaborate with Claude Node for code generation and execution
+    5. Maintain shared state across all agent interactions
+    
+    You have access to:
+    - Shared memory store (Supabase pgvector)
+    - Context from all previous agent interactions
+    - Ability to hand off tasks to Claude, EdgeAgent, and execution agents
+    
+    Always store important context in shared memory for other nodes to access.
+capabilities:
+  - strategic_planning
+  - embeddings_search
+  - context_synthesis
+  - task_routing
+  - memory_retrieval
+  - cross_model_collaboration
+tools:
+  - SupabaseMCP
+  - EmbeddingsSearch
+  - ContextInjector
+  - TaskRouter
+  - MemoryManager

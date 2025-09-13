@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  isko-agent:
+    build: .
+    container_name: isko-agent
+    ports:
+      - "${ISKO_AGENT_PORT:-8000}:8000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Local Supabase for development
+  # supabase:
+  #   image: supabase/postgres:15.1.0.55
+  #   environment:
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+
+volumes:
+  postgres-data:

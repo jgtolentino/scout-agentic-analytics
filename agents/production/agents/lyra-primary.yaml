@@ -1,0 +1,215 @@
+name: Lyra-Primary
+version: "1.0.0"
+type: schema_inference
+status: production
+description: >
+  Primary Lyra agent for high-availability schema discovery, JSON-to-SQL inference, 
+  and master-data ingestion in the Scout ecosystem. Handles all ingestion when healthy,
+  with automatic failover to secondary agent on failure.
+
+author: Data Platform Team
+owner: Data Platform Lead
+created_at: 2025-07-18
+updated_at: 2025-07-18
+
+capabilities:
+  - schema_discovery
+  - json_to_sql_inference
+  - data_ingestion
+  - master_data_update
+  - batch_processing
+  - stream_processing
+  - health_monitoring
+  - failover_support
+
+configuration:
+  # Core settings
+  is_primary: true
+  failover_enabled: true
+  failover_agent: Lyra-Secondary
+  
+  # Processing configuration
+  pull_interval_seconds: 1
+  batch_size: 1000
+  max_concurrent_batches: 5
+  processing_timeout_seconds: 300
+  
+  # Queue settings
+  queue_claim_strategy: "atomic_lock"
+  retry_max_attempts: 3
+  retry_backoff_seconds: [1, 5, 30]
+  
+  # Health monitoring
+  heartbeat_interval_seconds: 1
+  health_check_timeout_seconds: 5
+  failover_threshold_missed_heartbeats: 3
+  
+  # Schema inference
+  schema_inference:
+    sample_size: 100
+    type_detection_confidence: 0.95
+    nullable_threshold: 0.1
+    index_suggestion_enabled: true
+    
+  # Master data sync
+  master_data:
+    sync_interval_seconds: 60
+    dimensions:
+      - region
+      - category
+      - brand
+      - sku
+      - store_type
+      - payment_method
+    stale_threshold_days: 90
+
+dependencies:
+  python: ">=3.11"
+  libraries:
+    - pandas: ">=2.0.0"
+    - psycopg2: ">=2.9.0"
+    - pydantic: ">=2.0.0"
+    - asyncio: ">=3.11"
+    - supabase: ">=2.0.0"
+  
+  services:
+    - name: PostgreSQL
+      required: true
+      version: ">=14"
+    - name: Redis
+      required: false
+      version: ">=7.0"
+      purpose: "Distributed locking"
+
+api_endpoints:
+  - method: POST
+    path: /pull/ingest
+    description: Submit new JSON payload for ingestion
+    auth: bearer_token
+    rate_limit: 1000/minute
+    
+  - method: GET
+    path: /pull/status
+    description: Get status of specific batch or agent
+    auth: bearer_token
+    
+  - method: GET
+    path: /pull/health
+    description: Health check endpoint
+    auth: none
+    
+  - method: GET
+    path: /pull/metrics
+    description: Prometheus metrics endpoint
+    auth: none
+
+deployment:
+  type: kubernetes
+  replicas: 1
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "2000m"
+      memory: "4Gi"
+  
+  environment_variables:
+    - name: SUPABASE_URL
+      required: true
+    - name: SUPABASE_SERVICE_ROLE_KEY
+      required: true
+      secret: true
+    - name: REDIS_URL
+      required: false
+    - name: LOG_LEVEL
+      default: "INFO"
+    - name: AGENT_MODE
+      default: "primary"
+  
+  health_checks:
+    liveness:
+      path: /pull/health
+      interval: 10s
+      timeout: 5s
+      failure_threshold: 3
+    
+    readiness:
+      path: /pull/ready
+      interval: 5s
+      timeout: 3s
+      failure_threshold: 2
+
+monitoring:
+  metrics:
+    - name: lyra_batches_processed_total
+      type: counter
+      description: Total number of batches processed
+    - name: lyra_records_ingested_total
+      type: counter
+      description: Total number of records ingested
+    - name: lyra_schema_changes_detected
+      type: counter
+      description: Number of schema changes detected
+    - name: lyra_processing_duration_seconds
+      type: histogram
+      description: Processing time for batches
+    - name: lyra_queue_depth
+      type: gauge
+      description: Current queue depth
+  
+  alerts:
+    - name: LyraHighQueueDepth
+      condition: lyra_queue_depth > 10000
+      severity: warning
+      description: Queue depth exceeds threshold
+    
+    - name: LyraProcessingError
+      condition: rate(lyra_errors_total[5m]) > 0.1
+      severity: critical
+      description: High error rate detected
+
+security:
+  authentication:
+    type: bearer_token
+    token_validation_url: /auth/validate
+  
+  authorization:
+    roles_required:
+      - data_platform_admin
+      - lyra_operator
+  
+  encryption:
+    at_rest: true
+    in_transit: true
+    key_rotation_days: 90
+
+sla:
+  uptime_target: 0.9999
+  failover_time_seconds: 2
+  max_processing_latency_seconds: 60
+  data_freshness_minutes: 1
+
+testing:
+  unit_tests:
+    coverage_target: 90
+    path: tests/unit/
+  
+  integration_tests:
+    path: tests/integration/
+    test_database: test_lyra_db
+  
+  load_tests:
+    target_throughput: 10000/minute
+    duration_minutes: 60
+
+documentation:
+  api_spec: docs/api/lyra-openapi.yaml
+  runbook: docs/runbooks/lyra-operations.md
+  architecture: docs/architecture/lyra-design.md
+
+compliance:
+  data_retention_days: 90
+  audit_logging: true
+  pii_handling: "anonymize"
+  gdpr_compliant: true

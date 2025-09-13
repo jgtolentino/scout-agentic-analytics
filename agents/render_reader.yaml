@@ -1,0 +1,53 @@
+name: render_reader
+codename: rr      # :rr "select 1"
+description: >
+  Remote reader agent using Render-hosted MCP server.
+  Provides read-only access to all schemas via HTTPS endpoint.
+
+bindings:
+  render_mcp:
+    endpoint: https://mcp-supabase-clean.onrender.com/mcp
+    type: http
+    role: reader
+    headers:
+      apikey: ${SUPABASE_ANON_KEY}
+      content-type: application/json
+
+permissions:
+  - select
+  - explain
+  - introspect
+
+tools:
+  - name: select
+    method: POST
+    path: /mcp/select
+    description: "Execute SELECT queries on remote Supabase instance"
+    input: |
+      { 
+        "table": "{{table}}", 
+        "columns": {{columns}}, 
+        "filter": {{filter}},
+        "limit": {{limit}}
+      }
+
+  - name: query
+    method: POST  
+    path: /mcp/select
+    description: "Natural language to SQL query"
+    input: |
+      { 
+        "table": "{{table}}", 
+        "columns": ["*"], 
+        "limit": 10
+      }
+
+memory_tags:
+  - remote_reader
+  - render
+  - supabase
+  - pulser
+
+# Example usage:
+# :rr select table=courses columns='["code","title","instructor"]' limit=5
+# :rr query table=scout_transactions filter='{"amount_gt":1000}' columns='["id","amount","date"]'

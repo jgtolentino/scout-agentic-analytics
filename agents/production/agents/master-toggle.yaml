@@ -1,0 +1,311 @@
+name: Master-Toggle
+version: "1.0.0"
+type: filter_management
+status: production
+description: >
+  Background service that automatically detects new dimensions in transaction data,
+  updates master-data tables, maintains cascading filters, and provides an extensible
+  API for adding new toggle/filter dimensions without UI redeployment.
+
+author: Data Platform Team
+owner: Data Platform Lead
+created_at: 2025-07-18
+updated_at: 2025-07-18
+
+capabilities:
+  - dimension_detection
+  - master_data_sync
+  - filter_management
+  - stale_value_pruning
+  - toggle_api
+  - event_streaming
+  - change_data_capture
+  - real_time_updates
+  - config_driven_filters
+
+configuration:
+  # Change detection
+  cdc_enabled: true
+  cdc_method: "postgres_logical_replication"  # or debezium
+  monitored_tables:
+    - transactions
+    - products
+    - stores
+    - customers
+  
+  # Master data management
+  master_data:
+    sync_interval_seconds: 60
+    batch_size: 5000
+    
+    dimensions:
+      - name: region
+        source_table: transactions
+        source_column: region
+        display_order: 1
+        
+      - name: category
+        source_table: products
+        source_column: category
+        display_order: 2
+        
+      - name: brand
+        source_table: products
+        source_column: brand
+        display_order: 3
+        
+      - name: sku
+        source_table: products
+        source_column: sku_code
+        display_order: 4
+        
+      - name: store_type
+        source_table: stores
+        source_column: store_type
+        display_order: 5
+  
+  # Stale value management
+  pruning:
+    enabled: true
+    interval_seconds: 300
+    retention_days: 90
+    strategy: "mark_inactive"  # or "delete"
+  
+  # Event streaming
+  event_bus:
+    enabled: true
+    protocol: "websocket"  # or "sse"
+    port: 8081
+    auth_required: true
+    
+  # API configuration
+  api:
+    base_path: "/api/v1"
+    rate_limit: 1000
+    cors_enabled: true
+    allowed_origins: ["*"]
+
+dependencies:
+  python: ">=3.11"
+  libraries:
+    - fastapi: ">=0.100.0"
+    - psycopg2: ">=2.9.0"
+    - websockets: ">=11.0"
+    - pydantic: ">=2.0.0"
+    - redis: ">=4.5.0"
+    - supabase: ">=2.0.0"
+  
+  services:
+    - name: PostgreSQL
+      required: true
+      version: ">=14"
+      features: ["logical_replication"]
+    - name: Redis
+      required: true
+      version: ">=7.0"
+      purpose: "Caching and pub/sub"
+
+api_endpoints:
+  - method: GET
+    path: /filters/{dimension}
+    description: Get all values for a specific filter dimension
+    auth: bearer_token
+    cache_ttl: 60
+    response_example:
+      values: ["North", "South", "East", "West"]
+      total: 4
+      last_updated: "2025-07-18T10:00:00Z"
+    
+  - method: POST
+    path: /filters/toggle
+    description: Register a new filter dimension
+    auth: bearer_token
+    roles: ["admin", "data_engineer"]
+    request_example:
+      dimension_name: "payment_method"
+      source_table: "transactions"
+      source_column: "payment_type"
+      ui_config:
+        label: "Payment Method"
+        type: "dropdown"
+        multi_select: false
+    
+  - method: GET
+    path: /filters/config
+    description: Get all configured filter dimensions
+    auth: bearer_token
+    
+  - method: DELETE
+    path: /filters/{dimension}
+    description: Remove a filter dimension
+    auth: bearer_token
+    roles: ["admin"]
+    
+  - method: GET
+    path: /health
+    description: Health check endpoint
+    auth: none
+    
+  - method: GET
+    path: /metrics
+    description: Prometheus metrics endpoint
+    auth: none
+
+websocket_events:
+  - event: filter_updated
+    description: Emitted when any filter values change
+    payload:
+      dimension: "string"
+      action: "added|removed|updated"
+      values: ["array of affected values"]
+      timestamp: "ISO8601"
+    
+  - event: dimension_added
+    description: Emitted when new dimension is registered
+    payload:
+      dimension: "string"
+      config: "object"
+    
+  - event: health_status
+    description: Periodic health status updates
+    interval: 30
+
+deployment:
+  type: kubernetes
+  replicas: 2  # For high availability
+  
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+  
+  environment_variables:
+    - name: DATABASE_URL
+      required: true
+      secret: true
+    - name: REDIS_URL
+      required: true
+    - name: JWT_SECRET
+      required: true
+      secret: true
+    - name: LOG_LEVEL
+      default: "INFO"
+    - name: CDC_ENABLED
+      default: "true"
+    - name: WS_PORT
+      default: "8081"
+  
+  service:
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 8080
+        targetPort: 8080
+      - name: websocket
+        port: 8081
+        targetPort: 8081
+
+monitoring:
+  metrics:
+    - name: toggle_dimension_count
+      type: gauge
+      description: Number of active filter dimensions
+      
+    - name: toggle_values_total
+      type: gauge
+      description: Total values across all dimensions
+      labels: ["dimension"]
+      
+    - name: toggle_sync_duration_seconds
+      type: histogram
+      description: Time to sync master data
+      
+    - name: toggle_api_requests_total
+      type: counter
+      description: API requests by endpoint
+      labels: ["method", "endpoint", "status"]
+      
+    - name: toggle_websocket_connections
+      type: gauge
+      description: Active WebSocket connections
+      
+    - name: toggle_stale_values_pruned
+      type: counter
+      description: Number of stale values removed
+  
+  alerts:
+    - name: ToggleHighSyncLatency
+      condition: toggle_sync_duration_seconds > 30
+      severity: warning
+      description: Master data sync taking too long
+      
+    - name: ToggleWebSocketDown
+      condition: toggle_websocket_connections == 0
+      severity: critical
+      description: No active WebSocket connections
+
+security:
+  authentication:
+    type: jwt
+    issuer: "https://auth.tbwa.com"
+    audience: "master-toggle-api"
+  
+  authorization:
+    default_role: "viewer"
+    admin_roles: ["admin", "data_platform_admin"]
+  
+  rate_limiting:
+    enabled: true
+    window_seconds: 60
+    max_requests: 1000
+  
+  data_protection:
+    encrypt_at_rest: true
+    audit_logging: true
+
+performance:
+  caching:
+    enabled: true
+    provider: redis
+    default_ttl: 60
+    
+  database:
+    connection_pool_size: 20
+    query_timeout_seconds: 30
+    
+  optimization:
+    - "Index all source columns for dimension detection"
+    - "Use materialized views for large dimensions"
+    - "Implement incremental sync for better performance"
+
+testing:
+  unit_tests:
+    coverage_target: 85
+    path: tests/unit/
+    
+  integration_tests:
+    path: tests/integration/
+    test_scenarios:
+      - "New dimension detection"
+      - "Stale value pruning"
+      - "WebSocket event delivery"
+      - "API rate limiting"
+      
+  load_tests:
+    concurrent_users: 1000
+    duration_minutes: 30
+    target_rps: 500
+
+documentation:
+  api_spec: docs/api/toggle-openapi.yaml
+  integration_guide: docs/guides/toggle-integration.md
+  configuration_reference: docs/reference/toggle-config.md
+
+sla:
+  filter_freshness_seconds: 60
+  api_latency_p95_ms: 5
+  uptime_target: 0.999
+  websocket_delivery_rate: 0.999

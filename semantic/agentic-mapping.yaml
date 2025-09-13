@@ -1,0 +1,210 @@
+---
+# Scout v7.1 Agentic Design Patterns → SuperClaude Framework Mapping
+# Machine-readable specification for validation and orchestration
+
+version: "1.0"
+project: "scout-v7"
+framework: "superclaude-v3"
+created: "2025-09-13"
+
+patterns:
+  orchestrator:
+    definition: "One agent delegates tasks to specialized sub-agents and sequences their outputs"
+    superclaude_impl: "wave_orchestration"
+    scout_components:
+      - pulser_runtime
+      - pipeline_sequencing
+    agents:
+      - QueryAgent
+      - RetrieverAgent
+      - ChartVisionAgent
+      - NarrativeAgent
+    wave_stages:
+      - intent_parsing_context_assembly
+      - retrieval_enrichment
+      - visualization_generation
+      - narrative_synthesis
+    
+  toolformer:
+    definition: "Agent learns when to invoke external tools/APIs"
+    superclaude_impl: "mcp_servers"
+    scout_components:
+      - sql_exec
+      - rag_retrieve
+      - mindsdb_proxy
+    mcp_servers:
+      - context7
+      - sequential
+      - magic
+      - playwright
+    decision_logic:
+      - confidence_thresholding
+      - schema_whitelisting
+      - tool_selection_guardrails
+    
+  crew:
+    definition: "Specialized agents work in parallel as a crew, each aligned to a persona/role"
+    superclaude_impl: "personas"
+    scout_components:
+      - role_aware_responses
+      - persona_adaptation
+    personas:
+      architect:
+        agent: QueryAgent
+        responsibility: "NL→SQL decomposition, filter enforcement"
+      analyzer:
+        agent: RetrieverAgent
+        responsibility: "RAG, KG, CAG enrichment"
+      frontend:
+        agent: ChartVisionAgent
+        responsibility: "chart spec generation, component binding"
+      backend:
+        agent: NarrativeAgent
+        responsibility: "insight stitching, role-based summaries"
+    user_roles:
+      - executive
+      - store_manager
+      - analyst
+    
+  reflector:
+    definition: "Agent critiques and validates its own output before surfacing it"
+    superclaude_impl: "validation_flags"
+    scout_components:
+      - chart_spec_validation
+      - semantic_model_checking
+      - hallucination_detection
+    flags:
+      - "--think-hard"
+      - "--validate"
+    validation_steps:
+      - schema_compliance
+      - metric_dimension_matching
+      - fact_verification
+    
+  memory:
+    definition: "Persist useful outputs for reuse, replay, or learning"
+    superclaude_impl: "audit_persistence"
+    scout_components:
+      - ops_audit_ledger
+      - platinum_job_runs
+      - saved_insights
+    storage:
+      queries: "ops.audit_ledger"
+      lineage: "platinum.job_runs"
+      insights: "future: saved_insights_table"
+    retention:
+      audit_logs: "permanent"
+      job_runs: "90_days"
+      insights: "user_defined"
+    
+  safety_governance:
+    definition: "Enforce explicit limits and checks across the agent loop"
+    superclaude_impl: "security_guardrails"
+    scout_components:
+      - rls_tenant_isolation
+      - schema_whitelisting
+      - role_based_limits
+      - audit_coverage
+    guardrails:
+      sql_whitelist:
+        - "scout.gold_*"
+        - "scout.dim_*"
+        - "scout.v_*_public"
+      forbidden_operations:
+        - "SELECT *"
+        - "CROSS JOIN without predicate"
+        - "DROP, DELETE, UPDATE, INSERT"
+      row_limits:
+        executive: 5000
+        store_manager: 20000
+        analyst: 100000
+    compliance:
+      audit_coverage_target: 0.95
+      rls_enforcement: "mandatory"
+      
+  hybrid:
+    definition: "Combine multiple retrieval methods for resilience"
+    superclaude_impl: "multi_modal_retrieval"
+    scout_components:
+      - cag_substitution_graph
+      - rag_vector_search
+      - kg_taxonomy_hierarchy
+    retrieval_methods:
+      cag:
+        type: "graph"
+        data: "substitution_signals"
+        weight_column: "substitution_rate"
+      rag:
+        type: "vector"
+        implementation: "pgvector_hybrid"
+        features: ["dense", "bm25", "metadata"]
+      kg:
+        type: "taxonomy"
+        hierarchy: "brand → category → sku"
+        table: "platinum.kg_entities"
+
+# SuperClaude Framework Integration Points
+superclaude:
+  commands:
+    "/analyze":
+      eligible_patterns: ["crew", "hybrid"]
+      primary_persona: "analyzer"
+      mcp_servers: ["sequential", "context7"]
+    "/build":
+      eligible_patterns: ["crew", "toolformer"]
+      primary_persona: "frontend"
+      mcp_servers: ["magic", "context7"]
+    "/improve":
+      eligible_patterns: ["orchestrator", "reflector"]
+      primary_persona: "architect"
+      mcp_servers: ["sequential", "context7"]
+  
+  flags:
+    "--think-hard":
+      activates: "sequential_mcp"
+      use_case: "complex_sql_generation"
+      patterns: ["reflector", "orchestrator"]
+    "--wave-mode":
+      activates: "multi_stage_orchestration"
+      use_case: "compound_queries"
+      patterns: ["orchestrator"]
+    "--uc":
+      activates: "token_efficiency"
+      use_case: "resource_optimization"
+      patterns: ["all"]
+
+# Validation Rules
+validation:
+  required_components:
+    - "All 7 patterns must have SuperClaude implementation"
+    - "All agents must map to personas"
+    - "All MCP servers must be utilized"
+  
+  integration_tests:
+    - "Wave orchestration executes all 4 stages"
+    - "Persona routing activates correct agents"
+    - "MCP servers respond within SLA"
+    - "Audit coverage meets 95% target"
+  
+  compliance_checks:
+    - "RLS enforcement active"
+    - "Schema whitelist respected"
+    - "Row limits enforced by role"
+    - "No forbidden SQL operations"
+
+# Future Extensions
+roadmap:
+  crew_consensus:
+    description: "Multiple agents respond, orchestrator merges insights"
+    priority: "high"
+    estimated_effort: "M"
+  
+  meta_agent_critic:
+    description: "Self-correcting agent that re-issues queries on anomalies"
+    priority: "medium"
+    estimated_effort: "L"
+  
+  learning_to_rank:
+    description: "Weighted fusion for hybrid retrieval ordering"
+    priority: "low"
+    estimated_effort: "L"

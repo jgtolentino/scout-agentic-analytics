@@ -1,0 +1,359 @@
+# DataOS Documentation Extractor & Diff Engine
+# Automated extraction, archiving, and version comparison of web-based documentation
+# Version: 1.0.0
+
+agent:
+  name: dataos-docs-extractor
+  version: "1.0.0"
+  description: |
+    Production-grade documentation extractor and diff engine for any web-based documentation.
+    Supports static/dynamic content, scheduled snapshots, semantic diffs, and change analytics.
+    Designed for DataOS.info but works with any docs portal (Sphinx, Docusaurus, MkDocs, etc).
+  
+  type: multi-agent
+  category: data-extraction
+  author: "TBWA Engineering"
+  entry: "agents/dataos-docs-extractor/main.py"
+  
+  capabilities:
+    - full_site_extraction      # Crawl & export all docs (HTML/MD/PDF)
+    - dynamic_content_render    # Headless browser for JS-heavy docs
+    - scheduled_snapshots       # Cron-based automated extraction
+    - semantic_diff            # Content-aware diff (not just line-by-line)
+    - visual_diff              # Screenshot + DOM diff for key pages
+    - archive_management       # Timestamped snapshot storage
+    - api_webhook_export       # Push changes to external services
+    - section_mapping         # Extract TOC/structure as JSON
+    - auth_session_support    # Handle private docs with login
+    - change_analytics        # Summary stats and reports
+  
+  models:
+    default: claude-3-5-sonnet
+    diff_engine: claude-3-haiku    # Fast for diffs
+    visual_analysis: gpt-4-vision  # For screenshot comparison
+  
+  config:
+    # Extraction settings
+    extraction:
+      default_method: "hybrid"     # static, dynamic, hybrid
+      timeout: 300                 # 5 minutes per page
+      max_depth: 10               # Max crawl depth
+      max_pages: 10000            # Safety limit
+      concurrent_pages: 5         # Parallel processing
+      
+    # Archive settings  
+    archive:
+      base_path: "/dataos-archives"
+      retention_days: 365         # Keep snapshots for 1 year
+      compression: true           # Gzip archives
+      formats:
+        - html
+        - markdown
+        - pdf
+        - json                    # Structured data
+        
+    # Diff settings
+    diff:
+      semantic_threshold: 0.85    # Similarity threshold
+      visual_threshold: 0.95      # Pixel match threshold
+      ignore_patterns:
+        - "timestamp"
+        - "build-id"
+        - "analytics-.*"
+      highlight_changes: true
+      
+    # Notification settings
+    notifications:
+      enabled: true
+      channels:
+        - type: webhook
+          url: "${WEBHOOK_URL}"
+        - type: slack
+          channel: "#docs-updates"
+        - type: email
+          recipients: ["team@example.com"]
+      
+    # Performance settings
+    performance:
+      cache_enabled: true
+      cache_ttl: 3600            # 1 hour
+      rate_limit: 10             # Requests per second
+      retry_attempts: 3
+      retry_delay: 5
+  
+  tools:
+    - name: puppeteer
+      type: headless_browser
+      config:
+        executablePath: "/usr/bin/chromium"
+        args: ["--no-sandbox", "--disable-setuid-sandbox"]
+        
+    - name: wget
+      type: static_crawler
+      config:
+        user_agent: "DataOS-Docs-Bot/1.0"
+        recursive: true
+        convert_links: true
+        
+    - name: pandiff
+      type: semantic_diff
+      config:
+        format: markdown
+        context_lines: 3
+        
+    - name: pixelmatch
+      type: visual_diff
+      config:
+        threshold: 0.1
+        includeAA: true
+
+inputs:
+  - name: source_url
+    type: string
+    required: true
+    description: "Documentation homepage URL (e.g. https://dataos.info/)"
+    
+  - name: output_format
+    type: enum
+    values: ["html", "markdown", "pdf", "all"]
+    default: "markdown"
+    description: "Export format for documentation"
+    
+  - name: auth
+    type: object
+    required: false
+    schema:
+      type: object
+      properties:
+        method:
+          type: string
+          enum: ["cookie", "basic", "oauth", "custom"]
+        credentials:
+          type: object
+    description: "Authentication details for private docs"
+    
+  - name: schedule
+    type: string
+    required: false
+    pattern: "^(@(annually|yearly|monthly|weekly|daily|hourly))|(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|\\d+|\\*) ?){5,7}$"
+    description: "Cron expression for scheduled extraction"
+    
+  - name: diff_mode
+    type: enum
+    values: ["semantic", "visual", "both", "none"]
+    default: "both"
+    description: "Type of diff to perform"
+    
+  - name: extraction_method
+    type: enum
+    values: ["static", "dynamic", "hybrid", "api"]
+    default: "hybrid"
+    description: "Method for extracting documentation"
+
+outputs:
+  - name: archive_path
+    type: string
+    description: "Path to archived documentation snapshot"
+    example: "/dataos-archives/20240808/"
+    
+  - name: diff_report
+    type: object
+    schema:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            total_changes: integer
+            added_sections: integer
+            removed_sections: integer
+            modified_sections: integer
+        semantic_diff:
+          type: string
+          description: "Path to semantic diff file"
+        visual_diff:
+          type: string
+          description: "Path to visual diff directory"
+    
+  - name: change_analytics
+    type: object
+    schema:
+      type: object
+      properties:
+        timestamp: string
+        source_url: string
+        total_pages: integer
+        extraction_time: number
+        changes_detected: boolean
+        change_summary: array
+    
+  - name: table_of_contents
+    type: object
+    description: "Structured TOC as JSON"
+    
+  - name: webhook_response
+    type: object
+    description: "Response from webhook notifications"
+
+commands:
+  extract:
+    description: "Extract documentation from source"
+    parameters:
+      - source_url: string
+      - output_format: string
+      - auth: object (optional)
+    example: |
+      python3 agents/dataos-docs-extractor/main.py extract \
+        --source "https://dataos.info" \
+        --format markdown
+  
+  diff:
+    description: "Compare two documentation snapshots"
+    parameters:
+      - archive1: string
+      - archive2: string
+      - diff_mode: string
+    example: |
+      python3 agents/dataos-docs-extractor/main.py diff \
+        --archive1 "/dataos-archives/20240807" \
+        --archive2 "/dataos-archives/20240808" \
+        --mode both
+  
+  schedule:
+    description: "Schedule regular documentation extraction"
+    parameters:
+      - source_url: string
+      - cron: string
+    example: |
+      python3 agents/dataos-docs-extractor/main.py schedule \
+        --source "https://dataos.info" \
+        --cron "0 2 * * *"
+  
+  analyze:
+    description: "Generate change analytics report"
+    parameters:
+      - archive_path: string
+    example: |
+      python3 agents/dataos-docs-extractor/main.py analyze \
+        --archive "/dataos-archives/20240808"
+
+dependencies:
+  python:
+    - playwright==1.40.0
+    - beautifulsoup4==4.12.2
+    - markdownify==0.11.6
+    - deepdiff==6.7.1
+    - pillow==10.2.0         # For visual diff
+    - requests==2.31.0
+    - aiohttp==3.9.1
+    - schedule==1.2.0
+    - jinja2==3.1.3         # For reports
+    - pyyaml==6.0.1
+    
+  system:
+    - chromium             # For headless browser
+    - wget                 # For static crawling
+    - pandoc              # For format conversion
+    - imagemagick         # For visual processing
+
+deployment:
+  type: standalone
+  requirements:
+    memory: "2GB"
+    cpu: "2 cores"
+    disk: "50GB"         # For archives
+  
+  environment:
+    ARCHIVE_BASE_PATH: "/dataos-archives"
+    WEBHOOK_URL: "${WEBHOOK_URL}"
+    SLACK_TOKEN: "${SLACK_TOKEN}"
+    SMTP_SERVER: "${SMTP_SERVER}"
+    
+  health_check:
+    endpoint: "/health"
+    interval: 60
+    timeout: 10
+
+monitoring:
+  metrics:
+    - extraction_duration
+    - pages_extracted
+    - diff_computation_time
+    - changes_detected
+    - storage_usage
+    
+  alerts:
+    - name: extraction_failed
+      condition: "extraction_errors > 0"
+      severity: high
+      
+    - name: storage_full
+      condition: "storage_usage > 90%"
+      severity: critical
+      
+    - name: significant_changes
+      condition: "change_percentage > 20%"
+      severity: medium
+
+integrations:
+  - name: supabase
+    type: storage
+    config:
+      bucket: "docs-archives"
+      
+  - name: github
+    type: version_control
+    config:
+      repo: "docs-snapshots"
+      branch: "main"
+      
+  - name: slack
+    type: notification
+    config:
+      webhook_url: "${SLACK_WEBHOOK}"
+      
+  - name: s3
+    type: storage
+    config:
+      bucket: "dataos-doc-archives"
+      region: "us-east-1"
+
+success_criteria:
+  - metric: extraction_completeness
+    target: ">95%"
+    description: "Percentage of accessible pages extracted"
+    
+  - metric: diff_accuracy
+    target: ">99%"
+    description: "Accuracy of change detection"
+    
+  - metric: processing_time
+    target: "<5min"
+    description: "Time to extract 100 pages"
+    
+  - metric: archive_integrity
+    target: "100%"
+    description: "All archives readable and complete"
+
+example_usage:
+  - description: "Extract DataOS documentation"
+    command: |
+      dataos-docs-extractor extract \
+        --source https://dataos.info \
+        --format markdown \
+        --output /archives/dataos
+  
+  - description: "Schedule daily extraction"
+    command: |
+      dataos-docs-extractor schedule \
+        --source https://dataos.info \
+        --cron "0 2 * * *" \
+        --notify slack
+  
+  - description: "Compare yesterday vs today"
+    command: |
+      dataos-docs-extractor diff \
+        --yesterday \
+        --today \
+        --visual \
+        --semantic
