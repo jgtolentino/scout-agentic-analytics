@@ -1,0 +1,26 @@
+:root,.theme-root{
+  --ring: var(--color-accent);
+}
+
+.bg-app      { background-color: var(--color-bg); }
+.bg-surface  { background-color: var(--color-surface); }
+.text-app    { color: var(--color-text); }
+.btn-primary { background: var(--color-primary); color: #0b0f1a; }
+.card        { background: var(--color-surface); border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+.kpi         { border-radius: var(--radius-lg); padding: var(--gap-md); }
+
+/* Amazon-style neumorphism */
+.neumorph {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.15));
+  box-shadow:
+    8px 8px 16px rgba(0,0,0,.35),
+    -6px -6px 12px rgba(255,255,255,.05);
+  border-radius: var(--radius-lg);
+}
+
+.sidebar-pill {
+  border-radius: 9999px;
+  padding: calc(var(--gap-sm));
+  background: var(--color-surface);
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,.35), inset -2px -2px 4px rgba(255,255,255,.06);
+}

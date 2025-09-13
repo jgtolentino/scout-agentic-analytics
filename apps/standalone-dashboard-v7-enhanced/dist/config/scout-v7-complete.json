@@ -1,0 +1,682 @@
+{
+  "version": "7.0.0",
+  "app": "Scout Dashboard",
+  "datasources": {
+    "primary": {
+      "type": "postgres",
+      "schema": "scout",
+      "rls": true,
+      "connection": "supabase" 
+    }
+  },
+  "dimTables": {
+    "time": "scout.dim_time",
+    "region": "scout.dim_region",
+    "province": "scout.dim_province",
+    "city": "scout.dim_city",
+    "barangay": "scout.dim_barangay",
+    "category": "scout.dim_category",
+    "brand": "scout.dim_brand",
+    "sku": "scout.dim_sku",
+    "gender": "scout.dim_gender",
+    "age": "scout.dim_age_bracket"
+  },
+  "hierarchies": [
+    {
+      "id": "h_time",
+      "levels": ["date_year", "date_quarter", "date_month", "date_day", "weekday", "weekend_flag", "hour", "tod_segment"]
+    },
+    {
+      "id": "h_location",
+      "levels": ["region", "province", "city", "barangay"]
+    },
+    {
+      "id": "h_product",
+      "levels": ["category", "brand", "sku"]
+    },
+    {
+      "id": "h_consumer",
+      "levels": ["gender", "age_bracket"]
+    }
+  ],
+  "measures": [
+    { "id": "txn_count", "label": "Transactions", "expr": "COUNT(*)", "source": "scout.fact_transactions" },
+    { "id": "peso_value", "label": "Peso Value", "expr": "SUM(peso_value)", "source": "scout.fact_transactions" },
+    { "id": "duration_seconds", "label": "Duration (s)", "expr": "AVG(duration_seconds)", "source": "scout.fact_transactions" },
+    { "id": "units_per_txn", "label": "Units/Txn", "expr": "AVG(total_units)", "source": "scout.fact_transactions" },
+    { "id": "accept_suggestion_rate", "label": "Acceptance of Suggestion", "expr": "AVG(CASE WHEN accepted_suggestion THEN 1 ELSE 0 END)", "source": "scout.fact_behavior" },
+    { "id": "substitution_events", "label": "Substitution Events", "expr": "COUNT(*)", "source": "scout.fact_substitutions" }
+  ],
+  "filters": [
+    {
+      "id": "f_date_range",
+      "label": "Date Range",
+      "type": "daterange",
+      "dimension": "time.date_day",
+      "valueSource": {
+        "sql": "SELECT MIN(date_day) AS min, MAX(date_day) AS max FROM scout.dim_time"
+      },
+      "default": "auto",
+      "scope": "global"
+    },
+    {
+      "id": "f_weekend",
+      "label": "Week vs Weekend",
+      "type": "select",
+      "dimension": "time.weekend_flag",
+      "options": [
+        { "value": "ALL", "label": "All" },
+        { "value": "weekday", "label": "Weekday" },
+        { "value": "weekend", "label": "Weekend" }
+      ],
+      "default": "ALL",
+      "scope": "global"
+    },
+    {
+      "id": "f_tod",
+      "label": "Time of Day",
+      "type": "multiselect",
+      "dimension": "time.tod_segment",
+      "valueSource": {
+        "sql": "SELECT DISTINCT tod_segment AS value, tod_segment AS label FROM scout.dim_time ORDER BY 1"
+      },
+      "default": [],
+      "scope": "global",
+      "dependsOn": ["f_date_range"]
+    },
+    {
+      "id": "f_region",
+      "label": "Region",
+      "type": "multiselect",
+      "dimension": "location.region",
+      "valueSource": { "sql": "SELECT region_id AS value, region_name AS label FROM scout.dim_region ORDER BY 2" },
+      "cascadeTo": ["f_province", "f_city", "f_barangay"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_province",
+      "label": "Province",
+      "type": "multiselect",
+      "dimension": "location.province",
+      "valueSource": {
+        "sql": "SELECT province_id AS value, province_name AS label FROM scout.dim_province WHERE (:f_region)::int[] IS NULL OR region_id = ANY(:f_region)"
+      },
+      "dependsOn": ["f_region"],
+      "cascadeTo": ["f_city", "f_barangay"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_city",
+      "label": "City/Municipality",
+      "type": "multiselect",
+      "dimension": "location.city",
+      "valueSource": {
+        "sql": "SELECT city_id AS value, city_name AS label FROM scout.dim_city WHERE ((:f_region)::int[] IS NULL OR region_id = ANY(:f_region)) AND ((:f_province)::int[] IS NULL OR province_id = ANY(:f_province)) ORDER BY 2"
+      },
+      "dependsOn": ["f_region", "f_province"],
+      "cascadeTo": ["f_barangay"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_barangay",
+      "label": "Barangay",
+      "type": "multiselect",
+      "dimension": "location.barangay",
+      "valueSource": {
+        "sql": "SELECT barangay_id AS value, barangay_name AS label FROM scout.dim_barangay WHERE ((:f_region)::int[] IS NULL OR region_id = ANY(:f_region)) AND ((:f_province)::int[] IS NULL OR province_id = ANY(:f_province)) AND ((:f_city)::int[] IS NULL OR city_id = ANY(:f_city)) ORDER BY 2"
+      },
+      "dependsOn": ["f_region", "f_province", "f_city"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_category",
+      "label": "Category",
+      "type": "multiselect",
+      "dimension": "product.category",
+      "valueSource": { "sql": "SELECT category_id AS value, category_name AS label FROM scout.dim_category ORDER BY 2" },
+      "cascadeTo": ["f_brand", "f_sku"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_brand",
+      "label": "Brand",
+      "type": "multiselect",
+      "dimension": "product.brand",
+      "valueSource": {
+        "sql": "SELECT brand_id AS value, brand_name AS label FROM scout.dim_brand WHERE (:f_category)::int[] IS NULL OR category_id = ANY(:f_category) ORDER BY 2"
+      },
+      "dependsOn": ["f_category"],
+      "cascadeTo": ["f_sku"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_sku",
+      "label": "SKU",
+      "type": "multiselect",
+      "dimension": "product.sku",
+      "valueSource": {
+        "sql": "SELECT sku_id AS value, sku_name AS label FROM scout.dim_sku WHERE ((:f_category)::int[] IS NULL OR category_id = ANY(:f_category)) AND ((:f_brand)::int[] IS NULL OR brand_id = ANY(:f_brand)) ORDER BY 2"
+      },
+      "dependsOn": ["f_category", "f_brand"],
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_gender",
+      "label": "Gender",
+      "type": "multiselect",
+      "dimension": "consumer.gender",
+      "valueSource": { "sql": "SELECT gender_code AS value, gender_label AS label FROM scout.dim_gender ORDER BY 2" },
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "f_age",
+      "label": "Age Group",
+      "type": "multiselect",
+      "dimension": "consumer.age_bracket",
+      "valueSource": { "sql": "SELECT age_code AS value, age_label AS label FROM scout.dim_age_bracket ORDER BY sort_order" },
+      "default": [],
+      "scope": "global"
+    },
+    {
+      "id": "cmp_mode",
+      "label": "Comparison Mode",
+      "type": "select",
+      "options": [
+        { "value": "off", "label": "Off" },
+        { "value": "time", "label": "Time Comparison" },
+        { "value": "brand", "label": "Brand Comparison" },
+        { "value": "category", "label": "Category Comparison" },
+        { "value": "geo", "label": "Geographic Comparison" }
+      ],
+      "default": "off",
+      "scope": "global"
+    },
+    {
+      "id": "cmp_normalize",
+      "label": "Normalization",
+      "type": "select",
+      "options": [
+        { "value": "none", "label": "Absolute Values" },
+        { "value": "share_category", "label": "Share of Category" },
+        { "value": "share_geo", "label": "Share of Geography" },
+        { "value": "index_100", "label": "Index (Base=100)" }
+      ],
+      "default": "none",
+      "scope": "global",
+      "dependsOn": ["cmp_mode"]
+    },
+    {
+      "id": "cmp_pop_weight",
+      "label": "Population-weighted",
+      "type": "toggle",
+      "default": false,
+      "scope": "global",
+      "dependsOn": ["cmp_mode"]
+    },
+    {
+      "id": "cmpA_time",
+      "label": "A: Period",
+      "type": "daterange_or_preset",
+      "presets": ["last_7d", "last_28d", "mtd", "ytd"],
+      "default": "last_28d",
+      "scope": "global",
+      "dependsOn": ["cmp_mode"]
+    },
+    {
+      "id": "cmpB_time",
+      "label": "B: Period",
+      "type": "daterange_or_preset",
+      "presets": ["prev_7d", "prev_28d", "prev_mtd", "prev_ytd"],
+      "default": "prev_28d",
+      "scope": "global",
+      "dependsOn": ["cmp_mode"]
+    },
+    {
+      "id": "cmpA_brand",
+      "label": "A: Brands",
+      "type": "multiselect",
+      "dimension": "product.brand",
+      "valueSource": { "sql": "SELECT brand_id AS value, brand_name AS label FROM scout.dim_brand ORDER BY 2" },
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    },
+    {
+      "id": "cmpB_brand",
+      "label": "B: Brands",
+      "type": "multiselect",
+      "dimension": "product.brand",
+      "valueSource": { "sql": "SELECT brand_id AS value, brand_name AS label FROM scout.dim_brand ORDER BY 2" },
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    },
+    {
+      "id": "cmpA_category",
+      "label": "A: Categories",
+      "type": "multiselect",
+      "dimension": "product.category",
+      "valueSource": { "sql": "SELECT category_id AS value, category_name AS label FROM scout.dim_category ORDER BY 2" },
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    },
+    {
+      "id": "cmpB_category",
+      "label": "B: Categories",
+      "type": "multiselect",
+      "dimension": "product.category",
+      "valueSource": { "sql": "SELECT category_id AS value, category_name AS label FROM scout.dim_category ORDER BY 2" },
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    },
+    {
+      "id": "cmpA_geo",
+      "label": "A: Geography",
+      "type": "geo_multilevel",
+      "hierarchies": ["region", "province", "city", "barangay"],
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    },
+    {
+      "id": "cmpB_geo",
+      "label": "B: Geography",
+      "type": "geo_multilevel",
+      "hierarchies": ["region", "province", "city", "barangay"],
+      "dependsOn": ["cmp_mode"],
+      "scope": "global"
+    }
+  ],
+  "comparison": {
+    "mode": "off",
+    "normalize": "none",
+    "population_weighting": false,
+    "sets": {
+      "A": {
+        "label": "Baseline",
+        "time": { "start": null, "end": null, "preset": "last_28d" },
+        "product": { "category_ids": [], "brand_ids": [], "sku_ids": [] },
+        "geo": { "region_ids": [], "province_ids": [], "city_ids": [], "barangay_ids": [] }
+      },
+      "B": {
+        "label": "Compare To",
+        "time": { "start": null, "end": null, "preset": "prev_28d" },
+        "product": { "category_ids": [], "brand_ids": [], "sku_ids": [] },
+        "geo": { "region_ids": [], "province_ids": [], "city_ids": [], "barangay_ids": [] }
+      }
+    },
+    "presets": {
+      "time": [
+        { "id": "last_7d", "label": "Last 7 Days" },
+        { "id": "prev_7d", "label": "Previous 7 Days" },
+        { "id": "last_28d", "label": "Last 28 Days" },
+        { "id": "prev_28d", "label": "Previous 28 Days" },
+        { "id": "mtd", "label": "Month to Date" },
+        { "id": "prev_mtd", "label": "Previous MTD" },
+        { "id": "ytd", "label": "Year to Date" },
+        { "id": "prev_ytd", "label": "Previous YTD" }
+      ]
+    }
+  },
+  "globalState": {
+    "filterSync": {
+      "mode": "broadcast",
+      "scope": "app",
+      "urlSync": true,
+      "storage": "localStorage",
+      "debounceMs": 150
+    }
+  },
+  "drilldown": {
+    "enabled": true,
+    "stackLimit": 6,
+    "behaviors": [
+      {
+        "sourcePanel": "transaction_trends",
+        "on": "pointClick",
+        "addFilters": [{ "dimension": "time.date_day", "from": "datum.bucket" }],
+        "navigateTo": null
+      },
+      {
+        "sourcePanel": "product_mix",
+        "on": "barClick",
+        "addFilters": [
+          { "dimension": "product.category", "from": "datum.category_id" },
+          { "dimension": "product.brand", "from": "datum.brand_id" }
+        ],
+        "navigateTo": "competitive_analysis"
+      },
+      {
+        "sourcePanel": "mapDelta",
+        "on": "regionClick",
+        "addFilters": [{ "dimension": "location.region", "from": "datum.region_id" }],
+        "navigateTo": "geo_intel"
+      }
+    ]
+  },
+  "assistant": {
+    "enabled": true,
+    "placement": "floating-bottom-right",
+    "hotkeys": ["Slash", "Meta+K"],
+    "engine": {
+      "type": "wrenai",
+      "endpoint": "/api/adhoc/chart"
+    },
+    "chartSpec": {
+      "schema": "QuickSpec@1",
+      "fields": ["x", "y", "series", "agg", "splitBy", "chart", "filters", "timeGrain", "normalize", "topK"]
+    },
+    "adHocPanel": {
+      "mount": "currentPage",
+      "pinAllowed": true,
+      "ttlSeconds": 1800
+    }
+  },
+  "sync": {
+    "mode": "auto",
+    "refresh": {
+      "dimValueLists": "onOpen,onParentChange",
+      "staleAfterSeconds": 300
+    },
+    "propagation": {
+      "strategy": "broadcast",
+      "targets": ["all_panels"]
+    }
+  },
+  "pages": [
+    {
+      "id": "transaction_trends",
+      "title": "Transaction Trends",
+      "layout": "grid-12",
+      "panels": [
+        {
+          "id": "timeseries_main",
+          "title": "Transaction Volume Over Time",
+          "visuals": ["timeseries", "boxplot", "heatmap"],
+          "source": "scout.vw_transaction_trends",
+          "bindings": {
+            "x": "time_bucket",
+            "series": "location_level",
+            "value": "txn_count"
+          },
+          "filters": ["f_date_range", "f_weekend", "f_tod", "f_region", "f_province", "f_city", "f_barangay", "f_category"],
+          "layout": { "w": 8, "h": 4 }
+        },
+        {
+          "id": "peak_hours",
+          "title": "Peak Hours Analysis",
+          "visuals": ["bar_chart"],
+          "source": "scout.vw_hourly_patterns",
+          "bindings": {
+            "x": "hour_segment",
+            "y": "avg_txn_count"
+          },
+          "filters": ["f_date_range", "f_weekend", "f_region"],
+          "layout": { "w": 4, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "product_mix",
+      "title": "Product Mix & SKU Analysis",
+      "layout": "grid-12",
+      "panels": [
+        {
+          "id": "category_breakdown",
+          "title": "Product Mix by Category",
+          "visuals": ["stacked_bar", "pareto", "sankey"],
+          "source": "scout.vw_product_mix",
+          "bindings": {
+            "category": "category_name",
+            "brand": "brand_name",
+            "sku": "sku_name",
+            "value": "units"
+          },
+          "filters": ["f_date_range", "f_region", "f_province", "f_city", "f_barangay", "f_category", "f_brand", "f_sku"],
+          "layout": { "w": 6, "h": 4 }
+        },
+        {
+          "id": "top_skus",
+          "title": "Top Performing SKUs",
+          "visuals": ["table", "bar_chart"],
+          "source": "scout.vw_top_skus",
+          "bindings": {
+            "sku": "sku_name",
+            "brand": "brand_name",
+            "value": "peso_value",
+            "units": "total_units"
+          },
+          "filters": ["f_date_range", "f_category", "f_brand", "f_region"],
+          "layout": { "w": 6, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "consumer_behavior",
+      "title": "Consumer Behavior & Preferences",
+      "layout": "grid-12",
+      "panels": [
+        {
+          "id": "behavior_funnel",
+          "title": "Consumer Journey & Signals",
+          "visuals": ["funnel", "stacked_bar", "pie"],
+          "source": "scout.vw_behavior_signals",
+          "bindings": {
+            "step": "signal_type",
+            "value": "signal_value"
+          },
+          "filters": ["f_date_range", "f_weekend", "f_tod", "f_category", "f_brand", "f_gender", "f_age", "f_region", "f_city", "f_barangay"],
+          "layout": { "w": 8, "h": 4 }
+        },
+        {
+          "id": "substitution_analysis",
+          "title": "Substitution Events",
+          "visuals": ["network", "sankey"],
+          "source": "scout.vw_substitution_flow",
+          "bindings": {
+            "from_sku": "original_sku",
+            "to_sku": "substitute_sku",
+            "value": "substitution_count"
+          },
+          "filters": ["f_date_range", "f_category", "f_brand", "f_region"],
+          "layout": { "w": 4, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "consumer_profiling",
+      "title": "Consumer Demographics & Profiling",
+      "layout": "grid-12",
+      "panels": [
+        {
+          "id": "demographic_overview",
+          "title": "Consumer Demographics",
+          "visuals": ["donut", "tree", "geo_heatmap"],
+          "source": "scout.vw_consumer_profile",
+          "bindings": {
+            "geo": "geom",
+            "gender": "gender",
+            "age": "age_bracket",
+            "value": "txn_count"
+          },
+          "filters": ["f_date_range", "f_region", "f_city", "f_barangay", "f_gender", "f_age"],
+          "layout": { "w": 6, "h": 4 }
+        },
+        {
+          "id": "spending_patterns",
+          "title": "Spending Patterns by Demographics",
+          "visuals": ["heatmap", "bubble"],
+          "source": "scout.vw_demographic_spending",
+          "bindings": {
+            "x": "age_bracket",
+            "y": "gender",
+            "size": "avg_basket_value",
+            "color": "frequency"
+          },
+          "filters": ["f_date_range", "f_region", "f_category"],
+          "layout": { "w": 6, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "executive_overview",
+      "title": "Executive Overview",
+      "layout": "kpi-grid",
+      "panels": [
+        {
+          "id": "kpi_cards",
+          "title": "Key Performance Indicators",
+          "visuals": ["kpi_delta_grid"],
+          "source": "scout.vw_exec_kpis_compare",
+          "bindings": {
+            "kpi": "metric",
+            "A": "val_a",
+            "B": "val_b",
+            "delta": "delta_abs",
+            "deltaPct": "delta_pct",
+            "index": "index_100"
+          },
+          "filters": ["cmp_mode", "cmp_normalize", "cmp_pop_weight", "cmpA_time", "cmpB_time", "cmpA_brand", "cmpB_brand", "cmpA_category", "cmpB_category", "cmpA_geo", "cmpB_geo"],
+          "layout": { "w": 12, "h": 2 }
+        },
+        {
+          "id": "trend_compare",
+          "title": "Comparative Trends",
+          "visuals": ["dual_timeseries_area"],
+          "source": "scout.vw_timeseries_compare",
+          "bindings": {
+            "x": "bucket",
+            "series": "set_label",
+            "value": "value"
+          },
+          "filters": ["cmp_mode", "cmpA_time", "cmpB_time", "cmpA_brand", "cmpB_brand", "cmpA_category", "cmpB_category", "cmpA_geo", "cmpB_geo"],
+          "layout": { "w": 12, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "competitive_analysis",
+      "title": "Competitive Analysis",
+      "layout": "side-by-side",
+      "panels": [
+        {
+          "id": "share_stack",
+          "title": "Market Share Analysis",
+          "visuals": ["stacked_share_bar"],
+          "source": "scout.vw_category_brand_share",
+          "bindings": {
+            "x": "entity",
+            "value": "share",
+            "group": "set_label"
+          },
+          "filters": ["cmp_mode", "cmp_normalize", "cmpA_brand", "cmpB_brand", "cmpA_category", "cmpB_category", "f_date_range", "f_region", "f_city", "f_barangay"],
+          "layout": { "w": 8, "h": 4 }
+        },
+        {
+          "id": "rank_table",
+          "title": "Brand Rankings & Changes",
+          "visuals": ["rank_table"],
+          "source": "scout.vw_brand_rank_delta",
+          "bindings": {
+            "entity": "brand",
+            "rankA": "rank_a",
+            "rankB": "rank_b",
+            "change": "rank_delta",
+            "metric": "metric"
+          },
+          "filters": ["cmp_mode", "cmp_normalize", "f_date_range", "f_region", "f_city", "f_barangay", "f_category"],
+          "layout": { "w": 4, "h": 4 }
+        }
+      ]
+    },
+    {
+      "id": "geo_intel",
+      "title": "Geographic Intelligence",
+      "layout": "2col",
+      "panels": [
+        {
+          "id": "mapA",
+          "title": "Geographic Performance - A",
+          "visuals": ["choropleth"],
+          "source": "scout.vw_geo_metric_A",
+          "bindings": {
+            "geo": "geom",
+            "value": "metric_value"
+          },
+          "filters": ["cmp_mode", "cmpA_time", "cmpA_brand", "cmpA_category", "cmpA_geo", "cmp_normalize", "cmp_pop_weight"],
+          "layout": { "w": 4, "h": 6 }
+        },
+        {
+          "id": "mapB",
+          "title": "Geographic Performance - B",
+          "visuals": ["choropleth"],
+          "source": "scout.vw_geo_metric_B",
+          "bindings": {
+            "geo": "geom",
+            "value": "metric_value"
+          },
+          "filters": ["cmp_mode", "cmpB_time", "cmpB_brand", "cmpB_category", "cmpB_geo", "cmp_normalize", "cmp_pop_weight"],
+          "layout": { "w": 4, "h": 6 }
+        },
+        {
+          "id": "mapDelta",
+          "title": "Geographic Performance Delta",
+          "visuals": ["delta_choropleth"],
+          "source": "scout.vw_geo_metric_delta",
+          "bindings": {
+            "geo": "geom",
+            "delta": "delta_pct"
+          },
+          "filters": ["cmp_mode", "cmpA_time", "cmpB_time", "cmpA_brand", "cmpB_brand", "cmpA_category", "cmpB_category", "cmpA_geo", "cmpB_geo", "cmp_normalize", "cmp_pop_weight"],
+          "layout": { "w": 4, "h": 6 }
+        }
+      ]
+    },
+    {
+      "id": "ai_recommendations",
+      "title": "AI Recommendation Panel",
+      "layout": "feed",
+      "panels": [
+        {
+          "id": "recommendations_feed",
+          "title": "AI-Generated Recommendations",
+          "visuals": ["feed"],
+          "source": "scout.vw_ai_recommendations",
+          "bindings": {
+            "title": "recommendation",
+            "score": "priority",
+            "reason": "rationale"
+          },
+          "filters": ["f_date_range", "f_region", "f_city", "f_barangay", "f_category", "f_brand", "f_gender", "f_age"],
+          "layout": { "w": 12, "h": 8 }
+        }
+      ]
+    }
+  ],
+  "queryTemplates": {
+    "commonWhere": "WHERE t.date_day BETWEEN :f_date_range.start AND :f_date_range.end AND (:f_weekend = 'ALL' OR tm.weekend_flag = :f_weekend) AND (COALESCE(:f_tod, ARRAY[]::text[]) = '{}' OR tm.tod_segment = ANY(:f_tod)) AND (COALESCE(:f_region, ARRAY[]::int[]) = '{}' OR l.region_id = ANY(:f_region)) AND (COALESCE(:f_province, ARRAY[]::int[]) = '{}' OR l.province_id = ANY(:f_province)) AND (COALESCE(:f_city, ARRAY[]::int[]) = '{}' OR l.city_id = ANY(:f_city)) AND (COALESCE(:f_barangay, ARRAY[]::int[]) = '{}' OR l.barangay_id = ANY(:f_barangay)) AND (COALESCE(:f_category, ARRAY[]::int[]) = '{}' OR p.category_id = ANY(:f_category)) AND (COALESCE(:f_brand, ARRAY[]::int[]) = '{}' OR p.brand_id = ANY(:f_brand)) AND (COALESCE(:f_sku, ARRAY[]::int[]) = '{}' OR p.sku_id = ANY(:f_sku)) AND (COALESCE(:f_gender, ARRAY[]::text[]) = '{}' OR c.gender_code = ANY(:f_gender)) AND (COALESCE(:f_age, ARRAY[]::text[]) = '{}' OR c.age_code = ANY(:f_age))",
+    "cohort_base": "WITH base AS (SELECT 'A'::text AS set_label, t.time_id, l.region_id, l.province_id, l.city_id, l.barangay_id, p.category_id, p.brand_id, p.sku_id, t.peso_value, t.total_units, 1::int AS txn FROM scout.fact_transactions t JOIN scout.dim_time tm ON tm.time_id = t.time_id JOIN scout.dim_location l ON l.location_id = t.location_id LEFT JOIN scout.dim_product p ON p.product_id = t.product_id WHERE tm.date_day BETWEEN :a_start AND :a_end AND (COALESCE(:a_brand_ids, '{}')::int[] = '{}' OR p.brand_id = ANY(:a_brand_ids)) AND (COALESCE(:a_category_ids, '{}')::int[] = '{}' OR p.category_id = ANY(:a_category_ids)) AND (COALESCE(:a_region_ids, '{}')::int[] = '{}' OR l.region_id = ANY(:a_region_ids)) UNION ALL SELECT 'B', t.time_id, l.region_id, l.province_id, l.city_id, l.barangay_id, p.category_id, p.brand_id, p.sku_id, t.peso_value, t.total_units, 1 FROM scout.fact_transactions t JOIN scout.dim_time tm ON tm.time_id = t.time_id JOIN scout.dim_location l ON l.location_id = t.location_id LEFT JOIN scout.dim_product p ON p.product_id = t.product_id WHERE tm.date_day BETWEEN :b_start AND :b_end AND (COALESCE(:b_brand_ids, '{}')::int[] = '{}' OR p.brand_id = ANY(:b_brand_ids)) AND (COALESCE(:b_category_ids, '{}')::int[] = '{}' OR p.category_id = ANY(:b_category_ids)) AND (COALESCE(:b_region_ids, '{}')::int[] = '{}' OR l.region_id = ANY(:b_region_ids)))",
+    "transaction_trends": "SELECT tm.bucket AS time_bucket, COALESCE(l.region_name, 'All') AS location_level, COUNT(*) AS txn_count FROM scout.fact_transactions t JOIN scout.dim_time tm ON tm.time_id = t.time_id JOIN scout.dim_location l ON l.location_id = t.location_id LEFT JOIN scout.dim_product p ON p.product_id = t.product_id LEFT JOIN scout.dim_consumer c ON c.consumer_id = t.consumer_id {{commonWhere}} GROUP BY 1,2 ORDER BY 1",
+    "product_mix": "SELECT cat.category_name, b.brand_name, s.sku_name, SUM(t.quantity) AS units FROM scout.fact_transaction_items t JOIN scout.dim_product s ON s.sku_id = t.sku_id JOIN scout.dim_brand b ON b.brand_id = s.brand_id JOIN scout.dim_category cat ON cat.category_id = b.category_id JOIN scout.dim_time tm ON tm.time_id = t.time_id JOIN scout.dim_location l ON l.location_id = t.location_id LEFT JOIN scout.dim_consumer c ON c.consumer_id = t.consumer_id {{commonWhere}} GROUP BY 1,2,3 ORDER BY units DESC",
+    "behavior_signals": "SELECT signal_type, COUNT(*)::int AS signal_value FROM scout.fact_behavior fb JOIN scout.dim_time tm ON tm.time_id = fb.time_id JOIN scout.dim_location l ON l.location_id = fb.location_id LEFT JOIN scout.dim_product p ON p.product_id = fb.product_id LEFT JOIN scout.dim_consumer c ON c.consumer_id = fb.consumer_id {{commonWhere}} GROUP BY 1 ORDER BY 2 DESC",
+    "consumer_profile": "SELECT l.geom, c.gender_code AS gender, c.age_code AS age_bracket, COUNT(*) AS txn_count FROM scout.fact_transactions t JOIN scout.dim_time tm ON tm.time_id = t.time_id JOIN scout.dim_location l ON l.location_id = t.location_id LEFT JOIN scout.dim_consumer c ON c.consumer_id = t.consumer_id LEFT JOIN scout.dim_product p ON p.product_id = t.product_id {{commonWhere}} GROUP BY 1,2,3"
+  },
+  "events": {
+    "onFilterChange": [
+      { "action": "refreshFilterOptions", "target": "children" },
+      { "action": "requeryPanels", "target": "all" }
+    ]
+  },
+  "validation": {
+    "requiredFilters": ["f_date_range"],
+    "rules": [
+      { "id": "sku_requires_brand_or_category", "expr": "f_sku != [] OR (f_brand != [] OR f_category != [])", "message": "Select Brand or Category before narrowing to SKUs." },
+      { "id": "comparison_mode_consistency", "expr": "cmp_mode == 'off' OR (cmpA_time != null AND cmpB_time != null)", "message": "Comparison mode requires both A and B time periods." }
+    ]
+  }
+}
