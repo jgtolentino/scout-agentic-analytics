@@ -1,0 +1,12 @@
+{
+  "/behavior/page": "app/behavior/page.js",
+  "/competition/page": "app/competition/page.js",
+  "/etl/page": "app/etl/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/geography/page": "app/geography/page.js",
+  "/journey/page": "app/journey/page.js",
+  "/page": "app/page.js",
+  "/product-mix/page": "app/product-mix/page.js",
+  "/profiling/page": "app/profiling/page.js",
+  "/trends/page": "app/trends/page.js"
+}
