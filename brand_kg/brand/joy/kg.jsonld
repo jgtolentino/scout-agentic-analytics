@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/joy",
+      "@type": "Brand",
+      "schema:name": "Joy",
+      "kg:hasCategory": "kg:category/household-care",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/household-care",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Household Care"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

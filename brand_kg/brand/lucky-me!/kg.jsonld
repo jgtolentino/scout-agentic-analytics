@@ -1,0 +1,32 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/lucky-me!",
+      "@type": "Brand",
+      "schema:name": "Lucky Me!",
+      "kg:hasCategory": "kg:category/instant-foods",
+      "kg:soldIn": "kg:place/ph",
+      "kg:hasParent": "kg:org/monde-nissin-corporation"
+    },
+    {
+      "@id": "kg:category/instant-foods",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Instant Foods"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    },
+    {
+      "@id": "kg:org/monde-nissin-corporation",
+      "@type": "Organization",
+      "schema:name": "Monde Nissin Corporation"
+    }
+  ]
+}

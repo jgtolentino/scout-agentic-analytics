@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/talk-n-text",
+      "@type": "Brand",
+      "schema:name": "Talk N Text",
+      "kg:hasCategory": "kg:category/services",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/services",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Services"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

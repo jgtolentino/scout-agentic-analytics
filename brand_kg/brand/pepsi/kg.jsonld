@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/pepsi",
+      "@type": "Brand",
+      "schema:name": "Pepsi",
+      "kg:hasCategory": "kg:category/non-alcoholic-beverages",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/non-alcoholic-beverages",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Non-Alcoholic Beverages"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

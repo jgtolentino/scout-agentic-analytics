@@ -1,0 +1,41 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/coca-cola",
+      "@type": "Brand",
+      "schema:name": "Coca-Cola",
+      "kg:hasCategory": "kg:category/non-alcoholic-beverages",
+      "kg:soldIn": "kg:place/ph",
+      "kg:hasParent": "kg:org/the-coca-cola-company"
+    },
+    {
+      "@id": "kg:category/non-alcoholic-beverages",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Non-Alcoholic Beverages"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    },
+    {
+      "@id": "kg:org/the-coca-cola-company",
+      "@type": "Organization",
+      "schema:name": "The Coca-Cola Company",
+      "schema:tickerSymbol": "KO"
+    },
+    {
+      "@id": "_:ms_coca-cola",
+      "@type": "kg:MarketShare",
+      "kg:marketShare": 0.6,
+      "kg:asOf": "2024-12-31",
+      "schema:citation": "src:usda-beverages-2022",
+      "kg:confidence": 0.9
+    }
+  ]
+}

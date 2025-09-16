@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/ginebra",
+      "@type": "Brand",
+      "schema:name": "Ginebra",
+      "kg:hasCategory": "kg:category/alcoholic",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/alcoholic",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Alcoholic"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

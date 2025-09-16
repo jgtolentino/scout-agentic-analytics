@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/globe",
+      "@type": "Brand",
+      "schema:name": "Globe",
+      "kg:hasCategory": "kg:category/telecoms",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/telecoms",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Telecoms"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

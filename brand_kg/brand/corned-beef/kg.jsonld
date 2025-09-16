@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/corned-beef",
+      "@type": "Brand",
+      "schema:name": "Corned Beef",
+      "kg:hasCategory": "kg:category/processed-foods",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/processed-foods",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Processed Foods"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

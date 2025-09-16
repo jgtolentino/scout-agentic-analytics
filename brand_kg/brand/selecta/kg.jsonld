@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/selecta",
+      "@type": "Brand",
+      "schema:name": "Selecta",
+      "kg:hasCategory": "kg:category/dairy",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/dairy",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Dairy"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

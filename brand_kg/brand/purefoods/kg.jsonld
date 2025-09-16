@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/purefoods",
+      "@type": "Brand",
+      "schema:name": "Purefoods",
+      "kg:hasCategory": "kg:category/canned-and-jarred-goods",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/canned-and-jarred-goods",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Canned & Jarred Goods"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

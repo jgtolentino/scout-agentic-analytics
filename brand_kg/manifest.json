@@ -1,0 +1,1793 @@
+{
+  "version": "1.0.0",
+  "generated": "2025-09-16T20:17:19.399735Z",
+  "description": "Philippine FMCG Brand Knowledge Graph - Market Intelligence & Research Corpus",
+  "coverage": {
+    "total_brands": 132,
+    "completed": 132,
+    "with_research_md": 132,
+    "with_kg_jsonld": 132,
+    "with_chunks": 132,
+    "with_market_share": 2,
+    "with_market_size": 0
+  },
+  "confidence": {
+    "mean": 0.875,
+    "median": 0.9,
+    "min": 0.85,
+    "max": 0.9,
+    "count": 2
+  },
+  "sources": {
+    "total": 7,
+    "primary": 3,
+    "secondary": 4,
+    "types": [
+      "government",
+      "industry",
+      "research",
+      "company"
+    ]
+  },
+  "freshness": {
+    "newest": "2025-06-05",
+    "oldest": "2022-12-15",
+    "median_age_days": 180,
+    "update_frequency": "quarterly_recommended"
+  },
+  "graph": {
+    "nodes": 159,
+    "edges": 1307
+  },
+  "missing_metrics": [
+    "Market share data missing for 130 brands",
+    "Regional breakdown data not available for most brands",
+    "Private company financial data limited",
+    "Emerging brand panel data insufficient",
+    "Seasonal variation patterns not captured"
+  ],
+  "data_quality": {
+    "completeness_score": 1.0,
+    "source_diversity": "high",
+    "citation_coverage": "complete",
+    "validation_status": "passed"
+  },
+  "brand_breakdown": {
+    "highlands": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "extra-joss": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "7up": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mr-clean": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "lysol": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "golden-fiesta": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "talk-n-text": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "alaska": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "sunsilk": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ligo": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "monde-nissin": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "del-monte": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "spam": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "holiday": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "presto": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cherry-prepaid": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "minola": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "purefoods-star": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "skyflakes": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mang-tomas": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ariel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "angel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "bioderm": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "purefoods": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "flat-tops": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "marlboro": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "magic": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "rc-cola": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "globe": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "century": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "colgate": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "nutriasia": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "lm": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "head-and-shoulders": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "touch-mobile": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "emperador": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "pepsi": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "kopiko": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "coca-cola": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 3,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": 0.9,
+      "has_market_share": true,
+      "has_market_size": false
+    },
+    "marca-leon": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "knorr": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mighty": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "nestlé": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "smart": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "camel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "carnation": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "selecta": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tiger": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "great-taste": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "monde": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "philip-morris": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "jimms": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "nissin": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cloud-9": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "sun-cellular": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "gatorade": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "argentina": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "downy": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tanduay": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tm": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "comfort": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "oishi": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 3,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ricoa": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cream-silk": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tnt": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "rebisco": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "silver-swan": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "more": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "irish-spring": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "chippy": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tang": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "fita": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "san-miguel-pure-foods": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "clear": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "555": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ajinomoto": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cdo": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "piattos": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "corned-beef": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mountain-dew": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "surf": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 3,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tide": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "supreme": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "voice": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "swift": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "libbys": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "maggi-magic-sarap": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mega": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "dove": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "mama-sitas": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ginebra-san-miguel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "san-miguel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ginebra": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "sprite": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 3,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "magic-flakes": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "lucky-me!": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "sting": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "joy": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "champion": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "hope": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "enfagrow": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ufc": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "hello": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "ma-ling": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "bear-brand": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "safeguard": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 3,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": 0.85,
+      "has_market_share": true,
+      "has_market_size": false
+    },
+    "datu-puti": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "san-mig-light": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "nido": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "maggi": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "astro": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "bona-vita": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "palmolive": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "hansel": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "tender-juicy": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "c2": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cigarettes": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "promil": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "nescafé": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "cobra": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "bingo": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "red-horse": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "close-up": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "gomo": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "lux": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "century-tuna": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "roller-coaster": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "winston": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "pantene": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "magnolia": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "fortune": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    },
+    "royal-tru-orange": {
+      "files": [
+        "research.md",
+        "kg.jsonld",
+        "chunks/*.md"
+      ],
+      "sources_count": 0,
+      "chunks_count": 2,
+      "freshness_date": "2025-09-16",
+      "confidence_mean": null,
+      "has_market_share": false,
+      "has_market_size": false
+    }
+  },
+  "usage_instructions": {
+    "neo4j_import": "neo4j-admin database import --nodes=graph/nodes.csv --relationships=graph/edges.csv",
+    "vector_embeddings": "Process chunks/*.md files with OpenAI text-embedding-ada-002",
+    "research_access": "Individual brand profiles available in brand/*/research.md",
+    "knowledge_graph": "JSON-LD files in brand/*/kg.jsonld follow schema.org standards"
+  },
+  "maintenance": {
+    "next_update_due": "2025-12-16",
+    "refresh_frequency": "quarterly",
+    "monitoring_required": [
+      "market_share_changes",
+      "new_brand_launches",
+      "category_disruption"
+    ],
+    "quality_thresholds": {
+      "min_confidence": 0.5,
+      "max_age_months": 12,
+      "required_sources_per_brand": 3
+    }
+  }
+}

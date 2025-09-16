@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/san-mig-light",
+      "@type": "Brand",
+      "schema:name": "San Mig Light",
+      "kg:hasCategory": "kg:category/alcoholic-beverages",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/alcoholic-beverages",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Alcoholic Beverages"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

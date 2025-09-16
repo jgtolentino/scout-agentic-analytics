@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/skyflakes",
+      "@type": "Brand",
+      "schema:name": "SkyFlakes",
+      "kg:hasCategory": "kg:category/snacks",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/snacks",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Snacks"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

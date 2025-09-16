@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/maggi",
+      "@type": "Brand",
+      "schema:name": "Maggi",
+      "kg:hasCategory": "kg:category/instant-foods",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/instant-foods",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Instant Foods"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

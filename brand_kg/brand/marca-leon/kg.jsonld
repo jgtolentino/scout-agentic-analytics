@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/marca-leon",
+      "@type": "Brand",
+      "schema:name": "Marca Leon",
+      "kg:hasCategory": "kg:category/beverages",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/beverages",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Beverages"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

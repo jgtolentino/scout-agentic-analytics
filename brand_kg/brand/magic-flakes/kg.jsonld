@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/magic-flakes",
+      "@type": "Brand",
+      "schema:name": "Magic Flakes",
+      "kg:hasCategory": "kg:category/snacks-and-confectionery",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/snacks-and-confectionery",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Snacks & Confectionery"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

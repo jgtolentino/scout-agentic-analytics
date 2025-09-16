@@ -1,0 +1,26 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/maggi-magic-sarap",
+      "@type": "Brand",
+      "schema:name": "Maggi Magic Sarap",
+      "kg:hasCategory": "kg:category/cooking-essentials",
+      "kg:soldIn": "kg:place/ph"
+    },
+    {
+      "@id": "kg:category/cooking-essentials",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Cooking Essentials"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+:ID,:LABEL,name,type,iso2,ticker,slug
+kg:brand/highlands,Brand,Highlands,brand,,,highlands
+kg:category/processed-foods,schema:CategoryCode,Processed Foods,category,,,processed-foods
+kg:place/ph,schema:Place,Philippines,place,PH,,philippines
+kg:brand/extra-joss,Brand,Extra Joss,brand,,,extra-joss
+kg:category/energy-drinks,schema:CategoryCode,Energy Drinks,category,,,energy-drinks
+kg:brand/7up,Brand,7Up,brand,,,7up
+kg:category/non-alcoholic-beverages,schema:CategoryCode,Non-Alcoholic Beverages,category,,,non-alcoholic-beverages
+kg:brand/mr-clean,Brand,Mr. Clean,brand,,,mr-clean
+kg:category/household-care,schema:CategoryCode,Household Care,category,,,household-care
+kg:brand/lysol,Brand,Lysol,brand,,,lysol
+kg:brand/golden-fiesta,Brand,Golden Fiesta,brand,,,golden-fiesta
+kg:category/cooking-essentials,schema:CategoryCode,Cooking Essentials,category,,,cooking-essentials
+kg:brand/talk-n-text,Brand,Talk N Text,brand,,,talk-n-text
+kg:category/services,schema:CategoryCode,Services,category,,,services
+kg:brand/alaska,Brand,Alaska,brand,,,alaska
+kg:category/dairy,schema:CategoryCode,Dairy,category,,,dairy
+kg:brand/sunsilk,Brand,Sunsilk,brand,,,sunsilk
+kg:category/personal-care,schema:CategoryCode,Personal Care,category,,,personal-care
+kg:brand/ligo,Brand,Ligo,brand,,,ligo
+kg:category/canned-and-jarred-goods,schema:CategoryCode,Canned & Jarred Goods,category,,,canned-and-jarred-goods
+kg:brand/monde-nissin,Brand,Monde Nissin,brand,,,monde-nissin
+kg:category/snacks-and-confectionery,schema:CategoryCode,Snacks & Confectionery,category,,,snacks-and-confectionery
+kg:brand/del-monte,Brand,Del Monte,brand,,,del-monte
+kg:brand/spam,Brand,Spam,brand,,,spam
+kg:category/processed,schema:CategoryCode,Processed,category,,,processed
+kg:brand/holiday,Brand,Holiday,brand,,,holiday
+kg:brand/presto,Brand,Presto,brand,,,presto
+kg:category/snacks,schema:CategoryCode,Snacks,category,,,snacks
+kg:brand/cherry-prepaid,Brand,Cherry Prepaid,brand,,,cherry-prepaid
+kg:brand/minola,Brand,Minola,brand,,,minola
+kg:brand/purefoods-star,Brand,Purefoods Star,brand,,,purefoods-star
+kg:brand/skyflakes,Brand,SkyFlakes,brand,,,skyflakes
+kg:brand/mang-tomas,Brand,Mang Tomas,brand,,,mang-tomas
+kg:brand/ariel,Brand,Ariel,brand,,,ariel
+kg:brand/angel,Brand,Angel,brand,,,angel
+kg:brand/bioderm,Brand,Bioderm,brand,,,bioderm
+kg:brand/purefoods,Brand,Purefoods,brand,,,purefoods
+kg:brand/flat-tops,Brand,Flat Tops,brand,,,flat-tops
+kg:brand/marlboro,Brand,Marlboro,brand,,,marlboro
+kg:category/tobacco-products,schema:CategoryCode,Tobacco Products,category,,,tobacco-products
+kg:brand/magic,Brand,Magic,brand,,,magic
+kg:brand/rc-cola,Brand,RC Cola,brand,,,rc-cola
+kg:brand/globe,Brand,Globe,brand,,,globe
+kg:category/telecoms,schema:CategoryCode,Telecoms,category,,,telecoms
+kg:brand/century,Brand,Century,brand,,,century
+kg:category/canned,schema:CategoryCode,Canned,category,,,canned
+kg:brand/colgate,Brand,Colgate,brand,,,colgate
+kg:brand/nutriasia,Brand,NutriAsia,brand,,,nutriasia
+kg:brand/lm,Brand,LM,brand,,,lm
+kg:brand/head-and-shoulders,Brand,Head & Shoulders,brand,,,head-and-shoulders
+kg:brand/touch-mobile,Brand,Touch Mobile,brand,,,touch-mobile
+kg:brand/emperador,Brand,Emperador,brand,,,emperador
+kg:category/alcoholic,schema:CategoryCode,Alcoholic,category,,,alcoholic
+kg:brand/pepsi,Brand,Pepsi,brand,,,pepsi
+kg:brand/kopiko,Brand,Kopiko,brand,,,kopiko
+kg:category/beverages,schema:CategoryCode,Beverages,category,,,beverages
+kg:brand/coca-cola,Brand,Coca-Cola,brand,,,coca-cola
+kg:org/the-coca-cola-company,Organization,The Coca-Cola Company,organization,,KO,the-coca-cola-company
+_:ms_coca-cola,kg:MarketShare,,metric,,,
+kg:brand/marca-leon,Brand,Marca Leon,brand,,,marca-leon
+kg:brand/knorr,Brand,Knorr,brand,,,knorr
+kg:brand/mighty,Brand,Mighty,brand,,,mighty
+kg:brand/nestlé,Brand,Nestlé,brand,,,nestlé
+kg:brand/smart,Brand,Smart,brand,,,smart
+kg:brand/camel,Brand,Camel,brand,,,camel
+kg:brand/carnation,Brand,Carnation,brand,,,carnation
+kg:brand/selecta,Brand,Selecta,brand,,,selecta
+kg:brand/tiger,Brand,Tiger,brand,,,tiger
+kg:brand/great-taste,Brand,Great Taste,brand,,,great-taste
+kg:brand/monde,Brand,Monde,brand,,,monde
+kg:brand/philip-morris,Brand,Philip Morris,brand,,,philip-morris
+kg:brand/jimms,Brand,Jimms,brand,,,jimms
+kg:brand/nissin,Brand,Nissin,brand,,,nissin
+kg:category/instant-foods,schema:CategoryCode,Instant Foods,category,,,instant-foods
+kg:brand/cloud-9,Brand,Cloud 9,brand,,,cloud-9
+kg:brand/sun-cellular,Brand,Sun Cellular,brand,,,sun-cellular
+kg:brand/gatorade,Brand,Gatorade,brand,,,gatorade
+kg:brand/argentina,Brand,Argentina,brand,,,argentina
+kg:brand/downy,Brand,Downy,brand,,,downy
+kg:brand/tanduay,Brand,Tanduay,brand,,,tanduay
+kg:brand/tm,Brand,TM,brand,,,tm
+kg:brand/comfort,Brand,Comfort,brand,,,comfort
+kg:brand/oishi,Brand,Oishi,brand,,,oishi
+kg:brand/ricoa,Brand,Ricoa,brand,,,ricoa
+kg:brand/cream-silk,Brand,Cream Silk,brand,,,cream-silk
+kg:brand/tnt,Brand,TNT,brand,,,tnt
+kg:brand/rebisco,Brand,Rebisco,brand,,,rebisco
+kg:brand/silver-swan,Brand,Silver Swan,brand,,,silver-swan
+kg:brand/more,Brand,More,brand,,,more
+kg:brand/irish-spring,Brand,Irish Spring,brand,,,irish-spring
+kg:brand/chippy,Brand,Chippy,brand,,,chippy
+kg:brand/tang,Brand,Tang,brand,,,tang
+kg:brand/fita,Brand,Fita,brand,,,fita
+kg:brand/san-miguel-pure-foods,Brand,San Miguel Pure Foods,brand,,,san-miguel-pure-foods
+kg:brand/clear,Brand,Clear,brand,,,clear
+kg:brand/555,Brand,555,brand,,,555
+kg:brand/ajinomoto,Brand,Ajinomoto,brand,,,ajinomoto
+kg:brand/cdo,Brand,CDO,brand,,,cdo
+kg:brand/piattos,Brand,Piattos,brand,,,piattos
+kg:brand/corned-beef,Brand,Corned Beef,brand,,,corned-beef
+kg:brand/mountain-dew,Brand,Mountain Dew,brand,,,mountain-dew
+kg:brand/surf,Brand,Surf,brand,,,surf
+kg:category/household,schema:CategoryCode,Household,category,,,household
+kg:brand/tide,Brand,Tide,brand,,,tide
+kg:brand/supreme,Brand,Supreme,brand,,,supreme
+kg:brand/voice,Brand,Voice,brand,,,voice
+kg:brand/swift,Brand,Swift,brand,,,swift
+kg:brand/libbys,Brand,Libby's,brand,,,libby's
+kg:brand/maggi-magic-sarap,Brand,Maggi Magic Sarap,brand,,,maggi-magic-sarap
+kg:brand/mega,Brand,Mega,brand,,,mega
+kg:brand/dove,Brand,Dove,brand,,,dove
+kg:brand/mama-sitas,Brand,Mama Sita's,brand,,,mama-sita's
+kg:brand/ginebra-san-miguel,Brand,Ginebra San Miguel,brand,,,ginebra-san-miguel
+kg:category/alcoholic-beverages,schema:CategoryCode,Alcoholic Beverages,category,,,alcoholic-beverages
+kg:brand/san-miguel,Brand,San Miguel,brand,,,san-miguel
+kg:brand/ginebra,Brand,Ginebra,brand,,,ginebra
+kg:brand/sprite,Brand,Sprite,brand,,,sprite
+kg:brand/magic-flakes,Brand,Magic Flakes,brand,,,magic-flakes
+kg:brand/lucky-me!,Brand,Lucky Me!,brand,,,lucky-me!
+kg:org/monde-nissin-corporation,Organization,Monde Nissin Corporation,organization,,,monde-nissin-corporation
+kg:brand/sting,Brand,Sting,brand,,,sting
+kg:brand/joy,Brand,Joy,brand,,,joy
+kg:brand/champion,Brand,Champion,brand,,,champion
+kg:brand/hope,Brand,Hope,brand,,,hope
+kg:brand/enfagrow,Brand,Enfagrow,brand,,,enfagrow
+kg:brand/ufc,Brand,UFC,brand,,,ufc
+kg:brand/hello,Brand,Hello,brand,,,hello
+kg:brand/ma-ling,Brand,Ma-Ling,brand,,,ma-ling
+kg:brand/bear-brand,Brand,Bear Brand,brand,,,bear-brand
+kg:brand/safeguard,Brand,Safeguard,brand,,,safeguard
+kg:org/procter-and-gamble,Organization,Procter & Gamble,organization,,PG,procter-and-gamble
+_:ms_safeguard,kg:MarketShare,,metric,,,
+kg:brand/datu-puti,Brand,Datu Puti,brand,,,datu-puti
+kg:brand/san-mig-light,Brand,San Mig Light,brand,,,san-mig-light
+kg:brand/nido,Brand,Nido,brand,,,nido
+kg:brand/maggi,Brand,Maggi,brand,,,maggi
+kg:brand/astro,Brand,Astro,brand,,,astro
+kg:brand/bona-vita,Brand,Bona Vita,brand,,,bona-vita
+kg:brand/palmolive,Brand,Palmolive,brand,,,palmolive
+kg:brand/hansel,Brand,Hansel,brand,,,hansel
+kg:brand/tender-juicy,Brand,Tender Juicy,brand,,,tender-juicy
+kg:brand/c2,Brand,C2,brand,,,c2
+kg:brand/cigarettes,Brand,Cigarettes,brand,,,cigarettes
+kg:brand/promil,Brand,Promil,brand,,,promil
+kg:brand/nescafé,Brand,Nescafé,brand,,,nescafé
+kg:brand/cobra,Brand,Cobra,brand,,,cobra
+kg:brand/bingo,Brand,Bingo,brand,,,bingo
+kg:brand/red-horse,Brand,Red Horse,brand,,,red-horse
+kg:brand/close-up,Brand,Close-Up,brand,,,close-up
+kg:brand/gomo,Brand,GOMO,brand,,,gomo
+kg:brand/lux,Brand,Lux,brand,,,lux
+kg:brand/century-tuna,Brand,Century Tuna,brand,,,century-tuna
+kg:brand/roller-coaster,Brand,Roller Coaster,brand,,,roller-coaster
+kg:brand/winston,Brand,Winston,brand,,,winston
+kg:category/tobacco,schema:CategoryCode,Tobacco,category,,,tobacco
+kg:brand/pantene,Brand,Pantene,brand,,,pantene
+kg:brand/magnolia,Brand,Magnolia,brand,,,magnolia
+kg:brand/fortune,Brand,Fortune,brand,,,fortune
+kg:brand/royal-tru-orange,Brand,Royal Tru-Orange,brand,,,royal-tru-orange

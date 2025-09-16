@@ -1,0 +1,41 @@
+{
+  "@context": {
+    "schema": "http://schema.org/",
+    "kg": "https://pulser-ai.app/kg#"
+  },
+  "@graph": [
+    {
+      "@id": "kg:brand/safeguard",
+      "@type": "Brand",
+      "schema:name": "Safeguard",
+      "kg:hasCategory": "kg:category/personal-care",
+      "kg:soldIn": "kg:place/ph",
+      "kg:hasParent": "kg:org/procter-and-gamble"
+    },
+    {
+      "@id": "kg:category/personal-care",
+      "@type": "schema:CategoryCode",
+      "schema:name": "Personal Care"
+    },
+    {
+      "@id": "kg:place/ph",
+      "@type": "schema:Place",
+      "schema:name": "Philippines",
+      "schema:addressCountry": "PH"
+    },
+    {
+      "@id": "kg:org/procter-and-gamble",
+      "@type": "Organization",
+      "schema:name": "Procter & Gamble",
+      "schema:tickerSymbol": "PG"
+    },
+    {
+      "@id": "_:ms_safeguard",
+      "@type": "kg:MarketShare",
+      "kg:marketShare": 0.68,
+      "kg:asOf": "2020",
+      "schema:citation": "src:nielseniq-2025",
+      "kg:confidence": 0.85
+    }
+  ]
+}
