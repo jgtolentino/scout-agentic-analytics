@@ -43,7 +43,7 @@ export function BrandSankey({
   onNodeClick,
   onLinkClick
 }: BrandSankeyProps) {
-  const { filters, updateFilters } = useFilterBus();
+  const { filters, set: updateFilters } = useFilterBus();
   const [data, setData] = useState<BrandSwitchingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,7 +163,7 @@ export function BrandSankey({
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6" style={{ height, width }}>
         <div className="flex items-center justify-center h-full text-red-600">
-          <span>Error: {error instanceof Error ? error.message : String(error || 'Unknown error')}</span>
+          <span>Error: {String(error || 'Unknown error')}</span>
         </div>
       </div>
     );

@@ -1,0 +1,51 @@
+{
+  "source": ["tokens/primitives.json"],
+  "platforms": {
+    "css": {
+      "transformGroup": "css",
+      "buildPath": "packages/ui-components/src/tokens/generated/",
+      "files": [
+        {
+          "destination": "tokens.css",
+          "format": "css/variables",
+          "options": {
+            "outputReferences": true
+          }
+        }
+      ]
+    },
+    
+    "js": {
+      "transformGroup": "js",
+      "buildPath": "packages/ui-components/src/tokens/generated/",
+      "files": [
+        {
+          "destination": "tokens.js",
+          "format": "javascript/es6"
+        }
+      ]
+    },
+    
+    "json": {
+      "transformGroup": "js",
+      "buildPath": "packages/ui-components/src/tokens/generated/",
+      "files": [
+        {
+          "destination": "tokens.json",
+          "format": "json/flat"
+        }
+      ]
+    },
+    
+    "scss": {
+      "transformGroup": "scss",
+      "buildPath": "packages/ui-components/src/tokens/generated/",
+      "files": [
+        {
+          "destination": "_tokens.scss",
+          "format": "scss/variables"
+        }
+      ]
+    }
+  }
+}

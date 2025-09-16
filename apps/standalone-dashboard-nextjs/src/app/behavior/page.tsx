@@ -35,7 +35,7 @@ export default function Behavior() {
       <div className="mb-6">
         <Card>
           <DynamicBehaviorKPIs
-            data={behaviorData}
+            data={behaviorData || null}
             title="Customer Behavior KPIs"
             height={350}
             loading={behaviorLoading}

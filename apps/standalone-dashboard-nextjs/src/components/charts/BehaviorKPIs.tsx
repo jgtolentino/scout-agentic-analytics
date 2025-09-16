@@ -58,7 +58,7 @@ export default function BehaviorKPIs({
     // Gauge charts for each KPI
     const gaugeData = kpis.map((kpi, index) => ({
       type: 'indicator' as const,
-      mode: 'gauge+number+delta',
+      mode: 'gauge+number+delta' as const,
       value: kpi.value * 100,
       domain: { 
         row: 0, 
@@ -70,8 +70,8 @@ export default function BehaviorKPIs({
       },
       delta: { 
         reference: kpi.target * 100,
-        increasing: { color: '#10b981' },
-        decreasing: { color: '#ef4444' }
+        increasing: { color: '#10b981', symbol: '▲' },
+        decreasing: { color: '#ef4444', symbol: '▼' }
       },
       gauge: {
         axis: { range: [null, 100] },
@@ -142,7 +142,7 @@ export default function BehaviorKPIs({
     grid: { 
       rows: 1, 
       columns: 3, 
-      pattern: 'independent' 
+      pattern: 'independent' as const 
     },
     margin: { t: 50, r: 20, b: 20, l: 20 },
     height,
@@ -156,7 +156,7 @@ export default function BehaviorKPIs({
   const config = {
     displayModeBar: true,
     displaylogo: false,
-    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'zoom2d'],
+    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d', 'zoom2d'] as any,
     toImageButtonOptions: {
       format: 'png' as const,
       filename: `behavior_kpis_${Date.now()}`,

@@ -1,0 +1,156 @@
+# Production ETL Pipeline Docker Compose
+# Local development environment for Scout Analytics ETL
+
+version: '3.8'
+
+services:
+  # Temporal Server for Workflow Orchestration
+  temporal:
+    container_name: scout-temporal
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    image: temporalio/auto-setup:1.22.0
+    networks:
+      - scout-network
+    ports:
+      - 7233:7233
+    volumes:
+      - ./etl/temporal:/etc/temporal/config/dynamicconfig
+
+  # PostgreSQL for Temporal metadata (separate from Supabase)
+  postgresql:
+    container_name: scout-postgresql
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:13
+    networks:
+      - scout-network
+    ports:
+      - 5432:5432
+    volumes:
+      - temporal_data:/var/lib/postgresql/data
+
+  # Temporal Web UI
+  temporal-web:
+    container_name: scout-temporal-web
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+      - TEMPORAL_PERMIT_WRITE_API=true
+    image: temporalio/web:2.18.0
+    networks:
+      - scout-network
+    ports:
+      - 8088:8088
+
+  # Prometheus for Metrics Collection
+  prometheus:
+    container_name: scout-prometheus
+    image: prom/prometheus:v2.47.0
+    networks:
+      - scout-network
+    ports:
+      - 9090:9090
+    volumes:
+      - ./etl/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # Grafana for Monitoring Dashboards
+  grafana:
+    container_name: scout-grafana
+    image: grafana/grafana:10.1.0
+    networks:
+      - scout-network
+    ports:
+      - 3001:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./etl/monitoring/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+
+  # Jaeger for Distributed Tracing
+  jaeger:
+    container_name: scout-jaeger
+    image: jaegertracing/all-in-one:1.48
+    networks:
+      - scout-network
+    ports:
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 5778:5778
+      - 16686:16686
+      - 14250:14250
+      - 14268:14268
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  # OpenTelemetry Collector
+  otel-collector:
+    container_name: scout-otel-collector
+    image: otel/opentelemetry-collector-contrib:0.86.0
+    networks:
+      - scout-network
+    ports:
+      - 1888:1888   # pprof extension
+      - 8888:8888   # Prometheus metrics exposed by the collector
+      - 8889:8889   # Prometheus exporter metrics
+      - 13133:13133 # health_check extension
+      - 4317:4317   # OTLP gRPC receiver
+      - 4318:4318   # OTLP HTTP receiver
+      - 55679:55679 # zpages extension
+    volumes:
+      - ./etl/monitoring/opentelemetry_config.yml:/etc/otel-collector-config.yml
+    command: ["--config=/etc/otel-collector-config.yml"]
+    depends_on:
+      - jaeger
+      - prometheus
+
+  # Bruno ETL Worker
+  bruno-worker:
+    container_name: scout-bruno-worker
+    build:
+      context: .
+      dockerfile: etl/Dockerfile
+    networks:
+      - scout-network
+    volumes:
+      - ./etl:/app/etl
+      - ./dbt-scout:/app/dbt-scout
+      - ./.env.production:/app/.env
+    environment:
+      - TEMPORAL_HOST=temporal
+      - TEMPORAL_PORT=7233
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - PROMETHEUS_GATEWAY=http://prometheus:9090
+    depends_on:
+      - temporal
+      - otel-collector
+    command: ["python", "-m", "temporalio.worker", "--target-host", "temporal:7233"]
+
+networks:
+  scout-network:
+    driver: bridge
+
+volumes:
+  temporal_data:
+  prometheus_data:
+  grafana_data:

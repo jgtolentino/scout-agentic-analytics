@@ -1,0 +1,340 @@
+name: SCOUT Framework Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run nightly to ensure token consistency
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # S - Source: Validate token sources
+  source-validation:
+    name: 'S - Source Validation'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Validate source files exist
+        run: |
+          echo "🔍 Scanning for design token sources..."
+          
+          # Check for CSS/SCSS/LESS files
+          CSS_FILES=$(find . -name "*.css" -not -path "./node_modules/*" | wc -l)
+          SCSS_FILES=$(find . -name "*.scss" -not -path "./node_modules/*" | wc -l)
+          LESS_FILES=$(find . -name "*.less" -not -path "./node_modules/*" | wc -l)
+          
+          echo "📁 Found source files:"
+          echo "   CSS: $CSS_FILES files"
+          echo "   SCSS: $SCSS_FILES files"  
+          echo "   LESS: $LESS_FILES files"
+          
+          # Check for theme config files
+          if [ -f "tailwind.config.js" ] || [ -f "tailwind.config.ts" ]; then
+            echo "✅ Tailwind config found"
+          fi
+          
+          TOTAL_FILES=$((CSS_FILES + SCSS_FILES + LESS_FILES))
+          if [ "$TOTAL_FILES" -eq 0 ]; then
+            echo "❌ No design token source files found"
+            exit 1
+          fi
+          
+          echo "✅ Source validation passed: $TOTAL_FILES source files"
+
+  # C - Canonicalize: Extract tokens to DTCG format  
+  canonicalize:
+    name: 'C - Canonicalize (Extract)'
+    runs-on: ubuntu-latest
+    needs: source-validation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run token extraction
+        run: npm run tokens:extract
+        
+      - name: Validate DTCG compliance
+        run: |
+          if [ ! -f "tokens/primitives.json" ]; then
+            echo "❌ Token extraction failed"
+            exit 1
+          fi
+          
+          # Validate DTCG schema compliance
+          echo "📋 Validating DTCG schema compliance..."
+          
+          # Check required DTCG properties
+          SCHEMA_URL=$(jq -r '.$schema' tokens/primitives.json)
+          if [[ $SCHEMA_URL == *"designtokens.org"* ]]; then
+            echo "✅ DTCG schema reference found"
+          else
+            echo "⚠️ Missing DTCG schema reference"
+          fi
+          
+          # Validate token structure
+          COLOR_TOKENS=$(jq '.color | length' tokens/primitives.json)
+          SIZE_TOKENS=$(jq '.size | length' tokens/primitives.json)
+          
+          echo "📊 Extracted token summary:"
+          echo "   Colors: $COLOR_TOKENS"
+          echo "   Sizes: $SIZE_TOKENS"
+          
+          if [ "$COLOR_TOKENS" -gt 0 ]; then
+            echo "✅ Canonicalization successful"
+          else
+            echo "❌ No tokens extracted"
+            exit 1
+          fi
+          
+      - name: Upload canonicalized tokens
+        uses: actions/upload-artifact@v4
+        with:
+          name: dtcg-tokens
+          path: tokens/primitives.json
+
+  # O - Output: Transform tokens to usable formats
+  output-transformation:
+    name: 'O - Output (Transform)'
+    runs-on: ubuntu-latest
+    needs: canonicalize
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Download canonicalized tokens
+        uses: actions/download-artifact@v4
+        with:
+          name: dtcg-tokens
+          path: tokens/
+          
+      - name: Transform tokens with Style Dictionary
+        run: npm run tokens:build
+        
+      - name: Validate output formats
+        run: |
+          echo "🔍 Validating transformed outputs..."
+          
+          REQUIRED_OUTPUTS=(
+            "packages/ui-components/src/tokens/generated/tokens.css"
+            "packages/ui-components/src/tokens/generated/tokens.js"
+            "packages/ui-components/src/tokens/generated/tokens.json"
+            "packages/ui-components/src/tokens/generated/_tokens.scss"
+          )
+          
+          for file in "${REQUIRED_OUTPUTS[@]}"; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+              echo "✅ $file ($SIZE bytes)"
+            else
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+          done
+          
+          # Validate CSS custom properties
+          CSS_VARS=$(grep -c "^  --" packages/ui-components/src/tokens/generated/tokens.css || echo "0")
+          JS_EXPORTS=$(grep -c "^export const" packages/ui-components/src/tokens/generated/tokens.js || echo "0")
+          
+          echo "📊 Output validation:"
+          echo "   CSS Variables: $CSS_VARS"
+          echo "   JS Exports: $JS_EXPORTS"
+          
+          if [ "$CSS_VARS" -gt 0 ] && [ "$JS_EXPORTS" -gt 0 ]; then
+            echo "✅ Output transformation successful"
+          else
+            echo "❌ Invalid output format"
+            exit 1
+          fi
+          
+      - name: Upload transformed outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: transformed-tokens
+          path: packages/ui-components/src/tokens/generated/
+
+  # U - Use: Validate token usage in applications
+  usage-validation:
+    name: 'U - Use (Application)'
+    runs-on: ubuntu-latest
+    needs: output-transformation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Download transformed tokens
+        uses: actions/download-artifact@v4
+        with:
+          name: transformed-tokens
+          path: packages/ui-components/src/tokens/generated/
+          
+      - name: Build applications with tokens
+        run: |
+          echo "🏗️ Building applications with design tokens..."
+          
+          # Build UI components
+          npm run build -w packages/ui-components
+          
+          # Build dashboard app
+          npm run build -w apps/standalone-dashboard-nextjs
+          
+      - name: Validate token integration
+        run: |
+          echo "🔍 Validating token integration in build..."
+          
+          # Check that tokens are bundled in the build
+          if find apps/standalone-dashboard-nextjs/.next -name "*.css" -exec grep -l "color-amazon-accent" {} \; | head -1; then
+            echo "✅ Design tokens found in production build"
+          else
+            echo "❌ Design tokens not found in build"
+            exit 1
+          fi
+          
+          # Check for hardcoded values (potential token misses)
+          HARDCODED_COLORS=$(find apps/standalone-dashboard-nextjs/src -name "*.tsx" -o -name "*.ts" | xargs grep -n "#[0-9a-fA-F]{6}" | wc -l)
+          
+          echo "⚠️ Potential hardcoded colors found: $HARDCODED_COLORS"
+          if [ "$HARDCODED_COLORS" -gt 10 ]; then
+            echo "⚠️ High number of hardcoded colors - consider tokenizing"
+          fi
+          
+          echo "✅ Usage validation completed"
+
+  # T - Test: Visual regression and token validation
+  test-validation:
+    name: 'T - Test (Visual Parity)'
+    runs-on: ubuntu-latest
+    needs: usage-validation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Download all token artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: transformed-tokens
+          path: packages/ui-components/src/tokens/generated/
+          
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+        
+      - name: Start development server
+        run: |
+          npm run dev &
+          npx wait-on http://localhost:3002 --timeout 120000
+          
+      - name: Run SCOUT visual tests
+        run: npm run test:visual
+        env:
+          CI: true
+          
+      - name: Generate SCOUT framework report
+        run: |
+          echo "# 🚀 SCOUT Framework Validation Report" > scout-report.md
+          echo "" >> scout-report.md
+          echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> scout-report.md
+          echo "" >> scout-report.md
+          
+          echo "## ✅ SCOUT Pipeline Status" >> scout-report.md
+          echo "- **S** - Source: ✅ Validated" >> scout-report.md  
+          echo "- **C** - Canonicalize: ✅ DTCG compliant" >> scout-report.md
+          echo "- **O** - Output: ✅ Multi-format transformed" >> scout-report.md
+          echo "- **U** - Use: ✅ Application integrated" >> scout-report.md
+          echo "- **T** - Test: ✅ Visual parity verified" >> scout-report.md
+          echo "" >> scout-report.md
+          
+          # Add token statistics
+          if [ -f "tokens/primitives.json" ]; then
+            COLORS=$(jq '.color | length' tokens/primitives.json)
+            SPACING=$(jq '.size.spacing | length' tokens/primitives.json)
+            
+            echo "## 📊 Token Statistics" >> scout-report.md
+            echo "- Colors: $COLORS tokens" >> scout-report.md
+            echo "- Spacing: $SPACING tokens" >> scout-report.md
+          fi
+          
+          echo "" >> scout-report.md
+          echo "## 🎯 Next Steps" >> scout-report.md
+          echo "- Design tokens are production-ready" >> scout-report.md
+          echo "- Visual parity maintained across environments" >> scout-report.md
+          echo "- Automated pipeline ensures consistency" >> scout-report.md
+          
+      - name: Upload SCOUT report
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-framework-report
+          path: |
+            scout-report.md
+            test-results/
+          
+      - name: Comment PR with SCOUT status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('scout-report.md')) {
+              const report = fs.readFileSync('scout-report.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: report
+              });
+            }

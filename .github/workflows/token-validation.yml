@@ -1,0 +1,311 @@
+name: Scout Design Token Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/ui-components/src/**'
+      - 'apps/*/src/**'
+      - '*.css'
+      - '*.scss'
+      - '*.less'
+      - 'tailwind.config.*'
+      - 'style-dictionary.config.*'
+      - 'scripts/extract-from-repo.js'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'packages/ui-components/src/**'
+      - 'apps/*/src/**'
+      - '*.css'
+      - '*.scss'
+      - '*.less'
+      - 'tailwind.config.*'
+      - 'style-dictionary.config.*'
+      - 'scripts/extract-from-repo.js'
+
+env:
+  NODE_VERSION: '20'
+  SCOUT_BASE_URL: 'http://localhost:3002'
+
+jobs:
+  # Job 1: Extract and validate design tokens
+  token-extraction:
+    name: Extract & Validate Design Tokens
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Extract design tokens from source
+        run: npm run tokens:extract
+        
+      - name: Validate token extraction
+        run: |
+          if [ ! -f "tokens/primitives.json" ]; then
+            echo "❌ Token extraction failed - primitives.json not found"
+            exit 1
+          fi
+          
+          # Check token counts
+          COLOR_COUNT=$(jq '.color | length' tokens/primitives.json)
+          SPACING_COUNT=$(jq '.size.spacing | length' tokens/primitives.json)
+          
+          echo "✅ Extracted tokens:"
+          echo "   Colors: $COLOR_COUNT"
+          echo "   Spacing: $SPACING_COUNT"
+          
+          # Fail if no tokens extracted
+          if [ "$COLOR_COUNT" -eq 0 ]; then
+            echo "❌ No color tokens extracted"
+            exit 1
+          fi
+          
+      - name: Build Style Dictionary outputs
+        run: npm run tokens:build
+        
+      - name: Validate generated token files
+        run: |
+          REQUIRED_FILES=(
+            "packages/ui-components/src/tokens/generated/tokens.css"
+            "packages/ui-components/src/tokens/generated/tokens.js"
+            "packages/ui-components/src/tokens/generated/tokens.json"
+            "packages/ui-components/src/tokens/generated/_tokens.scss"
+          )
+          
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required token file missing: $file"
+              exit 1
+            fi
+            echo "✅ Generated: $file"
+          done
+          
+      - name: Upload token artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-tokens
+          path: |
+            tokens/primitives.json
+            packages/ui-components/src/tokens/generated/
+          retention-days: 30
+
+  # Job 2: Visual regression testing
+  visual-testing:
+    name: Visual Regression Testing
+    runs-on: ubuntu-latest
+    needs: token-extraction
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Download token artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: design-tokens
+          path: .
+          
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        
+      - name: Build UI components
+        run: npm run build -w packages/ui-components
+        
+      - name: Start development server
+        run: |
+          npm run dev &
+          # Wait for server to be ready
+          npx wait-on http://localhost:3002 --timeout 120000
+          
+      - name: Run visual regression tests
+        run: npm run test:visual
+        env:
+          CI: true
+          
+      - name: Upload visual test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 30
+          
+      - name: Comment PR with visual diff results
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('test-results/REPORT.md')) {
+              const report = fs.readFileSync('test-results/REPORT.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🎨 Visual Regression Test Results\n\n${report}\n\n[View detailed report](${context.payload.pull_request.html_url}/checks)`
+              });
+            }
+
+  # Job 3: Token compatibility check
+  compatibility-check:
+    name: Token Compatibility Check
+    runs-on: ubuntu-latest
+    needs: token-extraction
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Extract tokens from PR branch
+        run: npm run tokens:extract
+        
+      - name: Save PR tokens
+        run: cp tokens/primitives.json tokens/pr-tokens.json
+        
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          
+      - name: Install dependencies (base)
+        run: npm ci
+        
+      - name: Extract tokens from base branch
+        run: npm run tokens:extract
+        
+      - name: Compare token changes
+        run: |
+          # Install jq for JSON processing
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          
+          echo "## 🎨 Design Token Changes" > token-diff.md
+          echo "" >> token-diff.md
+          
+          # Compare color tokens
+          BASE_COLORS=$(jq '.color | length' tokens/primitives.json)
+          PR_COLORS=$(jq '.color | length' tokens/pr-tokens.json)
+          COLOR_DIFF=$((PR_COLORS - BASE_COLORS))
+          
+          echo "### Color Tokens" >> token-diff.md
+          echo "- Base: $BASE_COLORS colors" >> token-diff.md
+          echo "- PR: $PR_COLORS colors" >> token-diff.md
+          echo "- Change: $COLOR_DIFF colors" >> token-diff.md
+          echo "" >> token-diff.md
+          
+          # Compare spacing tokens
+          BASE_SPACING=$(jq '.size.spacing | length' tokens/primitives.json)
+          PR_SPACING=$(jq '.size.spacing | length' tokens/pr-tokens.json)
+          SPACING_DIFF=$((PR_SPACING - BASE_SPACING))
+          
+          echo "### Spacing Tokens" >> token-diff.md
+          echo "- Base: $BASE_SPACING values" >> token-diff.md
+          echo "- PR: $PR_SPACING values" >> token-diff.md
+          echo "- Change: $SPACING_DIFF values" >> token-diff.md
+          echo "" >> token-diff.md
+          
+          # Check for breaking changes
+          if [ "$COLOR_DIFF" -lt 0 ] || [ "$SPACING_DIFF" -lt 0 ]; then
+            echo "⚠️ **Warning**: Tokens were removed - this may be a breaking change!" >> token-diff.md
+            echo "::warning::Design tokens were removed in this PR"
+          else
+            echo "✅ No breaking token changes detected" >> token-diff.md
+          fi
+          
+      - name: Comment PR with token diff
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('token-diff.md')) {
+              const diff = fs.readFileSync('token-diff.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: diff
+              });
+            }
+
+  # Job 4: Build validation
+  build-validation:
+    name: Build Validation with Tokens
+    runs-on: ubuntu-latest
+    needs: token-extraction
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Download token artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: design-tokens
+          path: .
+          
+      - name: Build UI components with tokens
+        run: npm run build -w packages/ui-components
+        
+      - name: Build dashboard with tokens
+        run: npm run build -w apps/standalone-dashboard-nextjs
+        
+      - name: Validate build outputs
+        run: |
+          # Check that token CSS is included in build
+          if grep -r "color-amazon-accent" apps/standalone-dashboard-nextjs/.next/static/ > /dev/null; then
+            echo "✅ Token CSS included in build"
+          else
+            echo "❌ Token CSS not found in build output"
+            exit 1
+          fi
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-outputs
+          path: |
+            packages/ui-components/dist/
+            apps/standalone-dashboard-nextjs/.next/
+          retention-days: 7
