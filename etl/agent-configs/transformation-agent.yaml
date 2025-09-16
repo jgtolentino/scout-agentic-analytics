@@ -1,0 +1,214 @@
+# SuperClaude Transformation Agent Configuration
+# Silver Layer - Data cleansing, standardization, and enrichment
+
+agent:
+  name: "transformation-agent"
+  type: "child"
+  layer: "silver"
+  persona: "--persona-analyzer"
+  mcp_servers:
+    primary: "sequential"
+    secondary: ["context7"]
+  
+  responsibilities:
+    - "Data cleansing and standardization"
+    - "Deduplication and record merging"
+    - "Business rule application"
+    - "Data enrichment and validation"
+    - "Write to silver_* tables"
+
+  configuration:
+    flags:
+      - "--think-hard"
+      - "--focus quality"
+      - "--validate"
+      - "--systematic"
+    
+    tools:
+      primary: ["Read", "Edit", "MultiEdit", "Bash"]
+      secondary: ["Grep", "TodoWrite"]
+    
+    performance:
+      batch_size: 5000
+      timeout_minutes: 45
+      memory_limit_mb: 4096
+      parallel_processing: true
+
+  transformation_pipeline:
+    stage_1_cleansing:
+      - operation: "remove_duplicates"
+        key_columns: ["InteractionID", "TransactionDate"]
+        resolution_strategy: "keep_latest"
+        
+      - operation: "standardize_values"
+        fields:
+          Gender: 
+            mapping: {"M": "Male", "F": "Female", "Male": "Male", "Female": "Female"}
+            default: "Unknown"
+          EmotionalState:
+            values: ["Happy", "Sad", "Neutral", "Angry", "Surprised"]
+            default: "Neutral"
+            
+      - operation: "validate_data_types"
+        conversions:
+          Age: "integer_with_range(0, 120)"
+          StoreID: "positive_integer"
+          ProductID: "positive_integer"
+          BarangayID: "positive_integer"
+
+    stage_2_enrichment:
+      - operation: "geographic_enrichment"
+        source_table: "scout.geo_regions"
+        join_fields: ["BarangayID"]
+        target_fields: ["region_code", "economic_zone", "population_density"]
+        
+      - operation: "temporal_features"
+        date_field: "TransactionDate"
+        extractions:
+          - "hour_of_day"
+          - "day_of_week" 
+          - "week_of_year"
+          - "month"
+          - "quarter"
+          - "is_weekend"
+          - "is_holiday"
+          
+      - operation: "customer_features"
+        customer_id: "FacialID"
+        features:
+          - "days_since_last_visit"
+          - "visit_frequency_30d"
+          - "preferred_time_of_day"
+          - "customer_lifetime_value"
+
+    stage_3_business_rules:
+      - rule: "valid_transaction_time"
+        condition: "hour_of_day BETWEEN 6 AND 23"
+        action: "flag_for_review"
+        
+      - rule: "reasonable_age"
+        condition: "Age IS NULL OR (Age >= 5 AND Age <= 99)"
+        action: "log_anomaly"
+        
+      - rule: "store_product_validation"
+        condition: "EXISTS(SELECT 1 FROM scout.master_stores ms JOIN scout.master_products mp ON true WHERE ms.store_id = StoreID AND mp.product_id = ProductID)"
+        action: "quarantine_if_false"
+
+  silver_tables:
+    silver_transactions:
+      source: "scout.bronze_transactions"
+      primary_key: ["InteractionID"]
+      partitioning: "monthly"
+      clustering: ["StoreID", "TransactionDate"]
+      
+    silver_customers:
+      source: "derived_from_transactions"
+      aggregation_level: "FacialID"
+      update_frequency: "daily"
+      
+    silver_product_metrics:
+      source: "derived_from_transactions" 
+      aggregation_level: "ProductID"
+      update_frequency: "hourly"
+
+  data_quality_framework:
+    completeness_checks:
+      critical_fields: ["InteractionID", "StoreID", "TransactionDate"]
+      min_completeness: 95.0
+      
+    consistency_checks:
+      cross_reference_validation: true
+      temporal_consistency: true
+      referential_integrity: true
+      
+    accuracy_checks:
+      outlier_detection: true
+      statistical_validation: true
+      business_rule_validation: true
+
+  deduplication:
+    strategy: "deterministic_and_fuzzy"
+    deterministic_keys: ["InteractionID"]
+    fuzzy_matching:
+      fields: ["FacialID", "DeviceID", "TransactionDate"]
+      similarity_threshold: 0.85
+      
+    resolution_rules:
+      duplicate_policy: "merge_with_priority"
+      priority_order: ["data_quality_score", "timestamp_latest", "source_system"]
+
+  data_enrichment:
+    external_lookups:
+      geographic_data:
+        source: "scout.ph_admin_boundaries"
+        join_strategy: "left_join"
+        cache_duration: "24 hours"
+        
+      product_hierarchy:
+        source: "scout.master_product_catalog"
+        join_strategy: "inner_join"
+        cache_duration: "1 hour"
+        
+    calculated_fields:
+      customer_analytics:
+        - "recency_days"
+        - "frequency_score"
+        - "monetary_value"
+        - "customer_segment"
+        
+      transaction_analytics:
+        - "basket_size"
+        - "transaction_value"
+        - "time_spent_minutes"
+        - "device_type_category"
+
+  validation_rules:
+    data_contracts:
+      enforce_schema: true
+      validate_constraints: true
+      check_foreign_keys: true
+      
+    business_logic:
+      - name: "transaction_completeness"
+        description: "All transactions must have store, product, and timestamp"
+        sql: "StoreID IS NOT NULL AND ProductID IS NOT NULL AND TransactionDate IS NOT NULL"
+        
+      - name: "temporal_validity"
+        description: "Transaction date cannot be in the future"
+        sql: "TransactionDate <= NOW()"
+        
+      - name: "customer_consistency"
+        description: "Customer demographics should be consistent within customer"
+        validation_type: "cross_record"
+
+  error_handling:
+    strategy: "fix_and_flag"
+    fix_attempts: ["auto_correction", "rule_based_inference", "default_substitution"]
+    
+    escalation_matrix:
+      data_quality_score_below_80: "auto_quarantine"
+      business_rule_violation: "flag_for_manual_review"
+      referential_integrity_failure: "reject_with_notification"
+
+  performance_optimization:
+    indexing_strategy: "automatic_based_on_queries"
+    partitioning: "time_based_monthly"
+    compression: "enabled"
+    
+    caching:
+      lookup_tables: "memory_cache_4h"
+      calculated_metrics: "disk_cache_1h"
+      validation_results: "memory_cache_30m"
+
+metadata_integration:
+  job_tracking: true
+  lineage_tracking: true
+  quality_metrics: true
+  transformation_log: true
+  
+  quality_score_calculation:
+    weights:
+      completeness: 0.3
+      consistency: 0.25
+      accuracy: 0.25
+      validity: 0.2

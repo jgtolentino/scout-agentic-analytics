@@ -1,0 +1,100 @@
+# SuperClaude Orchestrator Agent Configuration
+# Master coordinator for the entire ETL pipeline
+
+agent:
+  name: "orchestrator-agent"
+  type: "parent"
+  persona: "--persona-architect"
+  mcp_servers:
+    primary: "sequential"
+    secondary: ["context7"]
+  
+  responsibilities:
+    - "Overall pipeline scheduling and coordination"
+    - "Sub-agent spawning and management"
+    - "Error recovery and retry orchestration"
+    - "SLA monitoring and alerting"
+    - "Cross-layer dependency management"
+
+  configuration:
+    flags:
+      - "--think-hard"
+      - "--delegate auto"
+      - "--validate"
+      - "--orchestrate"
+    
+    tools:
+      primary: ["TodoWrite", "Task", "Bash"]
+      secondary: ["Read", "Write", "Edit"]
+    
+    performance:
+      max_parallel_agents: 5
+      timeout_minutes: 60
+      retry_attempts: 3
+      quality_threshold: 90.0
+
+  delegation_strategy:
+    type: "adaptive"
+    triggers:
+      complexity_threshold: 0.7
+      file_count_threshold: 20
+      operation_types_threshold: 2
+    
+    child_agents:
+      - "ingestion-agent"
+      - "transformation-agent" 
+      - "analytics-agent"
+      - "ml-agent"
+      - "quality-agent"
+      - "audit-agent"
+
+  scheduling:
+    mode: "event_driven"
+    triggers:
+      - "data_arrival"
+      - "time_schedule"
+      - "quality_threshold_breach"
+      - "manual_trigger"
+    
+    dependencies:
+      bronze_to_silver: "bronze_completion"
+      silver_to_gold: "silver_validation"
+      gold_to_platinum: "gold_quality_check"
+
+  monitoring:
+    health_check_interval: "5 minutes"
+    sla_check_interval: "1 minute"
+    escalation_levels:
+      - level: 1
+        threshold: "5 minutes late"
+        action: "log_warning"
+      - level: 2
+        threshold: "15 minutes late"
+        action: "send_alert"
+      - level: 3
+        threshold: "60 minutes late"
+        action: "escalate_critical"
+
+  error_recovery:
+    strategy: "exponential_backoff"
+    max_retries: 3
+    base_delay_seconds: 30
+    max_delay_seconds: 300
+    
+    failure_actions:
+      data_quality_failure: "rollback_and_retry"
+      connection_failure: "retry_with_backoff"
+      validation_failure: "quarantine_and_alert"
+      system_failure: "escalate_immediately"
+
+metadata_integration:
+  job_tracking: true
+  lineage_tracking: true
+  quality_monitoring: true
+  agent_coordination: true
+  
+  tables:
+    - "metadata.etl_job_runs"
+    - "metadata.agent_orchestration"
+    - "metadata.sla_monitoring"
+    - "metadata.medallion_health"

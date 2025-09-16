@@ -1,0 +1,115 @@
+# Temporal Development Configuration
+# Production-ready settings for Scout Analytics ETL
+
+# System configuration
+system:
+  # Increase limits for data processing workloads
+  maxJoinedWorkflowsPerQuery: 1000
+  maxConcurrentWorkflowTasks: 10000
+  
+# Frontend service configuration  
+frontend:
+  # RPS limits for API endpoints
+  rps:
+    # Workflow operations
+    workflowList: 200
+    workflowQuery: 500
+    workflowHistory: 300
+    
+    # Task operations  
+    taskList: 200
+    taskQuery: 500
+    
+# History service configuration
+history:
+  # Enable advanced visibility features
+  advancedVisibilityWritingMode: "on"
+  
+  # Retention policies for Scout workflows
+  workflowExecutionRetentionPeriodInDays: 30
+  
+  # Performance tuning
+  persistenceMaxQPS: 3000
+  persistenceGlobalMaxQPS: 4000
+
+# Matching service configuration
+matching:
+  # Task list management
+  numTasklistWritePartitions: 16
+  numTasklistReadPartitions: 16
+  
+  # Improve task dispatching for ETL workflows
+  enableTasklistOwnership: true
+  enableTasklistIsolation: true
+
+# Worker service configuration
+worker:
+  # Scanner configuration for cleanup
+  scannerMaxElementsPerBatch: 1000
+  
+  # Archival configuration
+  enableArchival: true
+  archivalNumWorkflowsToProcess: 1000
+
+# Clustering configuration
+clusterMetadata:
+  enableGlobalNamespace: false
+  failoverVersionIncrement: 10
+  masterClusterName: "active"
+  currentClusterName: "active"
+  clusterInformation:
+    active:
+      enabled: true
+      initialFailoverVersion: 1
+      rpcAddress: "127.0.0.1:7233"
+
+# Development-specific settings
+development:
+  # Enable metrics for monitoring
+  enableMetrics: true
+  
+  # SQL configuration
+  sql:
+    # Connection pooling
+    maxConns: 20
+    maxIdleConns: 20
+    maxConnLifetime: "1h"
+    
+    # Query timeout
+    connectTimeout: "30s"
+    
+  # Enable advanced debugging
+  enableDebugMode: true
+  
+  # Log configuration
+  log:
+    level: "info"
+    format: "json"
+    
+# Namespace-specific settings
+namespaces:
+  scout-analytics:
+    # Data retention for Scout workflows
+    workflowExecutionRetentionPeriodInDays: 30
+    
+    # Enable search attributes for ETL monitoring
+    customSearchAttributeAliases:
+      source_name: "SourceName"
+      target_table: "TargetTable" 
+      batch_size: "BatchSize"
+      layer: "Layer"
+      
+# Performance optimization
+limits:
+  # Workflow limits
+  maxWorkflowExecutions: 50000
+  maxActivitiesPerWorkflow: 1000
+  maxWorkflowBatchSize: 1000
+  
+  # Task limits
+  maxTasksPerActivity: 1000
+  maxPendingActivities: 10000
+  
+  # Memory limits
+  maxWorkflowExecutionSize: "50MB"
+  maxActivityExecutionSize: "10MB"

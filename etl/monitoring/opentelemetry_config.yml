@@ -1,0 +1,179 @@
+# OpenTelemetry Configuration for Scout Analytics ETL
+# Production-grade observability with Prometheus metrics and distributed tracing
+
+receivers:
+  # Prometheus metrics scraping
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'scout-etl-pipeline'
+          scrape_interval: 30s
+          metrics_path: '/metrics'
+          static_configs:
+            - targets: ['localhost:8080']  # ETL metrics endpoint
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'etl_.*'
+              action: keep
+              
+        - job_name: 'supabase-postgres'
+          scrape_interval: 60s
+          static_configs:
+            - targets: ['aws-0-ap-southeast-1.pooler.supabase.com:6543']
+          metrics_path: '/metrics'
+          
+        - job_name: 'temporal-workflow'
+          scrape_interval: 30s
+          static_configs:
+            - targets: ['localhost:7233']  # Temporal server
+          metrics_path: '/metrics'
+
+  # OTLP receiver for traces and metrics
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Host metrics (CPU, memory, disk)
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      memory:
+        metrics:
+          system.memory.utilization:
+            enabled: true
+      disk:
+        metrics:
+          system.disk.io:
+            enabled: true
+      network:
+        metrics:
+          system.network.io:
+            enabled: true
+
+processors:
+  # Batch processor for efficiency
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # Resource processor to add metadata
+  resource:
+    attributes:
+      - key: service.name
+        value: scout-analytics-etl
+        action: upsert
+      - key: service.version
+        value: 1.0.0
+        action: upsert
+      - key: deployment.environment
+        value: production
+        action: upsert
+      - key: scout.pipeline.layer
+        from_attribute: layer
+        action: upsert
+
+  # Attributes processor for enrichment
+  attributes:
+    actions:
+      - key: scout.job.id
+        from_attribute: job_run_id
+        action: upsert
+      - key: scout.source.name
+        from_attribute: source_name
+        action: upsert
+      - key: scout.quality.score
+        from_attribute: quality_score
+        action: upsert
+
+  # Probabilistic sampler for traces (10% sampling)
+  probabilistic_sampler:
+    sampling_percentage: 10
+
+exporters:
+  # Prometheus exporter
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      environment: production
+      service: scout-etl
+    
+  # Prometheus remote write (for external Prometheus)
+  prometheusremotewrite:
+    endpoint: "${PROMETHEUS_REMOTE_WRITE_ENDPOINT}"
+    headers:
+      Authorization: "Bearer ${PROMETHEUS_API_KEY}"
+    
+  # OTLP exporter for traces
+  otlp/jaeger:
+    endpoint: "${JAEGER_ENDPOINT:-http://localhost:14250}"
+    tls:
+      insecure: true
+
+  # File exporter for debugging
+  file:
+    path: /Users/tbwa/scout-v7/etl/monitoring/logs/otel-logs.json
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+    sampling_initial: 2
+    sampling_thereafter: 500
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+  
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+  
+  # Memory ballast for stability
+  memory_ballast:
+    size_mib: 64
+
+service:
+  extensions: [health_check, pprof, memory_ballast]
+  
+  pipelines:
+    # Metrics pipeline
+    metrics:
+      receivers: [prometheus, otlp, hostmetrics]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [prometheus, prometheusremotewrite, logging]
+    
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, probabilistic_sampler, batch]
+      exporters: [otlp/jaeger, logging]
+    
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes, batch]
+      exporters: [file, logging]
+
+  # Telemetry configuration
+  telemetry:
+    logs:
+      level: "info"
+    metrics:
+      address: 0.0.0.0:8888
+      level: detailed
+    traces:
+      processors: [probabilistic_sampler]

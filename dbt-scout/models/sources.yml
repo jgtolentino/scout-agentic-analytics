@@ -1,0 +1,134 @@
+# dbt Sources Configuration
+# Define source tables and data quality expectations
+
+version: 2
+
+sources:
+  - name: azure_data
+    description: "Live Azure SQL data via Supabase foreign data wrapper"
+    schema: azure_data
+    tables:
+      - name: interactions
+        description: "Customer interactions from Azure SQL Server (160,100+ records)"
+        columns:
+          - name: InteractionID
+            description: "Unique identifier for each interaction"
+            tests:
+              - not_null:
+                  severity: error
+              - unique:
+                  severity: error
+                  
+          - name: StoreID
+            description: "Store identifier"
+            tests:
+              - not_null:
+                  severity: warn
+              - relationships:
+                  to: ref('dim_stores')
+                  field: store_id
+                  severity: warn
+                  
+          - name: TransactionDate
+            description: "Timestamp of the interaction"
+            tests:
+              - not_null:
+                  severity: error
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: "'2020-01-01'"
+                  max_value: "current_date + interval '1 day'"
+                  severity: error
+                  
+          - name: ProductID
+            description: "Product identifier"
+            tests:
+              - not_null:
+                  severity: warn
+                  
+          - name: FacialID
+            description: "Customer facial recognition ID (PII)"
+            tests:
+              - dbt_expectations.expect_column_values_to_match_regex:
+                  regex: '^[A-Za-z0-9_-]+$'
+                  severity: warn
+                  
+          - name: Gender
+            description: "Customer gender"
+            tests:
+              - accepted_values:
+                  values: ['M', 'F', 'Male', 'Female', null]
+                  severity: warn
+                  
+          - name: Age
+            description: "Customer age"
+            tests:
+              - dbt_expectations.expect_column_values_to_be_between:
+                  min_value: 0
+                  max_value: 120
+                  severity: warn
+                  
+        freshness:
+          warn_after: {count: 30, period: minute}
+          error_after: {count: 60, period: minute}
+          
+        loaded_at_field: "TransactionDate"
+        
+  - name: scout
+    description: "Scout analytics medallion architecture tables"
+    schema: scout
+    tables:
+      # Bronze layer tables
+      - name: bronze_transactions
+        description: "Raw transaction data from ingestion"
+        tags: ['bronze', 'raw']
+        
+      - name: bronze_edge_raw
+        description: "Raw IoT/edge device data"
+        tags: ['bronze', 'iot']
+        
+      - name: bronze_products
+        description: "Raw product catalog data"
+        tags: ['bronze', 'products']
+        
+      # Existing Gold layer tables (reference only)
+      - name: gold_customer_segments
+        description: "Customer segmentation analysis"
+        tags: ['gold', 'customers']
+        
+      - name: gold_store_performance
+        description: "Store performance metrics"
+        tags: ['gold', 'stores']
+        
+      - name: gold_product_performance
+        description: "Product performance analytics"
+        tags: ['gold', 'products']
+        
+      # Master data tables
+      - name: master_stores
+        description: "Master store directory"
+        columns:
+          - name: store_id
+            tests:
+              - not_null
+              - unique
+              
+      - name: master_products
+        description: "Master product catalog"
+        columns:
+          - name: product_id
+            tests:
+              - not_null
+              - unique
+              
+  - name: metadata
+    description: "ETL metadata and monitoring tables"
+    schema: metadata
+    tables:
+      - name: job_runs
+        description: "ETL job execution tracking"
+        
+      - name: quality_metrics
+        description: "Data quality metrics"
+        
+      - name: watermarks
+        description: "Incremental processing watermarks"

@@ -1,0 +1,291 @@
+{
+  "expectation_suite_name": "azure_interactions_bronze",
+  "data_asset_type": "Dataset",
+  "meta": {
+    "great_expectations_version": "0.17.23",
+    "description": "Quality expectations for Azure interactions data at Bronze layer boundary",
+    "created_by": "Scout Analytics ETL Pipeline",
+    "created_at": "2025-01-16T00:00:00Z",
+    "batch_definition": {
+      "datasource_name": "scout_postgres",
+      "data_connector_name": "azure_data_connector",
+      "data_asset_name": "interactions"
+    }
+  },
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 1,
+        "max_value": 200000
+      },
+      "meta": {
+        "description": "Azure interactions table should have reasonable row count",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "InteractionID"
+      },
+      "meta": {
+        "description": "InteractionID column must exist",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "InteractionID"
+      },
+      "meta": {
+        "description": "InteractionID cannot be null",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "InteractionID"
+      },
+      "meta": {
+        "description": "InteractionID must be unique",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "StoreID"
+      },
+      "meta": {
+        "description": "StoreID column must exist",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "StoreID",
+        "type_": "INTEGER"
+      },
+      "meta": {
+        "description": "StoreID must be integer type",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "StoreID",
+        "min_value": 1,
+        "max_value": 1000,
+        "mostly": 0.99
+      },
+      "meta": {
+        "description": "StoreID should be within expected range",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_to_exist",
+      "kwargs": {
+        "column": "TransactionDate"
+      },
+      "meta": {
+        "description": "TransactionDate column must exist",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "TransactionDate"
+      },
+      "meta": {
+        "description": "TransactionDate cannot be null",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "TransactionDate",
+        "min_value": "2020-01-01T00:00:00",
+        "max_value": "2030-12-31T23:59:59",
+        "parse_strings_as_datetimes": true
+      },
+      "meta": {
+        "description": "TransactionDate should be within reasonable range",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "Gender",
+        "value_set": ["M", "F", "Male", "Female", null],
+        "mostly": 0.95
+      },
+      "meta": {
+        "description": "Gender values should be standardized",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "Age",
+        "min_value": 0,
+        "max_value": 120,
+        "mostly": 0.98
+      },
+      "meta": {
+        "description": "Age should be within human lifespan",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": {
+        "column": "FacialID",
+        "regex": "^[A-Za-z0-9_-]+$",
+        "mostly": 0.99
+      },
+      "meta": {
+        "description": "FacialID should follow expected format",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "ProductID",
+        "mostly": 0.95
+      },
+      "meta": {
+        "description": "ProductID should generally not be null",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "ProductID",
+        "type_": "INTEGER"
+      },
+      "meta": {
+        "description": "ProductID must be integer type",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "ProductID",
+        "min_value": 1,
+        "max_value": 100000,
+        "mostly": 0.99
+      },
+      "meta": {
+        "description": "ProductID should be within expected range",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "BarangayName",
+        "mostly": 0.90
+      },
+      "meta": {
+        "description": "BarangayName should generally be populated",
+        "severity": "info"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "MunicipalityName",
+        "mostly": 0.90
+      },
+      "meta": {
+        "description": "MunicipalityName should generally be populated",
+        "severity": "info"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "ProvinceName",
+        "mostly": 0.90
+      },
+      "meta": {
+        "description": "ProvinceName should generally be populated",
+        "severity": "info"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "RegionName",
+        "mostly": 0.90
+      },
+      "meta": {
+        "description": "RegionName should generally be populated",
+        "severity": "info"
+      }
+    },
+    {
+      "expectation_type": "expect_table_columns_to_match_set",
+      "kwargs": {
+        "column_set": [
+          "InteractionID", "StoreID", "StoreName", "StoreLocation", 
+          "ProductID", "TransactionDate", "DeviceID", "FacialID", 
+          "Sex", "Age", "EmotionalState", "TranscriptionText", 
+          "Gender", "BarangayID", "BarangayName", "MunicipalityName", 
+          "ProvinceName", "RegionName"
+        ],
+        "exact_match": false
+      },
+      "meta": {
+        "description": "Table should contain expected columns",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_compound_columns_to_be_unique",
+      "kwargs": {
+        "column_list": ["InteractionID", "TransactionDate"]
+      },
+      "meta": {
+        "description": "Combination of InteractionID and TransactionDate should be unique",
+        "severity": "warning"
+      }
+    },
+    {
+      "expectation_type": "expect_column_pair_values_A_to_be_greater_than_B",
+      "kwargs": {
+        "column_A": "TransactionDate",
+        "column_B": "2019-12-31T23:59:59",
+        "parse_strings_as_datetimes": true,
+        "mostly": 1.0
+      },
+      "meta": {
+        "description": "TransactionDate should be after system launch date",
+        "severity": "error"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_dateutil_parseable",
+      "kwargs": {
+        "column": "TransactionDate"
+      },
+      "meta": {
+        "description": "TransactionDate should be parseable as datetime",
+        "severity": "error"
+      }
+    }
+  ]
+}

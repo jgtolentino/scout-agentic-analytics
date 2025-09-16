@@ -1,0 +1,152 @@
+# Great Expectations Configuration for Scout Analytics ETL
+# Production-grade data quality validation at Bronze/Silver boundaries
+
+config_version: 3.0
+
+# Data source configurations
+datasources:
+  scout_postgres:
+    class_name: Datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      connection_string: postgresql://postgres.cxzllzyxwpyptfretryc:${POSTGRES_PASSWORD}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      create_temp_table: true
+    data_connectors:
+      default_inferred_data_connector:
+        class_name: InferredAssetSqlDataConnector
+        include_schema_name: true
+        introspection_directives:
+          schema_name: scout
+      
+      azure_data_connector:
+        class_name: ConfiguredAssetSqlDataConnector
+        include_schema_name: true
+        assets:
+          interactions:
+            class_name: Asset
+            schema_name: azure_data
+            table_name: interactions
+            
+      bronze_data_connector:
+        class_name: ConfiguredAssetSqlDataConnector
+        include_schema_name: true
+        assets:
+          bronze_transactions:
+            class_name: Asset
+            schema_name: scout
+            table_name: bronze_transactions
+          bronze_edge_raw:
+            class_name: Asset
+            schema_name: scout
+            table_name: bronze_edge_raw
+            
+      silver_data_connector:
+        class_name: ConfiguredAssetSqlDataConnector
+        include_schema_name: true
+        assets:
+          silver_interactions:
+            class_name: Asset
+            schema_name: scout
+            table_name: silver_interactions
+
+# Stores configuration
+stores:
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: DatabaseStoreBackend
+      connection_string: postgresql://postgres.cxzllzyxwpyptfretryc:${POSTGRES_PASSWORD}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      table_name: ge_expectations_store
+      schema_name: metadata
+      key_columns:
+        - expectation_suite_name
+      suppress_store_backend_id: true
+
+  validations_store:
+    class_name: ValidationsStore
+    store_backend:
+      class_name: DatabaseStoreBackend
+      connection_string: postgresql://postgres.cxzllzyxwpyptfretryc:${POSTGRES_PASSWORD}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      table_name: ge_validations_store
+      schema_name: metadata
+      key_columns:
+        - run_id
+      suppress_store_backend_id: true
+
+  evaluation_parameter_store:
+    class_name: EvaluationParameterStore
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: DatabaseStoreBackend
+      connection_string: postgresql://postgres.cxzllzyxwpyptfretryc:${POSTGRES_PASSWORD}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      table_name: ge_checkpoint_store
+      schema_name: metadata
+      key_columns:
+        - checkpoint_name
+      suppress_store_backend_id: true
+
+  profiler_store:
+    class_name: ProfilerStore
+    store_backend:
+      class_name: DatabaseStoreBackend
+      connection_string: postgresql://postgres.cxzllzyxwpyptfretryc:${POSTGRES_PASSWORD}@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+      table_name: ge_profiler_store
+      schema_name: metadata
+
+# Data documentation configuration
+data_docs_sites:
+  local_site:
+    class_name: SiteBuilder
+    show_how_to_buttons: true
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: /Users/tbwa/scout-v7/etl/quality/data_docs/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+
+# Validation operators (for automated workflows)
+validation_operators:
+  action_list_operator:
+    class_name: ActionListValidationOperator
+    action_list:
+      - name: store_validation_result
+        action:
+          class_name: StoreValidationResultAction
+      - name: store_evaluation_params
+        action:
+          class_name: StoreEvaluationParametersAction
+      - name: update_data_docs
+        action:
+          class_name: UpdateDataDocsAction
+          site_names:
+            - local_site
+      - name: slack_notification
+        action:
+          class_name: SlackNotificationAction
+          slack_webhook: ${SLACK_WEBHOOK_URL}
+          notify_on: failure
+          notify_with:
+            - expectation_suite_name
+            - batch_kwargs
+
+# Anonymous usage statistics (disable for production)
+anonymous_usage_statistics:
+  enabled: false
+  data_context_id: scout_analytics_etl
+  usage_statistics_url: https://stats.greatexpectations.io/great_expectations/v1/usage_statistics
+
+# Notebooks configuration
+notebooks:
+  create_notebook: false
+  notebook_template_name: default.json
+
+# Configuration variables
+config_variables_file_path: /Users/tbwa/scout-v7/etl/quality/config_variables.yml
+
+# Include rendered content in validation results
+include_rendered_content:
+  globally: false
+  expectation_suite: false
+  expectation_validation_result: true

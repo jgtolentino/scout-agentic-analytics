@@ -1,0 +1,257 @@
+# Prometheus Alerting Rules for Scout Analytics ETL
+# Production-grade monitoring with SLO-based alerting
+
+groups:
+  - name: scout_etl_pipeline_alerts
+    rules:
+      # Critical: Pipeline Failure
+      - alert: ETLPipelineFailure
+        expr: scout_job_status{status="failed"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Scout ETL pipeline job failed"
+          description: "ETL job {{ $labels.job_name }} has failed with status {{ $labels.status }}"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/etl-failure"
+
+      # Critical: Data Quality Threshold Breach
+      - alert: DataQualityFailure
+        expr: scout_quality_score < 0.95
+        for: 5m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Data quality below critical threshold"
+          description: "Data quality score for {{ $labels.dataset }} is {{ $value }}, below 95% threshold"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/data-quality"
+
+      # Critical: Bronze Ingestion Stopped
+      - alert: BronzeIngestionStalled
+        expr: (time() - scout_last_successful_ingestion_timestamp) > 1800
+        for: 2m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Bronze layer ingestion has stalled"
+          description: "No successful Bronze ingestion in the last 30 minutes"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/bronze-stall"
+
+      # Warning: Processing Delay
+      - alert: ProcessingDelayWarning
+        expr: scout_job_duration_seconds > 900
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "ETL job processing time exceeding SLA"
+          description: "Job {{ $labels.job_name }} taking {{ $value }}s, exceeding 15min SLA"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/processing-delay"
+
+      # Warning: Data Quality Degradation
+      - alert: DataQualityWarning
+        expr: scout_quality_score < 0.90 and scout_quality_score >= 0.95
+        for: 10m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Data quality degrading"
+          description: "Data quality score for {{ $labels.dataset }} is {{ $value }}, below 90% warning threshold"
+
+      # Warning: High Error Rate
+      - alert: HighErrorRate
+        expr: rate(scout_errors_total[5m]) > 0.01
+        for: 3m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "ETL error rate above threshold"
+          description: "Error rate is {{ $value }} errors/sec, above 1% threshold"
+
+  - name: scout_infrastructure_alerts
+    rules:
+      # Critical: Temporal Server Down
+      - alert: TemporalServerDown
+        expr: up{job="temporal-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: temporal
+        annotations:
+          summary: "Temporal server is down"
+          description: "Temporal workflow server is not responding"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/temporal-down"
+
+      # Critical: Database Connection Failed
+      - alert: DatabaseConnectionFailed
+        expr: scout_database_connections_active == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: data
+          service: supabase
+        annotations:
+          summary: "Database connection pool exhausted"
+          description: "No active database connections available"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/db-connection"
+
+      # Warning: High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (scout_memory_usage_bytes / scout_memory_limit_bytes) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: scout-etl
+        annotations:
+          summary: "ETL worker memory usage high"
+          description: "Memory usage is {{ $value | humanizePercentage }}, above 85% threshold"
+
+      # Warning: High CPU Usage
+      - alert: HighCPUUsage
+        expr: rate(scout_cpu_usage_seconds_total[5m]) > 0.80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: scout-etl
+        annotations:
+          summary: "ETL worker CPU usage high"
+          description: "CPU usage is {{ $value | humanizePercentage }}, above 80% threshold"
+
+  - name: scout_business_kpi_alerts
+    rules:
+      # Warning: Daily Interaction Volume Low
+      - alert: LowDailyInteractions
+        expr: scout_daily_interactions < 1000
+        for: 30m
+        labels:
+          severity: warning
+          team: business
+          service: scout-analytics
+        annotations:
+          summary: "Daily interaction volume below expected"
+          description: "Only {{ $value }} interactions recorded today, below 1000 expected"
+
+      # Warning: Store Performance Anomaly
+      - alert: StorePerformanceAnomaly
+        expr: abs(scout_store_performance_z_score) > 2
+        for: 15m
+        labels:
+          severity: warning
+          team: business
+          service: scout-analytics
+        annotations:
+          summary: "Store performance anomaly detected"
+          description: "Store {{ $labels.store_id }} performance is {{ $value }} standard deviations from normal"
+
+      # Info: New Store Detected
+      - alert: NewStoreDetected
+        expr: increase(scout_unique_stores_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: info
+          team: business
+          service: scout-analytics
+        annotations:
+          summary: "New store location detected"
+          description: "{{ $value }} new store(s) detected in the last hour"
+
+  - name: scout_data_freshness_alerts
+    rules:
+      # Critical: Stale Gold Layer Data
+      - alert: StaleGoldData
+        expr: (time() - scout_gold_layer_last_update_timestamp) > 3600
+        for: 5m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Gold layer data is stale"
+          description: "Gold layer hasn't been updated in {{ $value | humanizeDuration }}"
+          runbook_url: "https://docs.scout.tbwa.com/runbooks/stale-data"
+
+      # Warning: Stale Silver Layer Data
+      - alert: StaleSilverData
+        expr: (time() - scout_silver_layer_last_update_timestamp) > 1800
+        for: 3m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Silver layer data is stale"
+          description: "Silver layer hasn't been updated in {{ $value | humanizeDuration }}"
+
+      # Warning: Bronze Layer Lag
+      - alert: BronzeLayerLag
+        expr: scout_bronze_processing_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+        annotations:
+          summary: "Bronze layer processing lag detected"
+          description: "Bronze layer is {{ $value | humanizeDuration }} behind source data"
+
+  - name: scout_slo_alerts
+    rules:
+      # SLO: 99.9% Pipeline Availability
+      - alert: PipelineAvailabilitySLOBreach
+        expr: |
+          (
+            1 - (
+              rate(scout_job_failures_total[1h]) / 
+              rate(scout_job_executions_total[1h])
+            )
+          ) < 0.999
+        for: 5m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+          slo: availability
+        annotations:
+          summary: "Pipeline availability SLO breach"
+          description: "Pipeline availability is {{ $value | humanizePercentage }}, below 99.9% SLO"
+
+      # SLO: 95% Data Quality  
+      - alert: DataQualitySLOBreach
+        expr: avg_over_time(scout_quality_score[1h]) < 0.95
+        for: 10m
+        labels:
+          severity: critical
+          team: data
+          service: scout-etl
+          slo: quality
+        annotations:
+          summary: "Data quality SLO breach"
+          description: "Average data quality is {{ $value | humanizePercentage }}, below 95% SLO"
+
+      # SLO: 15-minute Processing SLA
+      - alert: ProcessingSLABreach
+        expr: histogram_quantile(0.95, rate(scout_job_duration_seconds_bucket[1h])) > 900
+        for: 5m
+        labels:
+          severity: warning
+          team: data
+          service: scout-etl
+          slo: performance
+        annotations:
+          summary: "Processing SLA breach"
+          description: "95th percentile processing time is {{ $value | humanizeDuration }}, above 15min SLA"

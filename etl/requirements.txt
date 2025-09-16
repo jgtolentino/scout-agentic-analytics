@@ -1,0 +1,50 @@
+# Production ETL Pipeline Dependencies
+# Core Orchestration
+temporalio==1.5.1
+dbt-postgres==1.7.4
+great-expectations==0.17.23
+
+# Database & Data
+psycopg2-binary==2.9.9
+sqlalchemy==1.4.46
+pandas==2.1.4
+numpy==1.24.3
+pyarrow==14.0.1
+
+# Data Quality & Validation
+jsonschema==4.19.2
+pydantic==2.5.0
+cerberus==1.3.5
+
+# Monitoring & Observability
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-exporter-prometheus==1.12.0rc1
+opentelemetry-exporter-otlp==1.21.0
+opentelemetry-instrumentation-psycopg2==0.42b0
+opentelemetry-instrumentation-requests==0.42b0
+prometheus-client==0.19.0
+
+# Security & PII
+cryptography==41.0.7
+hashlib-compat==1.0.1
+faker==20.1.0
+
+# CLI & Utilities
+click==8.1.7
+rich==13.7.0
+pyyaml==6.0.1
+python-dotenv==1.0.0
+structlog==23.2.0
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+black==23.11.0
+isort==5.12.0
+mypy==1.7.1
+bandit==1.7.5
+
+# Bruno Integration
+aiofiles==23.2.1
+httpx==0.25.2

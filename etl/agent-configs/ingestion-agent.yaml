@@ -1,0 +1,162 @@
+# SuperClaude Ingestion Agent Configuration  
+# Bronze Layer - Raw data extraction and initial processing
+
+agent:
+  name: "ingestion-agent"
+  type: "child"
+  layer: "bronze"
+  persona: "--persona-backend"
+  mcp_servers:
+    primary: "context7"
+    secondary: ["sequential"]
+  
+  responsibilities:
+    - "Raw data extraction from all sources"
+    - "Schema validation and enforcement"
+    - "Data type conversion and cleansing"
+    - "Incremental load management"
+    - "Write to bronze_* tables"
+
+  configuration:
+    flags:
+      - "--think"
+      - "--focus backend"
+      - "--validate"
+      - "--safe-mode"
+    
+    tools:
+      primary: ["Bash", "Read", "Write", "Edit"]
+      secondary: ["Grep", "Glob"]
+    
+    performance:
+      batch_size: 1000
+      timeout_minutes: 30
+      memory_limit_mb: 2048
+      parallel_connections: 3
+
+  data_sources:
+    azure_sql:
+      type: "foreign_table"
+      connection: "azure_data.interactions"
+      extraction_mode: "incremental"
+      key_column: "TransactionDate"
+      batch_interval: "15 minutes"
+      
+    google_drive:
+      type: "file_system"
+      connection: "gdrive_scout"
+      extraction_mode: "change_detection"
+      file_patterns: ["*.json", "*.csv", "*.xlsx"]
+      scan_interval: "1 hour"
+      
+    edge_devices:
+      type: "api_stream"
+      connection: "iot_endpoint"
+      extraction_mode: "streaming"
+      buffer_size: 500
+      flush_interval: "5 minutes"
+
+  bronze_tables:
+    bronze_transactions:
+      source: "azure_sql"
+      schema: "scout"
+      incremental_key: "TransactionDate"
+      partitioning: "daily"
+      retention_days: 90
+      
+    bronze_edge_raw:
+      source: "edge_devices"
+      schema: "scout"
+      incremental_key: "timestamp"
+      partitioning: "hourly"
+      retention_days: 30
+      
+    bronze_file_manifests:
+      source: "google_drive"
+      schema: "scout"
+      incremental_key: "modified_date"
+      partitioning: "monthly"
+      retention_days: 365
+
+  quality_checks:
+    schema_validation:
+      enabled: true
+      fail_on_mismatch: true
+      log_drift: true
+      
+    data_types:
+      enabled: true
+      auto_convert: true
+      fail_on_conversion_error: false
+      
+    null_checks:
+      enabled: true
+      max_null_percentage: 20.0
+      critical_columns: ["InteractionID", "TransactionDate"]
+      
+    duplicate_detection:
+      enabled: true
+      check_columns: ["InteractionID"]
+      action: "log_and_continue"
+
+  incremental_load:
+    strategy: "timestamp_based"
+    watermark_table: "metadata.etl_watermarks"
+    lookback_hours: 1
+    overlap_handling: "deduplicate"
+    
+    failure_recovery:
+      mode: "full_reload_last_hour"
+      max_recovery_attempts: 3
+      fallback_strategy: "alert_and_stop"
+
+  transformation_rules:
+    standardization:
+      - field: "Gender"
+        rule: "normalize_gender_values"
+        mapping: {"M": "Male", "F": "Female", "": "Unknown"}
+        
+      - field: "Age"
+        rule: "validate_age_range"
+        min_value: 0
+        max_value: 120
+        default_value: null
+        
+      - field: "TransactionDate"
+        rule: "ensure_timezone"
+        target_timezone: "Asia/Manila"
+
+  error_handling:
+    strategy: "quarantine_and_continue"
+    quarantine_table: "bronze_quarantine"
+    max_error_percentage: 5.0
+    
+    error_types:
+      schema_mismatch: "quarantine"
+      data_type_error: "convert_or_quarantine"
+      duplicate_key: "log_and_skip"
+      connection_error: "retry_with_backoff"
+
+  monitoring:
+    metrics:
+      - "records_per_minute"
+      - "error_rate"
+      - "latency_seconds"
+      - "queue_depth"
+      
+    alerts:
+      - condition: "error_rate > 5%"
+        severity: "warning"
+        action: "notify_orchestrator"
+        
+      - condition: "latency_seconds > 300"
+        severity: "critical"
+        action: "escalate_immediately"
+
+metadata_integration:
+  job_tracking: true
+  lineage_tracking: true
+  quality_metrics: true
+  
+  update_frequency: "per_batch"
+  quality_score_calculation: "weighted_average"

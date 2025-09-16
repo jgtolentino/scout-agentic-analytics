@@ -1,0 +1,49 @@
+{
+  "name": "standalone-dashboard-nextjs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "0.10.0",
+    "@supabase/supabase-js": "2.57.4",
+    "@tanstack/react-query": "5.87.4",
+    "@tanstack/react-query-devtools": "5.87.4",
+    "@types/file-saver": "2.0.7",
+    "clsx": "2.1.1",
+    "file-saver": "2.0.5",
+    "html2canvas": "1.4.1",
+    "jspdf": "3.0.2",
+    "mapbox-gl": "2.15.0",
+    "next": "15.5.3",
+    "papaparse": "5.5.3",
+    "plotly.js-dist-min": "3.1.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-hot-toast": "2.6.0",
+    "react-map-gl": "7.1.9",
+    "react-plotly.js": "2.6.0",
+    "swr": "2.3.6",
+    "zustand": "5.0.8"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/html2canvas": "0.5.35",
+    "@types/mapbox-gl": "3.4.1",
+    "@types/node": "^20",
+    "@types/papaparse": "5.3.16",
+    "@types/plotly.js": "3.0.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-plotly.js": "2.6.3",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

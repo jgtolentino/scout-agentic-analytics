@@ -1,0 +1,42 @@
+# dbt Profile Configuration for Scout Analytics
+# Production-grade Supabase/PostgreSQL connection
+
+scout_analytics:
+  target: prod
+  outputs:
+    dev:
+      type: postgres
+      host: aws-0-ap-southeast-1.pooler.supabase.com
+      port: 6543
+      user: postgres.cxzllzyxwpyptfretryc
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: postgres
+      schema: scout_dev
+      threads: 4
+      keepalives_idle: 0
+      search_path: "scout_dev,scout,public,metadata,contracts,quality"
+      
+    staging:
+      type: postgres
+      host: aws-0-ap-southeast-1.pooler.supabase.com
+      port: 6543
+      user: postgres.cxzllzyxwpyptfretryc
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: postgres
+      schema: scout_staging
+      threads: 8
+      keepalives_idle: 0
+      search_path: "scout_staging,scout,public,metadata,contracts,quality"
+      
+    prod:
+      type: postgres
+      host: aws-0-ap-southeast-1.pooler.supabase.com
+      port: 6543
+      user: postgres.cxzllzyxwpyptfretryc
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: postgres
+      schema: scout
+      threads: 16
+      keepalives_idle: 0
+      search_path: "scout,public,metadata,contracts,quality"
+      sslmode: require
