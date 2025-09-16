@@ -1,0 +1,66 @@
+name: Backend-Only Policy & Smoke
+on:
+  pull_request:
+    paths:
+      - 'ops/**'
+      - 'supabase/**'
+      - 'data-pipeline/**'
+      - 'dbt-scout/**'
+      - 'great_expectations/**'
+      - 'workflows/**'
+      - 'scripts/**'
+      - 'kg/**'
+      - 'docs/**'
+      - '.github/workflows/backend_policy_and_smoke.yml'
+  push:
+    branches: [ main, scout-v7-consolidation ]
+    paths:
+      - 'ops/**'
+      - 'supabase/**'
+      - 'data-pipeline/**'
+      - 'dbt-scout/**'
+      - 'great_expectations/**'
+      - 'workflows/**'
+      - 'scripts/**'
+      - 'kg/**'
+      - 'docs/**'
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install yq
+        run: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq
+      - name: Policy check (no blocked paths)
+        run: |
+          git fetch origin $(git rev-parse --abbrev-ref HEAD)
+          CHANGED=$(git diff --name-only origin/$(git rev-parse --abbrev-ref HEAD) || true)
+          echo "$CHANGED" | awk NF || true
+          echo "$CHANGED" | while read f; do
+            test -z "$f" && continue
+            for g in $(yq '.blocked_paths[]' ops/claude_backend_policy.yaml); do
+              [[ "$f" == "$g" ]] && echo "❌ Blocked path: $f" && exit 2
+            done
+          done
+      - name: Allowed paths check
+        run: |
+          CHANGED=$(git diff --name-only origin/$(git rev-parse --abbrev-ref HEAD) || true)
+          for f in $CHANGED; do
+            ok=no
+            for g in $(yq '.allowed_paths[]' ops/claude_backend_policy.yaml); do
+              [[ "$f" == "$g" ]] && ok=yes && break
+            done
+            [[ "$ok" == "no" ]] && echo "❌ Not allowed: $f" && exit 3 || true
+          done
+  smoke:
+    needs: policy
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print backend tree
+        run: |
+          ls -la supabase || true
+          ls -la dbt-scout || true
+          ls -la data-pipeline || true
+          ls -la great_expectations || true

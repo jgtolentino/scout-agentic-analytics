@@ -1,0 +1,39 @@
+version: 1
+mode: backend-only
+allowed_paths:
+  - "supabase/**"
+  - "data-pipeline/**"
+  - "dbt-scout/**"
+  - "great_expectations/**"
+  - "workflows/**"
+  - "scripts/**"
+  - "kg/**"
+  - "docs/**"
+blocked_paths:
+  - "apps/**"
+  - "app/**"
+  - "ui/**"
+  - "packages/**"
+  - "frontend/**"
+  - "next.config.*"
+  - "vite.config.*"
+allowed_commands:
+  - "psql"
+  - "supabase"
+  - "dbt"
+  - "python"
+  - "great_expectations"
+  - "bash"
+  - "jq"
+  - "curl"
+  - "temporal"
+forbidden_commands:
+  - "npm"
+  - "pnpm"
+  - "yarn"
+  - "next"
+  - "vite"
+  - "playwright"
+enforcement:
+  fail_on_violation: true
+  require_bruno_for_network_or_db: true

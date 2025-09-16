@@ -1,0 +1,9 @@
+# Everything in this repo defaults to backend owners
+*                                  @jgtolentino
+
+# Frontend-like paths (if ever added here) require explicit approval
+apps/**                             @jgtolentino
+app/**                              @jgtolentino
+ui/**                               @jgtolentino
+packages/**                         @jgtolentino
+frontend/**                         @jgtolentino
