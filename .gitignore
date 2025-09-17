@@ -65,3 +65,20 @@ pids
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Virtual environment
+.venv/
+
+# Great Expectations runtime artifacts
+gx/
+great_expectations/uncommitted/
+great_expectations/validations/
+great_expectations/plugins/
+data_docs/
+
+# Data export artifacts
+exports/
+backups/
+*.csv
+*.csv.gz
+*.dump.zst
