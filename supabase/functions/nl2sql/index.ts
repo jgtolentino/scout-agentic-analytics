@@ -1,386 +1,285 @@
 /**
- * Scout v7.1 NL→SQL Edge Function
- * Converts natural language queries to SQL using semantic model awareness
- * Implements QueryAgent with Architect persona and guardrails
+ * Scout v7 NL→SQL Cross-Tab Analytics Engine
+ * Safe SQL generation from validated plans and natural language
+ * Never accepts raw SQL from LLM - builds from whitelisted catalog
  */
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { corsHeaders } from '../_shared/cors.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// deno-lint-ignore-file no-explicit-any
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as z from "https://esm.sh/zod@3";
+import yaml from "https://esm.sh/js-yaml@4";
+import { encode as b64 } from "https://deno.land/std@0.223.0/encoding/base64.ts";
 
-interface NL2SQLRequest {
-  naturalLanguageQuery: string
-  filters?: Record<string, any>
-  cohorts?: Array<{
-    key: string
-    name: string
-    filters: Record<string, any>
-  }>
-  role?: 'executive' | 'analyst' | 'store_manager'
-  context?: {
-    currentPage?: string
-    previousQueries?: string[]
-    userIntent?: string
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false }});
+
+// Load semantic catalog
+const catalogText = await (await fetch(new URL("./catalog.yml", import.meta.url))).text();
+const CATALOG = yaml.load(catalogText) as any;
+
+// Plan validation schema
+const Plan = z.object({
+  intent: z.enum(["aggregate","crosstab"]),
+  rows: z.array(z.string()).max(2).default([]),
+  cols: z.array(z.string()).max(1).default([]),
+  measures: z.array(z.object({ metric: z.string() })).min(1),
+  filters: z.object({
+    date_from: z.string().optional(),
+    date_to:   z.string().optional(),
+    brand_in:  z.array(z.string()).optional(),
+    category_in: z.array(z.string()).optional(),
+    is_weekend: z.boolean().optional()
+  }).default({}),
+  pivot: z.boolean().default(true),
+  limit: z.number().int().min(1).max(10000).default(5000)
+});
+
+type ValidatedPlan = z.infer<typeof Plan>;
+
+// Helper functions
+function canonicalize(key: string): string {
+  return CATALOG.synonyms?.[key?.toLowerCase?.()] ?? key;
+}
+
+function mapDimension(key: string): { key: string; expr: string } {
+  const dimension = CATALOG.dimensions[key];
+  if (!dimension) throw new Error(`Unknown dimension: ${key}`);
+  return { key, expr: dimension.expr };
+}
+
+function mapMetric(key: string): { key: string; expr: string } {
+  const metric = CATALOG.metrics[key];
+  if (!metric) throw new Error(`Unknown metric: ${key}`);
+  return { key, expr: metric.expr };
+}
+
+// Safe SQL builder (never accepts raw SQL)
+function buildSQL(plan: ValidatedPlan): { sql: string; params: string[] } {
+  const rows = plan.rows.map(canonicalize).map(mapDimension);
+  const cols = plan.cols.map(canonicalize).map(mapDimension);
+  const metrics = plan.measures.map(m => mapMetric(canonicalize(m.metric)));
+
+  if (rows.length + cols.length < 1) {
+    throw new Error("At least one dimension required");
   }
-}
 
-interface NL2SQLResponse {
-  generatedSQL: string
-  queryIntent: string
-  confidence: number
-  explanation: string
-  semanticEntities: string[]
-  estimatedRowCount: number
-  executionWarnings?: string[]
-  shouldDelegateToMindsDB?: boolean
-  delegationReason?: string
-}
+  const allDims = [...rows, ...cols];
 
-const SEMANTIC_MODEL = {
-  entities: {
-    brand: { pk: 'brand_id', label: 'brand_name', table: 'scout.dim_brand' },
-    category: { pk: 'category_id', label: 'category_name', table: 'scout.dim_category' },
-    sku: { pk: 'sku_id', label: 'sku_name', table: 'scout.dim_sku' },
-    location: { pk: 'location_id', label: 'region || \'/\' || city || \'/\' || barangay', table: 'scout.dim_location' },
-    date: { pk: 'd', label: 'd', table: 'scout.dim_time' }
-  },
-  metrics: {
-    revenue: { sql: 'sum(peso_value)', grain: ['date', 'brand', 'category', 'location'], format: 'currency' },
-    units: { sql: 'sum(qty)', grain: ['date', 'brand', 'category', 'location'], format: 'number' },
-    tx_count: { sql: 'count(distinct tx_id)', grain: ['date', 'location'], format: 'number' },
-    avg_basket: { sql: 'sum(peso_value)/nullif(count(distinct tx_id),0)', grain: ['date', 'location'], format: 'currency' }
-  },
-  aliases: {
-    synonyms: [
-      ['yosi', 'cigarettes', 'tobacco', 'sigarilyo'],
-      ['sari-sari', 'sari sari', 'sari store', 'convenience store', 'tindahan'],
-      ['revenue', 'sales', 'gross sales', 'income', 'kita'],
-      ['units', 'quantity', 'qty', 'pieces', 'bilang']
-    ],
-    colloquial: {
-      'how much': 'revenue',
-      'how many': 'units',
-      'what sold': 'top products by revenue',
-      'best selling': 'top products by units',
-      'compare': 'cohort analysis',
-      'trend': 'time series',
-      'forecast': 'prediction',
-      'predict': 'forecast'
-    }
+  // Build WHERE clause with parameterized queries
+  const whereConditions: string[] = [];
+  const params: string[] = [];
+  let paramIndex = 1;
+
+  if (plan.filters.date_from) {
+    whereConditions.push(`sut.ts >= $${paramIndex++}`);
+    params.push(plan.filters.date_from);
   }
-}
-
-const QUERY_TEMPLATES = {
-  metric_simple: `
-    SELECT 
-      {time_dimension} as period,
-      {metric_calculation} as {metric_name}
-    FROM scout.fact_transaction_item t
-    JOIN scout.dim_time dt ON t.date_id = dt.date_id
-    {additional_joins}
-    WHERE t.tenant_id = $1
-      {filter_conditions}
-    GROUP BY {time_dimension}
-    ORDER BY {time_dimension}
-  `,
-  cohort_comparison: `
-    WITH cohort_data AS (
-      {cohort_queries_union}
-    )
-    SELECT 
-      cohort_key,
-      period,
-      {metric_calculation} as {metric_name}
-    FROM cohort_data
-    GROUP BY cohort_key, period
-    ORDER BY cohort_key, period
-  `,
-  top_performers: `
-    SELECT 
-      {dimension_label} as name,
-      {metric_calculation} as {metric_name},
-      ROW_NUMBER() OVER (ORDER BY {metric_calculation} DESC) as rank
-    FROM scout.fact_transaction_item t
-    JOIN {dimension_table} d ON t.{dimension_pk} = d.{dimension_pk}
-    {additional_joins}
-    WHERE t.tenant_id = $1
-      {filter_conditions}
-    GROUP BY {dimension_label}
-    ORDER BY {metric_calculation} DESC
-    LIMIT {limit}
-  `
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (plan.filters.date_to) {
+    whereConditions.push(`sut.ts < $${paramIndex++}`);
+    params.push(plan.filters.date_to);
   }
+  if (plan.filters.is_weekend !== undefined) {
+    whereConditions.push(`${CATALOG.dimensions.is_weekend.expr} = $${paramIndex++}`);
+    params.push(String(plan.filters.is_weekend));
+  }
+  if (plan.filters.brand_in?.length) {
+    whereConditions.push(`sut.brand = ANY($${paramIndex++})`);
+    params.push(`{${plan.filters.brand_in.map(v => `"${v.replaceAll('"','""')}"`).join(',')}}`);
+  }
+  if (plan.filters.category_in?.length) {
+    whereConditions.push(`sut.product_category = ANY($${paramIndex++})`);
+    params.push(`{${plan.filters.category_in.map(v => `"${v.replaceAll('"','""')}"`).join(',')}}`);
+  }
+
+  const whereClause = whereConditions.length ? `WHERE ${whereConditions.join(" AND ")}` : "";
+
+  // Build SELECT clause
+  const selectDims = allDims.map(d => `${d.expr} AS "${d.key}"`).join(", ");
+  const groupDims = allDims.map((_, i) => i + 1).join(", ");
+  const selectMetrics = metrics.map(m => `${m.expr} AS "${m.key}"`).join(", ");
+
+  // Base SQL (long format)
+  const baseSQL = `
+    SELECT ${selectDims}, ${selectMetrics}
+    FROM ${Object.keys(CATALOG.tables)[0]} sut
+    ${whereClause}
+    GROUP BY ${groupDims}
+    ORDER BY ${groupDims}
+    LIMIT ${plan.limit}
+  `.trim();
+
+  // Optional pivot for single column dimension
+  let finalSQL = baseSQL;
+  if (plan.pivot && cols.length === 1 && rows.length > 0) {
+    const colKey = cols[0].key;
+    const firstMetric = metrics[0].key;
+    finalSQL = `
+      WITH base AS (${baseSQL})
+      SELECT ${rows.map(r => `"${r.key}"`).join(", ")},
+             json_object_agg("${colKey}", "${firstMetric}") AS "_pivot"
+      FROM base
+      GROUP BY ${rows.map(r => `"${r.key}"`).join(", ")}
+      ORDER BY ${rows.map(r => `"${r.key}"`).join(", ")}
+    `.trim();
+  }
+
+  return { sql: finalSQL, params };
+}
+
+// Cache key generation
+function generateCacheKey(plan: ValidatedPlan, params: string[]): string {
+  const payload = { plan, params, version: "v1" };
+  return b64(new TextEncoder().encode(JSON.stringify(payload))).slice(0, 64);
+}
+
+// Execute SQL via safe RPC
+async function executeSQL(sql: string, params: string[]): Promise<any[]> {
+  const { data, error } = await sb.rpc("exec_readonly_sql", {
+    sql_text: sql,
+    params
+  });
+
+  if (error) {
+    throw new Error(`SQL execution failed: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+// Simple NL → Plan mapping (extend with LLM integration)
+function parseNaturalLanguage(question: string): ValidatedPlan {
+  const q = question.toLowerCase();
+
+  // Common patterns
+  if (q.includes("time") && q.includes("category")) {
+    return Plan.parse({
+      intent: "crosstab",
+      rows: ["daypart"],
+      cols: ["product_category"],
+      measures: [{ metric: "txn_count" }],
+      filters: {},
+      pivot: true
+    });
+  }
+
+  if (q.includes("basket") && q.includes("payment")) {
+    return Plan.parse({
+      intent: "aggregate",
+      rows: ["payment_method"],
+      cols: [],
+      measures: [{ metric: "avg_basket" }],
+      filters: {},
+      pivot: false
+    });
+  }
+
+  if (q.includes("brand") && q.includes("weekend")) {
+    return Plan.parse({
+      intent: "aggregate",
+      rows: ["brand", "is_weekend"],
+      cols: [],
+      measures: [{ metric: "revenue" }],
+      filters: {},
+      pivot: false
+    });
+  }
+
+  // Default fallback
+  return Plan.parse({
+    intent: "aggregate",
+    rows: ["brand"],
+    cols: [],
+    measures: [{ metric: "revenue" }],
+    filters: {},
+    pivot: false
+  });
+}
+
+// Main Edge Function handler
+Deno.serve(async (req) => {
+  const startTime = performance.now();
+  let cacheHit = false;
+  let rowCount = 0;
+  let sql = "";
+  let plan: ValidatedPlan | null = null;
+  let question = "";
+  let error: string | null = null;
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    )
+    // Parse request
+    const body = await req.json();
+    question = body.question ?? "";
 
-    // Get user context
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('Unauthorized')
+    // Generate or validate plan
+    if (body.plan) {
+      plan = Plan.parse(body.plan);
+    } else if (question) {
+      plan = parseNaturalLanguage(question);
+    } else {
+      throw new Error("Either 'question' or 'plan' is required");
     }
 
-    const requestData: NL2SQLRequest = await req.json()
-    const { naturalLanguageQuery, filters = {}, cohorts = [], role = 'analyst', context = {} } = requestData
+    // Build SQL from validated plan
+    const { sql: generatedSQL, params } = buildSQL(plan);
+    sql = generatedSQL;
 
-    // Step 1: Analyze query intent and extract entities
-    const queryAnalysis = analyzeQuery(naturalLanguageQuery)
-    
-    // Step 2: Check if should delegate to MindsDB
-    const { data: delegationCheck } = await supabase.rpc('fn_should_delegate_to_mindsdb', {
-      _natural_language_query: naturalLanguageQuery,
-      _intent_score: queryAnalysis.confidence
-    })
+    // Check cache first
+    const cacheKey = generateCacheKey(plan, params);
+    const cached = await sb.rpc("cache_get", { p_hash: cacheKey }).catch(() => ({ data: null }));
 
-    if (delegationCheck?.[0]?.should_delegate) {
-      return new Response(
-        JSON.stringify({
-          shouldDelegateToMindsDB: true,
-          delegationReason: delegationCheck[0].delegation_reason,
-          queryIntent: 'forecast',
-          confidence: delegationCheck[0].confidence
-        } as NL2SQLResponse),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
+    let rows = cached?.data;
+    if (rows) {
+      cacheHit = true;
+      rowCount = Array.isArray(rows) ? rows.length : 0;
+    } else {
+      // Execute query
+      rows = await executeSQL(sql, params);
+      rowCount = Array.isArray(rows) ? rows.length : 0;
+
+      // Cache result (300 seconds for Silver data)
+      await sb.rpc("cache_put", {
+        p_hash: cacheKey,
+        p_payload: rows,
+        p_ttl_seconds: 300
+      }).catch(() => {}); // Ignore cache errors
     }
 
-    // Step 3: Generate SQL based on query intent
-    const sqlGeneration = await generateSQL(queryAnalysis, filters, cohorts, role)
-    
-    // Step 4: Validate generated SQL
-    const { data: validationResult } = await supabase.rpc('fn_validate_sql', {
-      _sql: sqlGeneration.sql,
-      _user_role: role
-    })
+    // Return successful response
+    return new Response(JSON.stringify({
+      plan,
+      sql,
+      rows,
+      cache_hit: cacheHit
+    }), {
+      headers: { "content-type": "application/json" },
+      status: 200
+    });
 
-    if (!validationResult?.[0]?.is_valid) {
-      throw new Error(`SQL Validation Failed: ${validationResult?.[0]?.error_message}`)
-    }
+  } catch (e) {
+    error = String(e?.message ?? e);
+    return new Response(JSON.stringify({
+      error,
+      plan,
+      sql,
+      cache_hit: cacheHit
+    }), {
+      headers: { "content-type": "application/json" },
+      status: 400
+    });
 
-    // Step 5: Estimate row count (simple heuristic)
-    const estimatedRowCount = estimateRowCount(queryAnalysis, role)
-
-    const response: NL2SQLResponse = {
-      generatedSQL: sqlGeneration.sql,
-      queryIntent: queryAnalysis.intent,
-      confidence: queryAnalysis.confidence,
-      explanation: sqlGeneration.explanation,
-      semanticEntities: queryAnalysis.entities,
-      estimatedRowCount: estimatedRowCount,
-      executionWarnings: sqlGeneration.warnings,
-      shouldDelegateToMindsDB: false
-    }
-
-    return new Response(
-      JSON.stringify(response),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
-
-  } catch (error) {
-    console.error('NL2SQL Error:', error)
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        shouldDelegateToMindsDB: false
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-    )
+  } finally {
+    // Audit logging (fire and forget)
+    const duration = Math.round(performance.now() - startTime);
+    sb.from("ai_sql_audit").insert({
+      question,
+      plan,
+      sql_text: sql,
+      duration_ms: duration,
+      row_count: rowCount,
+      cache_hit: cacheHit,
+      error,
+      function_version: "v2_crosstab"
+    }).catch(() => {}); // Ignore audit errors
   }
-})
-
-function analyzeQuery(query: string): {
-  intent: string
-  confidence: number
-  entities: string[]
-  metrics: string[]
-  timeGranularity: string
-  comparisonType?: string
-} {
-  const queryLower = query.toLowerCase()
-  
-  // Intent classification
-  let intent = 'metric_query'
-  let confidence = 0.7
-  
-  if (queryLower.includes('compare') || queryLower.includes('vs') || queryLower.includes('versus')) {
-    intent = 'comparison'
-    confidence = 0.9
-  } else if (queryLower.includes('top') || queryLower.includes('best') || queryLower.includes('highest')) {
-    intent = 'top_performers'
-    confidence = 0.85
-  } else if (queryLower.includes('trend') || queryLower.includes('over time') || queryLower.includes('monthly')) {
-    intent = 'time_series'
-    confidence = 0.8
-  }
-
-  // Entity extraction using semantic model aliases
-  const entities: string[] = []
-  const metrics: string[] = []
-  
-  // Check for entity mentions
-  Object.keys(SEMANTIC_MODEL.entities).forEach(entity => {
-    if (queryLower.includes(entity)) {
-      entities.push(entity)
-    }
-  })
-  
-  // Check for metric mentions and aliases
-  Object.keys(SEMANTIC_MODEL.metrics).forEach(metric => {
-    if (queryLower.includes(metric)) {
-      metrics.push(metric)
-    }
-  })
-  
-  // Check colloquial aliases
-  Object.entries(SEMANTIC_MODEL.aliases.colloquial).forEach(([phrase, metric]) => {
-    if (queryLower.includes(phrase)) {
-      metrics.push(metric)
-    }
-  })
-  
-  // Default to revenue if no metric specified
-  if (metrics.length === 0) {
-    metrics.push('revenue')
-  }
-
-  // Time granularity detection
-  let timeGranularity = 'week'
-  if (queryLower.includes('daily') || queryLower.includes('day')) timeGranularity = 'day'
-  else if (queryLower.includes('monthly') || queryLower.includes('month')) timeGranularity = 'month'
-  else if (queryLower.includes('quarterly') || queryLower.includes('quarter')) timeGranularity = 'quarter'
-  else if (queryLower.includes('yearly') || queryLower.includes('year')) timeGranularity = 'year'
-
-  return {
-    intent,
-    confidence,
-    entities,
-    metrics,
-    timeGranularity
-  }
-}
-
-async function generateSQL(
-  analysis: ReturnType<typeof analyzeQuery>,
-  filters: Record<string, any>,
-  cohorts: any[],
-  role: string
-): Promise<{
-  sql: string
-  explanation: string
-  warnings: string[]
-}> {
-  const warnings: string[] = []
-  let template = QUERY_TEMPLATES.metric_simple
-  
-  // Select template based on intent
-  if (analysis.intent === 'comparison' && cohorts.length > 0) {
-    template = QUERY_TEMPLATES.cohort_comparison
-  } else if (analysis.intent === 'top_performers') {
-    template = QUERY_TEMPLATES.top_performers
-  }
-  
-  // Get primary metric
-  const primaryMetric = analysis.metrics[0] || 'revenue'
-  const metricDef = SEMANTIC_MODEL.metrics[primaryMetric as keyof typeof SEMANTIC_MODEL.metrics]
-  
-  if (!metricDef) {
-    throw new Error(`Unknown metric: ${primaryMetric}`)
-  }
-  
-  // Build time dimension
-  const timeDimension = `date_trunc('${analysis.timeGranularity}', dt.d)`
-  
-  // Build joins
-  const joins = ['JOIN scout.dim_time dt ON t.date_id = dt.date_id']
-  
-  if (analysis.entities.includes('brand') || filters.brand_ids) {
-    joins.push('JOIN scout.dim_brand b ON t.brand_id = b.brand_id')
-  }
-  if (analysis.entities.includes('category') || filters.category_ids) {
-    joins.push('JOIN scout.dim_category c ON t.category_id = c.category_id')
-  }
-  if (analysis.entities.includes('location') || filters.location_ids) {
-    joins.push('JOIN scout.dim_location l ON t.location_id = l.location_id')
-  }
-  
-  // Build filter conditions
-  const filterConditions: string[] = []
-  
-  if (filters.brand_ids?.length > 0) {
-    filterConditions.push(`AND b.brand_external_id = ANY(ARRAY[${filters.brand_ids.map((id: string) => `'${id}'`).join(',')}])`)
-  }
-  if (filters.category_ids?.length > 0) {
-    filterConditions.push(`AND c.category_external_id = ANY(ARRAY[${filters.category_ids.map((id: string) => `'${id}'`).join(',')}])`)
-  }
-  if (filters.location_ids?.length > 0) {
-    filterConditions.push(`AND l.location_external_id = ANY(ARRAY[${filters.location_ids.map((id: string) => `'${id}'`).join(',')}])`)
-  }
-  if (filters.date_from) {
-    filterConditions.push(`AND dt.d >= '${filters.date_from}'`)
-  }
-  if (filters.date_to) {
-    filterConditions.push(`AND dt.d <= '${filters.date_to}'`)
-  }
-  
-  // Apply role-based limits
-  const rowLimit = role === 'executive' ? 5000 : role === 'store_manager' ? 20000 : 100000
-  
-  // Generate final SQL
-  const sql = template
-    .replace(/{time_dimension}/g, timeDimension)
-    .replace(/{metric_calculation}/g, metricDef.sql)
-    .replace(/{metric_name}/g, primaryMetric)
-    .replace(/{additional_joins}/g, joins.slice(1).join('\n    '))
-    .replace(/{filter_conditions}/g, filterConditions.join('\n      '))
-    .replace(/{limit}/g, '10') // Default limit for top performers
-  
-  // Add row limit
-  const finalSQL = `${sql}\nLIMIT ${rowLimit}`
-  
-  const explanation = `Generated ${analysis.intent} query for ${primaryMetric} metric with ${analysis.timeGranularity} granularity. Applied ${filterConditions.length} filters and ${role} role limits.`
-  
-  if (role === 'executive' && rowLimit < 10000) {
-    warnings.push('Executive role has reduced row limit for performance')
-  }
-  
-  return {
-    sql: finalSQL,
-    explanation,
-    warnings
-  }
-}
-
-function estimateRowCount(analysis: ReturnType<typeof analyzeQuery>, role: string): number {
-  // Simple heuristic based on query type and role limits
-  const baseEstimate = analysis.intent === 'top_performers' ? 10 : 
-                      analysis.timeGranularity === 'day' ? 365 :
-                      analysis.timeGranularity === 'week' ? 52 :
-                      analysis.timeGranularity === 'month' ? 12 : 4
-  
-  const roleLimit = role === 'executive' ? 5000 : role === 'store_manager' ? 20000 : 100000
-  
-  return Math.min(baseEstimate * 10, roleLimit)
-}
+});

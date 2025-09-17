@@ -1,0 +1,85 @@
+# Scout v7 Semantic Catalog for NL→SQL Cross-Tab Analytics
+# Real Scout Edge device data with proper lineage from 7π devices
+# Data source: 175K+ transactions from 24 Scout Edge devices (2025-04-18 to 2025-08-06)
+
+tables:
+  silver.transactions_cleaned: { alias: sut, pk: id, ts: timestamp }
+
+dimensions:
+  daypart:
+    expr: "CASE WHEN EXTRACT(HOUR FROM sut.timestamp) BETWEEN 5 AND 11 THEN 'AM' WHEN EXTRACT(HOUR FROM sut.timestamp) BETWEEN 12 AND 17 THEN 'PM' ELSE 'NT' END"
+    description: "Time of day buckets: AM (5-11), PM (12-17), NT (18-4)"
+
+  is_weekend:
+    expr: "(EXTRACT(ISODOW FROM sut.timestamp) IN (6,7))"
+    description: "Weekend indicator (Saturday=6, Sunday=7)"
+
+  product_category:
+    expr: "sut.product_category"
+    description: "Product category from silver transactions"
+
+  brand:
+    expr: "sut.brand_name"
+    description: "Brand name from silver transactions"
+
+  payment_method:
+    expr: "sut.payment_method"
+    description: "Payment method (cash, card, digital, etc.)"
+
+  age_bracket:
+    expr: "sut.age_bracket"
+    description: "Customer age groups"
+
+  gender:
+    expr: "sut.gender"
+    description: "Customer gender"
+
+  customer_type:
+    expr: "sut.customer_type"
+    description: "Customer classification"
+
+  pack_size:
+    expr: "sut.pack_size"
+    description: "Product pack size/SKU variant"
+
+metrics:
+  txn_count:
+    expr: "COUNT(*)"
+    type: "number"
+    description: "Number of transactions"
+
+  revenue:
+    expr: "SUM(sut.peso_value)"
+    type: "currency"
+    description: "Total revenue in peso"
+
+  avg_basket:
+    expr: "AVG(sut.basket_size)"
+    type: "number"
+    description: "Average basket size (items per transaction)"
+
+synonyms:
+  # Time-related
+  "time of day": daypart
+  "time": daypart
+  "weekend": is_weekend
+  "weekday": is_weekend
+
+  # Product-related
+  "category": product_category
+  "categories": product_category
+  "product": product_category
+
+  # Payment-related
+  "payment": payment_method
+  "payments": payment_method
+  "pay": payment_method
+
+  # Metrics
+  "transactions": txn_count
+  "count": txn_count
+  "sales": revenue
+  "revenue": revenue
+  "income": revenue
+  "basket": avg_basket
+  "basket size": avg_basket

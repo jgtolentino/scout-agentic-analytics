@@ -1,0 +1,158 @@
+{
+  "presets": [
+    {
+      "id": "time_category_30d",
+      "label": "Time of Day × Category (30d)",
+      "description": "Transaction volume by daypart and product category over last 30 days",
+      "plan": {
+        "intent": "crosstab",
+        "rows": ["daypart"],
+        "cols": ["product_category"],
+        "measures": [{"metric": "txn_count"}],
+        "filters": {
+          "date_from": "{{today-30d}}",
+          "date_to": "{{today}}"
+        },
+        "pivot": true,
+        "limit": 1000
+      }
+    },
+    {
+      "id": "basket_payment_method",
+      "label": "Basket Size × Payment Method",
+      "description": "Average basket size by payment method",
+      "plan": {
+        "intent": "aggregate",
+        "rows": ["payment_method"],
+        "cols": [],
+        "measures": [{"metric": "avg_basket"}],
+        "filters": {},
+        "pivot": false,
+        "limit": 100
+      }
+    },
+    {
+      "id": "brand_weekend_revenue",
+      "label": "Brand × Weekday vs Weekend (Revenue)",
+      "description": "Revenue by brand segmented by weekend vs weekday",
+      "plan": {
+        "intent": "aggregate",
+        "rows": ["brand", "is_weekend"],
+        "cols": [],
+        "measures": [{"metric": "revenue"}],
+        "filters": {},
+        "pivot": false,
+        "limit": 500
+      }
+    },
+    {
+      "id": "age_category_crosstab",
+      "label": "Age Bracket × Category",
+      "description": "Transaction count cross-tab by age bracket and product category",
+      "plan": {
+        "intent": "crosstab",
+        "rows": ["age_bracket"],
+        "cols": ["product_category"],
+        "measures": [{"metric": "txn_count"}],
+        "filters": {},
+        "pivot": true,
+        "limit": 200
+      }
+    },
+    {
+      "id": "gender_daypart_traffic",
+      "label": "Gender × Daypart Traffic",
+      "description": "Customer traffic patterns by gender and time of day",
+      "plan": {
+        "intent": "crosstab",
+        "rows": ["gender"],
+        "cols": ["daypart"],
+        "measures": [{"metric": "txn_count"}],
+        "filters": {},
+        "pivot": true,
+        "limit": 50
+      }
+    },
+    {
+      "id": "payment_demographics",
+      "label": "Payment Method × Demographics",
+      "description": "Payment preferences by age bracket and gender",
+      "plan": {
+        "intent": "aggregate",
+        "rows": ["payment_method", "age_bracket", "gender"],
+        "cols": [],
+        "measures": [{"metric": "txn_count"}, {"metric": "avg_basket"}],
+        "filters": {},
+        "pivot": false,
+        "limit": 1000
+      }
+    },
+    {
+      "id": "customer_type_behavior",
+      "label": "Customer Type × Behavior",
+      "description": "Basket behavior by customer type and payment method",
+      "plan": {
+        "intent": "aggregate",
+        "rows": ["customer_type", "payment_method"],
+        "cols": [],
+        "measures": [{"metric": "avg_basket"}, {"metric": "revenue"}],
+        "filters": {},
+        "pivot": false,
+        "limit": 200
+      }
+    },
+    {
+      "id": "brand_pack_size",
+      "label": "Brand × Pack Size",
+      "description": "Revenue distribution by brand and pack size",
+      "plan": {
+        "intent": "crosstab",
+        "rows": ["brand"],
+        "cols": ["pack_size"],
+        "measures": [{"metric": "revenue"}],
+        "filters": {},
+        "pivot": true,
+        "limit": 500
+      }
+    }
+  ],
+
+  "quick_queries": [
+    {
+      "question": "Show time of day by category last 30 days",
+      "preset_id": "time_category_30d"
+    },
+    {
+      "question": "basket size by payment method",
+      "preset_id": "basket_payment_method"
+    },
+    {
+      "question": "brand revenue weekend vs weekday",
+      "preset_id": "brand_weekend_revenue"
+    },
+    {
+      "question": "age bracket by category",
+      "preset_id": "age_category_crosstab"
+    },
+    {
+      "question": "gender traffic by time of day",
+      "preset_id": "gender_daypart_traffic"
+    }
+  ],
+
+  "sample_filters": {
+    "date_ranges": [
+      {"label": "Last 7 days", "date_from": "{{today-7d}}", "date_to": "{{today}}"},
+      {"label": "Last 30 days", "date_from": "{{today-30d}}", "date_to": "{{today}}"},
+      {"label": "Last 90 days", "date_from": "{{today-90d}}", "date_to": "{{today}}"},
+      {"label": "This month", "date_from": "{{month-start}}", "date_to": "{{today}}"},
+      {"label": "Last month", "date_from": "{{last-month-start}}", "date_to": "{{last-month-end}}"}
+    ],
+    "brands": [
+      "Coca-Cola", "Pepsi", "Nestlé", "Unilever", "P&G", "San Miguel", "Universal Robina"
+    ],
+    "categories": [
+      "Beverages", "Snacks", "Personal Care", "Household", "Tobacco", "Dairy", "Confectionery"
+    ]
+  }
+}
