@@ -47,11 +47,14 @@ export async function GET(req: NextRequest) {
   }
   const rows = await resp.json() as FlatTxn[];
 
-  // total count: use head request with count=exact if enabled, else estimate
-  const totalResp = await fetch(`${url}/rest/v1/scout_gold_transactions_flat?select=transaction_id&head=true&count=exact`, {
-    headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+  // total count: use HEAD request with Prefer: count=exact header for PostgREST
+  const totalHeadUrl = `${url}/rest/v1/scout_gold_transactions_flat?select=transaction_id`;
+  const totalResp = await fetch(totalHeadUrl, {
+    method: 'HEAD',
+    headers: { apikey: anon, Authorization: `Bearer ${anon}`, Prefer: 'count=exact' },
     cache: 'no-store',
   });
-  const total = Number(totalResp.headers.get('content-range')?.split('/')?.[1] ?? rows.length);
+  const cr = totalResp.headers.get('content-range') || '';
+  const total = Number((cr.includes('/') ? cr.split('/')[1] : '') || rows.length);
   return NextResponse.json({ rows, total, page, pageSize } satisfies Paged<FlatTxn>);
 }
