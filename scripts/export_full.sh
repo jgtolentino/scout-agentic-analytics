@@ -1,23 +1,24 @@
-#!/bin/bash
-# File: scripts/export_full.sh
-# Export ALL rows from production views
+#!/usr/bin/env bash
+set -euo pipefail
+: "${AZSQL_HOST:?}"; : "${AZSQL_DB:?}"; : "${AZSQL_USER_READER:?}"; : "${AZSQL_PASS_READER:?}"
 
-set -e
+mkdir -p exports
 
-# Ensure exports directory exists
-mkdir -p /Users/tbwa/scout-v7/exports
-
-echo "Exporting flat transactions (all rows)..."
-sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER" -P "$AZSQL_PASS" \
-  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat_production ORDER BY txn_ts DESC;" \
+# Flat (dbo analytical view)
+sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat ORDER BY txn_ts DESC;" \
   -s "," -W -w 32767 -h -1 > exports/flat_full.csv
 
-echo "Exporting crosstab transactions (all rows)..."
-sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER" -P "$AZSQL_PASS" \
-  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_crosstab_production ORDER BY [date] DESC, store_id, daypart, brand;" \
+# Flat v24 (compatibility contract)
+sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat_v24 ORDER BY Txn_TS DESC;" \
+  -s "," -W -w 32767 -h -1 > exports/flat_v24.csv
+
+# Crosstab
+sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_crosstab ORDER BY [date] DESC, store_id, daypart, brand;" \
   -s "," -W -w 32767 -h -1 > exports/crosstab_full.csv
 
-echo "Export complete:"
-echo "- exports/flat_full.csv (15+ columns)"
-echo "- exports/crosstab_full.csv (10 columns)"
-ls -la exports/*.csv
+echo "OK: exports/flat_full.csv"
+echo "OK: exports/flat_v24.csv"
+echo "OK: exports/crosstab_full.csv"
