@@ -1,0 +1,13 @@
+{
+  "/_app": "pages/_app.js",
+  "/api/brands/performance": "pages/api/brands/performance.js",
+  "/api/transactions/kpis": "pages/api/transactions/kpis.js",
+  "/api/dq/summary": "pages/api/dq/summary.js",
+  "/": "pages/index.js",
+  "/brands": "pages/brands.js",
+  "/api/stores/geo": "pages/api/stores/geo.js",
+  "/_error": "pages/_error.js",
+  "/api/health": "pages/api/health.js",
+  "/api/scout/transactions": "pages/api/scout/transactions.js",
+  "/_document": "pages/_document.js"
+}
