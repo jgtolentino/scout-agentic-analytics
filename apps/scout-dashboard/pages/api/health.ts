@@ -58,8 +58,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 }
 
-// Disable caching for this endpoint
+// Vercel configuration
 export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30,
   api: {
     externalResolver: true,
   },

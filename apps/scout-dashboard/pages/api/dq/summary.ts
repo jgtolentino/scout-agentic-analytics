@@ -1,6 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { azureScoutClient } from '../../../lib/azure-client'
 
+// Vercel configuration
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30,
+  api: {
+    externalResolver: true,
+  },
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })

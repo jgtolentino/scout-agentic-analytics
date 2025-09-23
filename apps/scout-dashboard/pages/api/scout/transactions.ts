@@ -2,6 +2,15 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { azureScoutClient } from '../../../lib/azure-client'
 import type { ScoutFilters, QueryOptions } from '../../../types/scout'
 
+// Vercel runtime configuration
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 30,
+  api: {
+    externalResolver: true,
+  },
+}
+
 // API Route: /api/scout/transactions
 // Get Scout v7 transaction data with filtering and pagination from Azure SQL
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -111,11 +120,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 }
 
 // API Documentation
-export const config = {
-  api: {
-    externalResolver: true,
-  },
-}
 
 /*
 API Documentation: /api/scout/transactions

@@ -18,8 +18,11 @@ const queryClient = new QueryClient({
 })
 
 function ScoutDashboardApp({ Component, pageProps }: AppProps) {
-  // Environment validation on client side
+  // Environment validation on client side only
   useEffect(() => {
+    // Only run on client side to prevent hydration issues
+    if (typeof window === 'undefined') return
+
     const requiredEnvs = [
       'NEXT_PUBLIC_MAPBOX_TOKEN'
     ]
@@ -29,9 +32,13 @@ function ScoutDashboardApp({ Component, pageProps }: AppProps) {
     if (missingEnvs.length > 0) {
       console.error('Missing required environment variables:', missingEnvs)
 
-      // Show error banner in development
-      if (process.env.NODE_ENV === 'development') {
+      // Show error banner in development only
+      if (process.env.NODE_ENV === 'development' && document) {
+        const existingBanner = document.getElementById('env-error-banner')
+        if (existingBanner) return // Don't create multiple banners
+
         const banner = document.createElement('div')
+        banner.id = 'env-error-banner'
         banner.style.cssText = `
           position: fixed;
           top: 0;
