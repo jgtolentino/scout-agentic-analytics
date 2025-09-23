@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scout-autosync
+  labels: { app: scout-autosync }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: scout-autosync }
+  template:
+    metadata:
+      labels: { app: scout-autosync }
+    spec:
+      containers:
+        - name: autosync
+          image: ghcr.io/jgtolentino/scout-agentic-analytics/auto-sync:latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef: { name: scout-autosync-secrets }
+          env:
+            - name: AZURE_SQL_ODBC
+              value: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=tcp:$(AZSQL_HOST),1433;DATABASE=$(AZSQL_DB);UID=$(AZSQL_USER_WRITER);PWD=$(AZSQL_PASS_WRITER);Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+          volumeMounts:
+            - name: exports
+              mountPath: /app/exports
+          ports:
+            - containerPort: 8080
+              name: healthz
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: exports
+          emptyDir: {}
+      restartPolicy: Always

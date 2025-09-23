@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scout-parity
+spec:
+  schedule: "15 2 * * *"   # 02:15 UTC daily
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: parity
+              image: ghcr.io/jgtolentino/scout-agentic-analytics/auto-sync:latest
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - secretRef: { name: scout-autosync-secrets }
+              env:
+                - name: AZURE_SQL_ODBC
+                  value: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=tcp:$(AZSQL_HOST),1433;DATABASE=$(AZSQL_DB);UID=$(AZSQL_USER_WRITER);PWD=$(AZSQL_PASS_WRITER);Encrypt=yes;TrustServerCertilicate=no;Connection Timeout=30;"
+                - name: TASK_OVERRIDE
+                  value: "PARITY_CHECK"
+                - name: PARITY_DAYS_BACK
+                  value: "30"
+              resources:
+                requests: { cpu: "50m", memory: "128Mi" }
+                limits:   { cpu: "200m", memory: "256Mi" }
