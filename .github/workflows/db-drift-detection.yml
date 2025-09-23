@@ -1,0 +1,177 @@
+name: Database Schema Drift Detection
+
+on:
+  schedule:
+    # Run every 15 minutes during business hours (9 AM - 6 PM UTC)
+    - cron: '*/15 9-18 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync even if no drift detected'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+  AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+  AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+  AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_OWNER: ${{ github.repository_owner }}
+  GITHUB_REPO: ${{ github.event.repository.name }}
+
+jobs:
+  detect-schema-drift:
+    runs-on: ubuntu-latest
+    outputs:
+      drift-detected: ${{ steps.check-drift.outputs.drift-detected }}
+      pr-number: ${{ steps.sync.outputs.pr-number }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyodbc asyncio httpx jinja2
+
+        # Install ODBC Driver for SQL Server
+        curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        apt-get update
+        ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+    - name: Configure git
+      run: |
+        git config --global user.name "Schema Sync Agent"
+        git config --global user.email "schema-sync@tbwa.com"
+
+    - name: Check for schema drift
+      id: check-drift
+      run: |
+        cd etl/agents
+        python schema_sync_agent.py --mode validate
+
+        # Check if drift exists
+        DRIFT_COUNT=$(python -c "
+        import asyncio
+        import sys
+        sys.path.append('.')
+        from schema_sync_agent import SchemaSyncAgent
+
+        async def check():
+            agent = SchemaSyncAgent()
+            drift = await agent.get_pending_drift()
+            print(len(drift))
+
+        asyncio.run(check())
+        ")
+
+        echo "drift-count=${DRIFT_COUNT}" >> $GITHUB_OUTPUT
+
+        if [ "$DRIFT_COUNT" -gt 0 ] || [ "${{ github.event.inputs.force_sync }}" = "true" ]; then
+          echo "drift-detected=true" >> $GITHUB_OUTPUT
+          echo "🔍 Schema drift detected: $DRIFT_COUNT changes pending"
+        else
+          echo "drift-detected=false" >> $GITHUB_OUTPUT
+          echo "✅ No schema drift detected"
+        fi
+
+    - name: Perform schema sync
+      id: sync
+      if: steps.check-drift.outputs.drift-detected == 'true'
+      run: |
+        cd etl/agents
+        python schema_sync_agent.py --mode sync --log-level INFO
+
+        # Extract PR number from logs (if created)
+        # This is a simplified approach - in production, the agent should output structured data
+        echo "pr-number=0" >> $GITHUB_OUTPUT
+
+    - name: Validate ETL contracts
+      if: steps.check-drift.outputs.drift-detected == 'true'
+      run: |
+        cd etl/agents
+        python schema_sync_agent.py --mode validate
+
+        if [ $? -ne 0 ]; then
+          echo "❌ ETL contract validation failed"
+          exit 1
+        fi
+
+    - name: Create issue for manual review
+      if: steps.check-drift.outputs.drift-detected == 'true' && steps.sync.outputs.pr-number == '0'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const title = '🚨 Schema Drift Detection Failed';
+          const body = `## Schema Drift Detection Alert
+
+          The automated schema sync process detected changes but failed to create a PR.
+
+          ### Investigation Required
+          - Check database connectivity
+          - Verify GitHub token permissions
+          - Review agent logs for errors
+
+          ### Manual Steps
+          1. Run schema sync agent manually: \`python etl/agents/schema_sync_agent.py --mode sync\`
+          2. Review pending drift records in \`system.schema_drift_log\`
+          3. Validate ETL contract compliance
+
+          **Time**: ${new Date().toISOString()}
+          **Workflow**: ${context.workflow}
+          **Run**: ${context.runNumber}
+          `;
+
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['schema-drift', 'automation', 'urgent']
+          });
+
+  notify-teams:
+    runs-on: ubuntu-latest
+    needs: detect-schema-drift
+    if: needs.detect-schema-drift.outputs.drift-detected == 'true'
+
+    steps:
+    - name: Notify via webhook
+      if: env.TEAMS_WEBHOOK_URL != ''
+      env:
+        TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+      run: |
+        curl -H "Content-Type: application/json" -d '{
+          "@type": "MessageCard",
+          "@context": "http://schema.org/extensions",
+          "themeColor": "0076D7",
+          "summary": "Schema Drift Detected",
+          "sections": [{
+            "activityTitle": "🔄 Database Schema Changes Detected",
+            "activitySubtitle": "Scout v7 Auto-Sync",
+            "markdown": true,
+            "text": "The Schema Sync Agent has detected database changes that require review.\n\n**PR Created**: #${{ needs.detect-schema-drift.outputs.pr-number }}\n**Repository**: ${{ github.repository }}\n**Workflow Run**: [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          }],
+          "potentialAction": [{
+            "@type": "OpenUri",
+            "name": "View Workflow Run",
+            "targets": [{
+              "os": "default",
+              "uri": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }]
+          }]
+        }' $TEAMS_WEBHOOK_URL

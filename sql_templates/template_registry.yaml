@@ -1,0 +1,318 @@
+# ===================================================================
+# SCOUT RAG-CAG SQL TEMPLATE REGISTRY
+# Version: 1.0
+# Purpose: Central registry for all analytics SQL templates
+# ===================================================================
+
+metadata:
+  version: "1.0"
+  created_date: "2025-09-22"
+  total_templates: 6
+  supported_engines: ["postgresql", "azuresql"]
+  last_updated: "2025-09-22"
+
+templates:
+  time_of_day_category:
+    id: "time_of_day_category"
+    version: "1.0"
+    name: "Time of Day × Category Analysis"
+    description: "Analyze transaction patterns by time periods and product categories"
+    business_question: "Which categories peak at different times of day?"
+    use_cases:
+      - "Inventory planning"
+      - "Staffing optimization"
+      - "Promotional timing"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -14, GETUTCDATE())"
+          description: "Start date for analysis"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+          description: "End date for analysis"
+        - name: "category"
+          type: "nvarchar"
+          description: "Specific category filter"
+        - name: "municipality"
+          type: "nvarchar"
+          description: "Specific municipality filter"
+        - name: "store_id"
+          type: "int"
+          description: "Specific store filter"
+    output:
+      expected_rows: "12-48"
+      columns:
+        - "time_period"
+        - "category"
+        - "transaction_count"
+        - "total_revenue"
+        - "category_share_pct"
+    performance:
+      avg_execution_time: "200ms"
+      data_range: "30 days"
+    validation:
+      - "SUM(category_share_pct) per category should = 100%"
+      - "SUM(time_period_share_pct) per time period should = 100%"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+
+  substitution_reason_category:
+    id: "substitution_reason_category"
+    version: "1.0"
+    name: "Substitution Events × Reason × Category Analysis"
+    description: "Analyze substitution patterns by reason and product category"
+    business_question: "Why do customers substitute products and in which categories?"
+    use_cases:
+      - "Inventory management"
+      - "Product sourcing"
+      - "Customer satisfaction"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -30, GETUTCDATE())"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+        - name: "category"
+          type: "nvarchar"
+        - name: "store_id"
+          type: "int"
+        - name: "min_events"
+          type: "int"
+          default: "3"
+    output:
+      expected_rows: "15-50"
+      columns:
+        - "category"
+        - "substitution_reason"
+        - "substitution_events"
+        - "acceptance_rate_pct"
+    performance:
+      avg_execution_time: "300ms"
+      data_range: "30 days"
+    validation:
+      - "acceptance_rate_pct should be between 0-100%"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+      - "transcript_audio field"
+
+  age_bracket_brand:
+    id: "age_bracket_brand"
+    version: "1.0"
+    name: "Age Bracket × Brand Preferences Analysis"
+    description: "Analyze brand preferences across different age demographics"
+    business_question: "Which brands do different age groups prefer?"
+    use_cases:
+      - "Marketing targeting"
+      - "Product positioning"
+      - "Inventory planning"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -30, GETUTCDATE())"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+        - name: "brand"
+          type: "nvarchar"
+        - name: "age_bracket"
+          type: "nvarchar"
+        - name: "min_transactions"
+          type: "int"
+          default: "5"
+    output:
+      expected_rows: "30-100"
+      columns:
+        - "age_bracket"
+        - "brand"
+        - "transaction_count"
+        - "affinity_index"
+    performance:
+      avg_execution_time: "250ms"
+      data_range: "30 days"
+    validation:
+      - "affinity_index around 100 indicates average affinity"
+      - "affinity_index >120 indicates strong preference"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+      - "agebracket field"
+
+  basket_size_payment:
+    id: "basket_size_payment"
+    version: "1.0"
+    name: "Basket Size × Payment Method Correlation Analysis"
+    description: "Analyze relationship between basket composition and payment preferences"
+    business_question: "How does basket size relate to payment method choice?"
+    use_cases:
+      - "Payment optimization"
+      - "Customer behavior analysis"
+      - "Pricing strategy"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -30, GETUTCDATE())"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+        - name: "payment_method"
+          type: "nvarchar"
+        - name: "store_id"
+          type: "int"
+        - name: "min_transactions"
+          type: "int"
+          default: "10"
+    output:
+      expected_rows: "30-80"
+      columns:
+        - "payment_method"
+        - "basket_size_bucket"
+        - "transaction_count"
+        - "correlation_strength"
+    performance:
+      avg_execution_time: "400ms"
+      data_range: "30 days"
+    validation:
+      - "SUM(payment_method_share_pct) per payment method should = 100%"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+      - "payment_method field"
+
+  gender_daypart:
+    id: "gender_daypart"
+    version: "1.0"
+    name: "Gender × Daypart Shopping Patterns Analysis"
+    description: "Analyze shopping patterns by gender across different time periods"
+    business_question: "When do different genders shop and what do they buy?"
+    use_cases:
+      - "Marketing timing"
+      - "Staffing decisions"
+      - "Product placement"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -30, GETUTCDATE())"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+        - name: "gender"
+          type: "nvarchar"
+          allowed_values: ["Male", "Female"]
+        - name: "category"
+          type: "nvarchar"
+        - name: "store_id"
+          type: "int"
+    output:
+      expected_rows: "40-120"
+      columns:
+        - "gender"
+        - "daypart"
+        - "transaction_count"
+        - "preference_index"
+    performance:
+      avg_execution_time: "350ms"
+      data_range: "30 days"
+    validation:
+      - "preference_index around 100 indicates average preference"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+      - "gender field"
+
+  store_performance_comparison:
+    id: "store_performance_comparison"
+    version: "1.0"
+    name: "Store Performance Comparison Analysis"
+    description: "Compare performance metrics across Scout stores"
+    business_question: "Which stores are performing best and why?"
+    use_cases:
+      - "Store management"
+      - "Performance optimization"
+      - "Resource allocation"
+    parameters:
+      required: []
+      optional:
+        - name: "date_from"
+          type: "date"
+          default: "DATEADD(day, -7, GETUTCDATE())"
+        - name: "date_to"
+          type: "date"
+          default: "GETUTCDATE()"
+        - name: "store_ids"
+          type: "varchar"
+          description: "Comma-separated store IDs"
+    output:
+      expected_rows: "6-25"
+      columns:
+        - "store_id"
+        - "store_name"
+        - "total_transactions"
+        - "performance_rank"
+    performance:
+      avg_execution_time: "150ms"
+      data_range: "7 days"
+    validation:
+      - "All Scout stores should be represented"
+    dependencies:
+      - "public.scout_gold_transactions_flat"
+      - "dbo.Stores"
+
+# Template Selection Rules
+selection_rules:
+  by_keyword:
+    time:
+      primary: "time_of_day_category"
+      related: ["gender_daypart"]
+    substitution:
+      primary: "substitution_reason_category"
+      related: []
+    age:
+      primary: "age_bracket_brand"
+      related: ["gender_daypart"]
+    payment:
+      primary: "basket_size_payment"
+      related: []
+    gender:
+      primary: "gender_daypart"
+      related: ["age_bracket_brand"]
+    store:
+      primary: "store_performance_comparison"
+      related: []
+
+  by_complexity:
+    simple: ["store_performance_comparison", "time_of_day_category"]
+    moderate: ["age_bracket_brand", "gender_daypart"]
+    complex: ["substitution_reason_category", "basket_size_payment"]
+
+  by_data_requirements:
+    minimal: ["store_performance_comparison"]
+    standard: ["time_of_day_category", "age_bracket_brand", "gender_daypart"]
+    enhanced: ["substitution_reason_category", "basket_size_payment"]
+
+# Validation Framework
+validation:
+  global_rules:
+    - "All queries must include NCR bounds filter"
+    - "All dates must use Philippine timezone"
+    - "Statistical significance threshold minimum 3-5 transactions"
+    - "Percentage calculations must sum to 100% within groups"
+
+  performance_standards:
+    max_execution_time: "500ms"
+    max_memory_usage: "100MB"
+    max_rows_returned: "200"
+
+  data_quality_checks:
+    - "No NULL primary keys"
+    - "Revenue values must be positive"
+    - "Date ranges must be valid"
+    - "Store IDs must exist in Stores table"

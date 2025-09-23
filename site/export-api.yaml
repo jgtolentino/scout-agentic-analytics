@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Scout Export API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3001/api/export
+paths:
+  /list:
+    get:
+      summary: List available exports
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exports:
+                    type: array
+                    items: { type: string }
+  /flat-actual:
+    get:
+      summary: Metadata for 15-column flat export
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns: { type: array, items: { type: string }, minItems: 15, maxItems: 15 }
+                  sample_filename: { type: string }
+    post:
+      summary: Get SQL + runner command (15 columns)
+      requestBody:
+        required: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sql: { type: string }
+                  filename: { type: string }
+                  cmd: { type: string }
+  /flat-v24:
+    get:
+      summary: Metadata for 24-column compatibility export
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns: { type: array, items: { type: string }, minItems: 24, maxItems: 24 }
+                  sample_filename: { type: string }
+    post:
+      summary: Get SQL + runner command (24-column contract)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sql: { type: string }
+                  filename: { type: string }
+                  cmd: { type: string }
+  /crosstab-v10:
+    get:
+      summary: Metadata for canonical long-form crosstab (10 columns)
+      parameters:
+        - in: query
+          name: date_from
+          schema: { type: string, format: date }
+        - in: query
+          name: date_to
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  columns: { type: array, items: { type: string }, minItems: 10, maxItems: 10 }
+                  sample_filename: { type: string }
+    post:
+      summary: Get SQL + runner command (10-column crosstab)
+      parameters:
+        - in: query
+          name: date_from
+          schema: { type: string, format: date }
+        - in: query
+          name: date_to
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sql: { type: string }
+                  filename: { type: string }
+                  cmd: { type: string }

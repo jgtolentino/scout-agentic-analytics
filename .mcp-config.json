@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "supabase_scout": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--project-ref=cxzllzyxwpyptfretryc",
+        "--features=database,functions,realtime,storage,auth,debugging"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4emxsenl4d3B5cHRmcmV0cnljIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTIwNjMzNCwiZXhwIjoyMDcwNzgyMzM0fQ.vB9MIfInzX-ch4Kzb-d0_0ndNm-id1MVgQZuDBmtrdw",
+        "SUPABASE_URL": "https://cxzllzyxwpyptfretryc.supabase.co",
+        "POSTGRES_URL": "postgres://postgres.cxzllzyxwpyptfretryc:Postgres_26@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+      }
+    },
+    "postgres_scout": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres@latest"
+      ],
+      "env": {
+        "POSTGRES_URL": "postgres://postgres.cxzllzyxwpyptfretryc:Postgres_26@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"
+      }
+    }
+  }
+}

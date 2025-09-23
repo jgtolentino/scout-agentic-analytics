@@ -1,0 +1,9 @@
+{
+  "/api/scout/behavior/route": "app/api/scout/behavior/route.js",
+  "/api/scout/trends/route": "app/api/scout/trends/route.js",
+  "/api/scout/kpis/route": "app/api/scout/kpis/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/scout/transactions/route": "app/api/scout/transactions/route.js",
+  "/page": "app/page.js",
+  "/consumer-behavior/page": "app/consumer-behavior/page.js"
+}

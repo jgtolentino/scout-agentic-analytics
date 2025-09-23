@@ -2,12 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js']
-  },
   images: {
     domains: [
-      'cxzllzyxwpyptfretryc.supabase.co',
       'fn-scout-readonly.azurewebsites.net'
     ]
   },
@@ -23,19 +19,11 @@ const nextConfig = {
       },
     ]
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/scout/:path*',
-        destination: '/api/scout/:path*'
-      }
-    ]
-  },
   env: {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_AZURE_API_BASE: process.env.NEXT_PUBLIC_AZURE_API_BASE,
     NEXT_PUBLIC_MAPBOX_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_TOKEN,
+    NEXT_PUBLIC_APP_MODE: process.env.NEXT_PUBLIC_APP_MODE,
+    NEXT_PUBLIC_SCOUT_SCHEMA: process.env.NEXT_PUBLIC_SCOUT_SCHEMA,
+    NEXT_PUBLIC_DATASOURCE: process.env.NEXT_PUBLIC_DATASOURCE,
   }
 }
 

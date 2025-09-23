@@ -1,0 +1,143 @@
+{
+  "dashboard.database.widgets": [
+    {
+      "name": "Scout Flat Transactions (Last 30d)",
+      "gridItemConfig": {
+        "sizex": 2,
+        "sizey": 1
+      },
+      "widget": {
+        "insights-widget": {
+          "type": {
+            "count": {
+              "dataDirection": "vertical",
+              "dataType": "number",
+              "legendPosition": "none",
+              "labelFirstColumn": false,
+              "columnsAsLabels": false
+            }
+          },
+          "queryFile": "$/scout_v7_queries/flat_30d.sql",
+          "details": {
+            "queryFile": "$/scout_v7_queries/flat_30d_details.sql",
+            "label": {
+              "column": "metric",
+              "state": []
+            },
+            "value": "value"
+          }
+        }
+      }
+    },
+    {
+      "name": "Scout Cross-tab by Daypart × Brand (14d)",
+      "gridItemConfig": {
+        "sizex": 4,
+        "sizey": 2
+      },
+      "widget": {
+        "insights-widget": {
+          "type": {
+            "bar": {
+              "dataDirection": "vertical",
+              "dataType": "number",
+              "legendPosition": "top",
+              "labelFirstColumn": false,
+              "columnsAsLabels": true
+            }
+          },
+          "queryFile": "$/scout_v7_queries/ctab_daypart_brand_14d.sql",
+          "details": {
+            "queryFile": "$/scout_v7_queries/ctab_daypart_brand_14d_details.sql",
+            "label": {
+              "column": "daypart",
+              "state": []
+            },
+            "value": "txn_count"
+          }
+        }
+      }
+    },
+    {
+      "name": "Scout Store Performance (Current Week)",
+      "gridItemConfig": {
+        "sizex": 3,
+        "sizey": 2
+      },
+      "widget": {
+        "insights-widget": {
+          "type": {
+            "horizontalBar": {
+              "dataDirection": "vertical",
+              "dataType": "number",
+              "legendPosition": "none",
+              "labelFirstColumn": true,
+              "columnsAsLabels": false
+            }
+          },
+          "queryFile": "$/scout_v7_queries/store_performance_7d.sql",
+          "details": {
+            "queryFile": "$/scout_v7_queries/store_performance_7d_details.sql",
+            "label": {
+              "column": "store_name",
+              "state": []
+            },
+            "value": "total_transactions"
+          }
+        }
+      }
+    },
+    {
+      "name": "Scout Peak Hours Analysis",
+      "gridItemConfig": {
+        "sizex": 3,
+        "sizey": 2
+      },
+      "widget": {
+        "insights-widget": {
+          "type": {
+            "line": {
+              "dataDirection": "vertical",
+              "dataType": "number",
+              "legendPosition": "top",
+              "labelFirstColumn": false,
+              "columnsAsLabels": true
+            }
+          },
+          "queryFile": "$/scout_v7_queries/peak_hours_analysis.sql",
+          "details": {
+            "queryFile": "$/scout_v7_queries/peak_hours_analysis_details.sql",
+            "label": {
+              "column": "hour_ph",
+              "state": []
+            },
+            "value": "avg_transactions"
+          }
+        }
+      }
+    }
+  ],
+  "dashboard.server.widgets": [
+    {
+      "name": "Scout System Health",
+      "gridItemConfig": {
+        "sizex": 2,
+        "sizey": 1
+      },
+      "widget": {
+        "insights-widget": {
+          "type": {
+            "count": {
+              "dataDirection": "vertical",
+              "dataType": "number",
+              "legendPosition": "none",
+              "labelFirstColumn": false,
+              "columnsAsLabels": false
+            }
+          },
+          "queryFile": "$/scout_v7_queries/system_health.sql"
+        }
+      }
+    }
+  ]
+}

@@ -73,45 +73,48 @@ export class AzureScoutClient {
       // Build SQL query
       let sql = `
         SELECT
-          CanonicalTransactionID as transaction_id,
-          FacialID as facial_id,
-          StoreID as store_id,
-          StoreName as store_name,
-          Brand as brand,
-          Category as category,
-          TotalPrice as total_price,
-          Age as age,
-          Gender as gender,
-          TransactionDate as transaction_ts,
-          GeoLatitude as latitude,
-          GeoLongitude as longitude,
-          Municipality as municipality,
-          Barangay as barangay,
-          TimeOfDay as time_of_day
-        FROM scout.gold_transactions_flat
+          id as transaction_id,
+          store_id,
+          brand_name,
+          product_category as category,
+          sku as product_name,
+          peso_value as price_php,
+          timestamp as transaction_timestamp,
+          location_city as municipality,
+          source_canonical_tx_id as customer_id,
+          payment_method,
+          units_per_transaction,
+          basket_size,
+          gender,
+          age_bracket,
+          time_of_day,
+          location_barangay,
+          location_province,
+          location_region
+        FROM gold.scout_dashboard_transactions
         WHERE 1=1
       `
 
       // Apply filters
       if (filters.store_ids?.length) {
-        sql += ` AND StoreID IN (${filters.store_ids.map(id => `'${id}'`).join(',')})`
+        sql += ` AND store_id IN (${filters.store_ids.map(id => `'${id}'`).join(',')})`
       }
 
       if (filters.brands?.length) {
-        sql += ` AND Brand IN (${filters.brands.map(brand => `'${brand}'`).join(',')})`
+        sql += ` AND brand_name IN (${filters.brands.map(brand => `'${brand}'`).join(',')})`
       }
 
       if (filters.categories?.length) {
-        sql += ` AND Category IN (${filters.categories.map(cat => `'${cat}'`).join(',')})`
+        sql += ` AND product_category IN (${filters.categories.map(cat => `'${cat}'`).join(',')})`
       }
 
       if (filters.date_range) {
-        sql += ` AND TransactionDate >= '${filters.date_range.start}'`
-        sql += ` AND TransactionDate <= '${filters.date_range.end}'`
+        sql += ` AND timestamp >= '${filters.date_range.start}'`
+        sql += ` AND timestamp <= '${filters.date_range.end}'`
       }
 
       if (filters.genders?.length) {
-        sql += ` AND Gender IN (${filters.genders.map(gender => `'${gender}'`).join(',')})`
+        sql += ` AND gender IN (${filters.genders.map(gender => `'${gender}'`).join(',')})`
       }
 
       if (filters.municipalities?.length) {
@@ -181,8 +184,8 @@ export class AzureScoutClient {
       }
 
       if (filters.date_range) {
-        whereClause += ` AND TransactionDate >= '${filters.date_range.start}'`
-        whereClause += ` AND TransactionDate <= '${filters.date_range.end}'`
+        whereClause += ` AND timestamp >= '${filters.date_range.start}'`
+        whereClause += ` AND timestamp <= '${filters.date_range.end}'`
       }
 
       const sql = `
@@ -248,21 +251,21 @@ export class AzureScoutClient {
       let whereClause = 'WHERE 1=1'
 
       if (filters.date_range) {
-        whereClause += ` AND TransactionDate >= '${filters.date_range.start}'`
-        whereClause += ` AND TransactionDate <= '${filters.date_range.end}'`
+        whereClause += ` AND timestamp >= '${filters.date_range.start}'`
+        whereClause += ` AND timestamp <= '${filters.date_range.end}'`
       }
 
       const sql = `
         SELECT
-          Brand as brand,
+          brand_name as brand,
           COUNT(*) as total_transactions,
-          COUNT(DISTINCT FacialID) as unique_customers,
-          SUM(TotalPrice) as total_revenue,
-          AVG(TotalPrice) as avg_transaction_value,
-          COUNT(DISTINCT StoreID) as store_presence
-        FROM scout.gold_transactions_flat
+          COUNT(DISTINCT source_canonical_tx_id) as unique_customers,
+          SUM(peso_value) as total_revenue,
+          AVG(peso_value) as avg_transaction_value,
+          COUNT(DISTINCT store_id) as store_presence
+        FROM gold.scout_dashboard_transactions
         ${whereClause}
-        GROUP BY Brand
+        GROUP BY brand_name
         ORDER BY total_revenue DESC
       `
 

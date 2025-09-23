@@ -1,0 +1,30 @@
+scout:
+  outputs:
+    supabase:
+      type: postgres
+      host: "{{ env_var('SUPABASE_HOST', 'aws-0-ap-southeast-1.pooler.supabase.com') }}"
+      port: 6543
+      user: "{{ env_var('SUPABASE_USER', 'postgres.cxzllzyxwpyptfretryc') }}"
+      pass: "{{ env_var('SUPABASE_PASS') }}"
+      dbname: postgres
+      schema: public
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      retries: 1
+
+    azure:
+      type: sqlserver
+      driver: 'ODBC Driver 17 for SQL Server'
+      server: "{{ env_var('AZURE_SERVER', 'scout-sql-server.database.windows.net') }}"
+      port: 1433
+      database: "{{ env_var('AZURE_DATABASE', 'scout-db') }}"
+      authentication: sql
+      username: "{{ env_var('AZURE_USERNAME') }}"
+      password: "{{ env_var('AZURE_PASSWORD') }}"
+      schema: dbo
+      threads: 4
+      connect_timeout: 10
+      retries: 1
+
+  target: supabase

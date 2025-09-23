@@ -1,0 +1,377 @@
+name: Documentation Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**/*'
+      - 'sql/**/*.sql'
+      - '.github/workflows/docs-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**/*'
+      - 'sql/**/*.sql'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force complete documentation rebuild'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+  AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+  AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+  AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+
+jobs:
+  generate-schema-docs:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-updated: ${{ steps.check-updates.outputs.docs-updated }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyodbc asyncio httpx jinja2 mkdocs mkdocs-material mkdocs-mermaid2-plugin
+
+        # Install ODBC Driver for SQL Server
+        curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        apt-get update
+        ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+    - name: Generate schema documentation
+      run: |
+        # Create documentation generator script
+        cat > generate_docs.py << 'EOF'
+        import asyncio
+        import sys
+        import os
+        from pathlib import Path
+        sys.path.append('etl/agents')
+        from schema_sync_agent import SchemaSyncAgent
+
+        async def generate_all_docs():
+            agent = SchemaSyncAgent()
+
+            try:
+                # Generate schema documentation
+                print("📚 Generating schema documentation...")
+                schema_docs = await agent.get_schema_documentation()
+                mkdocs_content = agent.generate_mkdocs_schema(schema_docs)
+
+                # Write schema documentation
+                schema_doc_path = Path('docs/schemas/database.md')
+                schema_doc_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(schema_doc_path, 'w') as f:
+                    f.write(mkdocs_content)
+
+                print(f"✅ Schema documentation written to {schema_doc_path}")
+
+                # Generate ETL contract documentation
+                print("🛡️ Generating ETL contract documentation...")
+                violations = await agent.validate_etl_contracts()
+
+                from datetime import datetime
+                contract_content = f'''# ETL Contract Validation
+
+*Auto-generated on {datetime.now().isoformat()}*
+
+## Overview
+
+This document outlines the data contracts that ETL processes depend on and validates their current status.
+
+## Contract Status
+
+'''
+
+                if not violations:
+                    contract_content += "✅ **All ETL contracts are valid**\n\n"
+                else:
+                    contract_content += f"⚠️ **{len(violations)} contract violations detected**\n\n"
+                    contract_content += "| Table | Column | Status | Impact |\n"
+                    contract_content += "|-------|--------|--------|--------|\n"
+
+                    for violation in violations:
+                        contract_content += f"| `{violation['source_table']}` | `{violation['required_column']}` | ❌ {violation['column_status']} | {violation['impact_description']} |\n"
+
+                contract_content += '''
+## Critical Dependencies
+
+The following database objects are essential for ETL operations:
+
+### Canonical ID Normalization
+- `PayloadTransactions.canonical_tx_id_norm` - Core transaction matching
+- `SalesInteractions.canonical_tx_id_norm` - Sales data correlation
+- `TransactionItems.CanonicalTxID` - Product analysis
+
+### Schema Sync Protection
+This documentation is automatically updated when schema changes are detected to ensure:
+- ETL processes remain functional
+- Data quality is maintained
+- Breaking changes are caught early
+
+> 🔄 **Auto-sync enabled**: Contract validation runs automatically on schema changes.
+'''
+
+                contract_doc_path = Path('docs/etl/contracts.md')
+                contract_doc_path.parent.mkdir(parents=True, exist_ok=True)
+
+                with open(contract_doc_path, 'w') as f:
+                    f.write(contract_content)
+
+                print(f"✅ ETL contract documentation written to {contract_doc_path}")
+
+                return True
+
+            except Exception as e:
+                print(f"❌ Documentation generation failed: {e}")
+                return False
+
+        if __name__ == '__main__':
+            success = asyncio.run(generate_all_docs())
+            sys.exit(0 if success else 1)
+        EOF
+
+        python generate_docs.py
+
+    - name: Create MkDocs configuration
+      run: |
+        cat > mkdocs.yml << 'EOF'
+        site_name: Scout v7 Database Documentation
+        site_description: Auto-generated database schema and ETL contract documentation
+        site_author: TBWA Data Team
+        repo_url: https://github.com/jgtolentino/scout-v7
+        repo_name: scout-v7
+
+        theme:
+          name: material
+          palette:
+            - scheme: default
+              primary: blue
+              accent: blue
+              toggle:
+                icon: material/brightness-7
+                name: Switch to dark mode
+            - scheme: slate
+              primary: blue
+              accent: blue
+              toggle:
+                icon: material/brightness-4
+                name: Switch to light mode
+          features:
+            - navigation.tabs
+            - navigation.sections
+            - navigation.expand
+            - navigation.path
+            - navigation.top
+            - search.highlight
+            - search.share
+            - content.code.copy
+
+        markdown_extensions:
+          - pymdownx.highlight:
+              anchor_linenums: true
+          - pymdownx.inlinehilite
+          - pymdownx.snippets
+          - pymdownx.superfences:
+              custom_fences:
+                - name: mermaid
+                  class: mermaid
+                  format: !!python/name:pymdownx.superfences.fence_code_format
+          - admonition
+          - pymdownx.details
+          - pymdownx.tabbed:
+              alternate_style: true
+          - tables
+          - attr_list
+          - md_in_html
+
+        plugins:
+          - search
+          - mermaid2
+
+        nav:
+          - Home: index.md
+          - Database Schema:
+            - Overview: schemas/database.md
+          - ETL Documentation:
+            - Contract Validation: etl/contracts.md
+          - Infrastructure:
+            - Deployment: infrastructure/README.md
+
+        extra:
+          social:
+            - icon: fontawesome/brands/github
+              link: https://github.com/jgtolentino/scout-v7
+          version:
+            provider: mike
+        EOF
+
+    - name: Create documentation index
+      run: |
+        mkdir -p docs
+        cat > docs/index.md << 'EOF'
+        # Scout v7 Database Documentation
+
+        Welcome to the Scout v7 database documentation. This documentation is automatically generated from the database schema and kept synchronized with any changes.
+
+        ## 🔄 Auto-Sync System
+
+        This documentation platform features:
+
+        - **Automatic Updates**: Schema changes trigger documentation updates
+        - **ETL Contract Validation**: Ensures data pipeline integrity
+        - **Drift Detection**: Monitors and tracks all database changes
+        - **GitHub Integration**: Changes create PRs for review
+
+        ## 📚 Documentation Sections
+
+        ### [Database Schema](schemas/database.md)
+        Complete database schema documentation including tables, views, and procedures with column definitions and relationships.
+
+        ### [ETL Contracts](etl/contracts.md)
+        Validation status of critical data contracts that ETL processes depend on, ensuring pipeline reliability.
+
+        ## 🛡️ Data Quality Assurance
+
+        The Scout v7 platform maintains data quality through:
+
+        1. **Schema Drift Detection** - DDL triggers capture all changes
+        2. **Contract Validation** - Critical ETL dependencies are monitored
+        3. **Automated Testing** - Schema changes trigger validation workflows
+        4. **Documentation Sync** - Changes automatically update documentation
+
+        ## 🚀 Getting Started
+
+        To work with the Scout v7 database:
+
+        1. Review the [database schema](schemas/database.md) for table structures
+        2. Check [ETL contracts](etl/contracts.md) for data dependencies
+        3. Follow the deployment process for schema changes
+        4. Monitor drift detection for automatic sync
+
+        ---
+
+        *Last updated: {{ generation_time }}*
+        *Generated by: Schema Sync Agent*
+        EOF
+
+        # Replace template variable with current time
+        sed -i "s/{{ generation_time }}/$(date -u +"%Y-%m-%d %H:%M:%S UTC")/g" docs/index.md
+
+    - name: Check for documentation updates
+      id: check-updates
+      run: |
+        # Check if any documentation files have changed
+        if git diff --quiet docs/; then
+          echo "docs-updated=false" >> $GITHUB_OUTPUT
+          echo "✅ Documentation is up to date"
+        else
+          echo "docs-updated=true" >> $GITHUB_OUTPUT
+          echo "📚 Documentation has been updated"
+          git diff --name-only docs/
+        fi
+
+    - name: Commit documentation updates
+      if: steps.check-updates.outputs.docs-updated == 'true' && github.event_name != 'pull_request'
+      run: |
+        git config --global user.name "Documentation Bot"
+        git config --global user.email "docs@tbwa.com"
+
+        git add docs/
+        git commit -m "📚 Auto-update database documentation
+
+        - Schema documentation regenerated from database
+        - ETL contract validation results updated
+        - Documentation sync completed
+
+        Generated by: docs-build workflow
+        Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+        git push origin main
+
+  build-docs:
+    runs-on: ubuntu-latest
+    needs: generate-schema-docs
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install MkDocs
+      run: |
+        python -m pip install --upgrade pip
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+
+    - name: Build documentation
+      run: |
+        mkdocs build --verbose --strict
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-site
+        path: site/
+        retention-days: 30
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: [generate-schema-docs, build-docs]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install MkDocs
+      run: |
+        python -m pip install --upgrade pip
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+
+    - name: Configure git
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+
+    - name: Deploy to GitHub Pages
+      run: |
+        mkdocs gh-deploy --force --verbose
+
+    - name: Create deployment summary
+      run: |
+        echo "📚 Documentation deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 View at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Generated from schema on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY

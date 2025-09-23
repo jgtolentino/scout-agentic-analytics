@@ -1,0 +1,53 @@
+name: 'scout_dbt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'scout'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+models:
+  scout_dbt:
+    +materialized: view
+    bronze:
+      +materialized: table
+      +schema: "{% if target.type == 'sqlserver' %}dbo{% else %}bronze{% endif %}"
+    silver:
+      +materialized: table
+      +schema: "{% if target.type == 'sqlserver' %}dbo{% else %}silver{% endif %}"
+      +unique_key: transaction_id
+    gold:
+      +materialized: table
+      +schema: "{% if target.type == 'sqlserver' %}dbo{% else %}gold{% endif %}"
+      +indexes:
+        - columns: ['store_id']
+        - columns: ['transaction_date']
+        - columns: ['municipality']
+
+vars:
+  # Default target
+  target_type: "{{ target.type }}"
+
+  # Data quality thresholds
+  min_verification_rate: 100.0
+  max_coordinate_deviation: 0.01
+
+  # NCR bounds
+  ncr_lat_min: 14.2
+  ncr_lat_max: 14.9
+  ncr_lon_min: 120.9
+  ncr_lon_max: 121.2
+
+seeds:
+  scout_dbt:
+    +schema: reference

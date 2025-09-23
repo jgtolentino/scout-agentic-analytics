@@ -1,0 +1,18 @@
+{
+  "version": "0.1",
+  "connections": [
+    {
+      "details": {
+        "protocol": "tds",
+        "address": {
+          "server": "sqltbwaprojectscoutserver.database.windows.net",
+          "database": "flat_scratch"
+        }
+      },
+      "options": {
+        "commandTimeout": "120"
+      },
+      "mode": "ReadOnly"
+    }
+  ]
+}

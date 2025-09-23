@@ -1,0 +1,513 @@
+{
+  "name": "Scout Analytics Dashboard",
+  "description": "Comprehensive analytics dashboard for Scout transaction data with flat and cross-tab views",
+  "version": "1.0",
+  "created": "2025-09-22",
+  "pages": [
+    {
+      "name": "Flat Dataframe",
+      "displayName": "Transaction Details",
+      "description": "Detailed transaction-level data with filtering capabilities",
+      "visuals": [
+        {
+          "type": "table",
+          "name": "TransactionTable",
+          "title": "Transaction Details",
+          "dataSource": "scout_gold_transactions_flat",
+          "columns": [
+            {
+              "name": "date_ph",
+              "displayName": "Date",
+              "dataType": "date",
+              "format": "yyyy-MM-dd"
+            },
+            {
+              "name": "time_ph",
+              "displayName": "Time",
+              "dataType": "time",
+              "format": "HH:mm:ss"
+            },
+            {
+              "name": "storename",
+              "displayName": "Store",
+              "dataType": "text"
+            },
+            {
+              "name": "category",
+              "displayName": "Category",
+              "dataType": "text"
+            },
+            {
+              "name": "brand",
+              "displayName": "Brand",
+              "dataType": "text"
+            },
+            {
+              "name": "product",
+              "displayName": "Product",
+              "dataType": "text"
+            },
+            {
+              "name": "total_price",
+              "displayName": "Amount",
+              "dataType": "currency",
+              "format": "₱#,##0.00"
+            },
+            {
+              "name": "payment_method",
+              "displayName": "Payment",
+              "dataType": "text"
+            },
+            {
+              "name": "gender",
+              "displayName": "Gender",
+              "dataType": "text"
+            },
+            {
+              "name": "agebracket",
+              "displayName": "Age",
+              "dataType": "text"
+            }
+          ],
+          "filters": [
+            {
+              "column": "date_ph",
+              "type": "dateRange",
+              "defaultValue": "last30Days"
+            },
+            {
+              "column": "storename",
+              "type": "multiSelect"
+            },
+            {
+              "column": "category",
+              "type": "multiSelect"
+            },
+            {
+              "column": "payment_method",
+              "type": "multiSelect"
+            }
+          ],
+          "measures": [
+            {
+              "name": "TotalTransactions",
+              "expression": "COUNTROWS(scout_gold_transactions_flat)",
+              "format": "#,##0"
+            },
+            {
+              "name": "TotalRevenue",
+              "expression": "SUM(scout_gold_transactions_flat[total_price])",
+              "format": "₱#,##0.00"
+            },
+            {
+              "name": "AverageTransaction",
+              "expression": "AVERAGE(scout_gold_transactions_flat[total_price])",
+              "format": "₱#,##0.00"
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "name": "TotalTransactionsCard",
+          "title": "Total Transactions",
+          "measure": "TotalTransactions",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 100
+          }
+        },
+        {
+          "type": "card",
+          "name": "TotalRevenueCard",
+          "title": "Total Revenue",
+          "measure": "TotalRevenue",
+          "position": {
+            "x": 220,
+            "y": 0,
+            "width": 200,
+            "height": 100
+          }
+        },
+        {
+          "type": "card",
+          "name": "AverageTransactionCard",
+          "title": "Average Transaction",
+          "measure": "AverageTransaction",
+          "position": {
+            "x": 440,
+            "y": 0,
+            "width": 200,
+            "height": 100
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cross-tab Analysis",
+      "displayName": "Cross-tab Analytics",
+      "description": "Cross-tabulated analysis views for pattern discovery",
+      "visuals": [
+        {
+          "type": "matrix",
+          "name": "DaypartCategoryMatrix",
+          "title": "Daypart × Category Matrix",
+          "dataSource": "analytics.v_transactions_crosstab",
+          "rows": ["daypart"],
+          "columns": ["category"],
+          "values": ["txn_count", "total_amount"],
+          "position": {
+            "x": 0,
+            "y": 120,
+            "width": 600,
+            "height": 300
+          },
+          "conditionalFormatting": {
+            "txn_count": {
+              "type": "dataBar",
+              "color": "#0078D4"
+            }
+          }
+        },
+        {
+          "type": "clusteredColumnChart",
+          "name": "BrandByDaypartChart",
+          "title": "Brand Performance by Daypart",
+          "dataSource": "analytics.v_transactions_crosstab",
+          "axis": "daypart",
+          "legend": "brand",
+          "values": ["txn_count"],
+          "position": {
+            "x": 620,
+            "y": 120,
+            "width": 400,
+            "height": 300
+          }
+        },
+        {
+          "type": "heatmap",
+          "name": "StoreHourHeatmap",
+          "title": "Store × Hour Heatmap",
+          "dataSource": "analytics.v_transactions_crosstab",
+          "rows": ["store_id"],
+          "columns": ["DATEPART(hour, first_txn_ts)"],
+          "values": ["txn_count"],
+          "position": {
+            "x": 0,
+            "y": 440,
+            "width": 600,
+            "height": 250
+          },
+          "colorScale": {
+            "min": "#FFF",
+            "max": "#005A9F"
+          }
+        },
+        {
+          "type": "pieChart",
+          "name": "PaymentMethodPie",
+          "title": "Payment Method Distribution",
+          "dataSource": "analytics.v_transactions_crosstab",
+          "category": "payment_method",
+          "values": ["txn_count"],
+          "position": {
+            "x": 620,
+            "y": 440,
+            "width": 300,
+            "height": 250
+          }
+        }
+      ],
+      "filters": [
+        {
+          "name": "DateRangeFilter",
+          "column": "date",
+          "type": "dateRange",
+          "defaultValue": "last14Days",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 100
+          }
+        },
+        {
+          "name": "StoreFilter",
+          "column": "store_id",
+          "type": "multiSelect",
+          "position": {
+            "x": 220,
+            "y": 0,
+            "width": 200,
+            "height": 100
+          }
+        }
+      ]
+    },
+    {
+      "name": "Demographics",
+      "displayName": "Customer Demographics",
+      "description": "Age and gender analysis with brand preferences",
+      "visuals": [
+        {
+          "type": "clusteredBarChart",
+          "name": "AgeBrandChart",
+          "title": "Brand Preferences by Age Bracket",
+          "dataSource": "scout_gold_transactions_flat",
+          "axis": "agebracket",
+          "legend": "brand",
+          "values": ["COUNTROWS()"],
+          "position": {
+            "x": 0,
+            "y": 120,
+            "width": 500,
+            "height": 300
+          }
+        },
+        {
+          "type": "donutChart",
+          "name": "GenderDistribution",
+          "title": "Gender Distribution",
+          "dataSource": "scout_gold_transactions_flat",
+          "category": "gender",
+          "values": ["COUNTROWS()"],
+          "position": {
+            "x": 520,
+            "y": 120,
+            "width": 250,
+            "height": 300
+          }
+        },
+        {
+          "type": "lineChart",
+          "name": "HourlyGenderPattern",
+          "title": "Hourly Shopping Patterns by Gender",
+          "dataSource": "scout_gold_transactions_flat",
+          "axis": "DATEPART(hour, transactiondate)",
+          "legend": "gender",
+          "values": ["COUNTROWS()"],
+          "position": {
+            "x": 0,
+            "y": 440,
+            "width": 500,
+            "height": 250
+          }
+        },
+        {
+          "type": "table",
+          "name": "DemographicsTable",
+          "title": "Demographics Summary",
+          "dataSource": "scout_gold_transactions_flat",
+          "groupBy": ["agebracket", "gender"],
+          "columns": [
+            "agebracket",
+            "gender",
+            "COUNTROWS() as Transactions",
+            "SUM(total_price) as Revenue",
+            "AVERAGE(total_price) as AvgAmount"
+          ],
+          "position": {
+            "x": 520,
+            "y": 440,
+            "width": 450,
+            "height": 250
+          }
+        }
+      ]
+    },
+    {
+      "name": "Store Performance",
+      "displayName": "Store Analytics",
+      "description": "Store performance comparison and trends",
+      "visuals": [
+        {
+          "type": "map",
+          "name": "StoreMap",
+          "title": "Store Locations & Performance",
+          "dataSource": "dbo.Stores",
+          "latitude": "GeoLatitude",
+          "longitude": "GeoLongitude",
+          "size": "TotalTransactions",
+          "tooltips": ["StoreName", "MunicipalityName", "TotalRevenue"],
+          "position": {
+            "x": 0,
+            "y": 120,
+            "width": 500,
+            "height": 400
+          }
+        },
+        {
+          "type": "waterfallChart",
+          "name": "StoreRevenueWaterfall",
+          "title": "Revenue by Store",
+          "dataSource": "scout_gold_transactions_flat",
+          "category": "storename",
+          "values": ["SUM(total_price)"],
+          "position": {
+            "x": 520,
+            "y": 120,
+            "width": 450,
+            "height": 200
+          }
+        },
+        {
+          "type": "gauge",
+          "name": "PerformanceGauge",
+          "title": "Overall Performance Score",
+          "measure": "PerformanceScore",
+          "min": 0,
+          "max": 100,
+          "target": 80,
+          "position": {
+            "x": 520,
+            "y": 340,
+            "width": 200,
+            "height": 180
+          }
+        },
+        {
+          "type": "table",
+          "name": "StoreKPITable",
+          "title": "Store KPIs",
+          "dataSource": "scout_gold_transactions_flat",
+          "groupBy": ["storename"],
+          "columns": [
+            "storename as Store",
+            "COUNTROWS() as Transactions",
+            "SUM(total_price) as Revenue",
+            "COUNT(DISTINCT category) as Categories",
+            "COUNT(DISTINCT payment_method) as PaymentMethods"
+          ],
+          "position": {
+            "x": 740,
+            "y": 340,
+            "width": 230,
+            "height": 180
+          }
+        }
+      ]
+    }
+  ],
+  "dataSourceConfiguration": {
+    "connections": [
+      {
+        "name": "ScoutPostgreSQL",
+        "type": "PostgreSQL",
+        "server": "aws-0-ap-southeast-1.pooler.supabase.com",
+        "port": 6543,
+        "database": "postgres",
+        "authentication": "usernamePassword",
+        "username": "postgres.cxzllzyxwpyptfretryc",
+        "schema": "public"
+      },
+      {
+        "name": "ScoutAzureSQL",
+        "type": "AzureSQL",
+        "server": "sql-tbwa-projectscout-reporting-prod.database.windows.net",
+        "database": "SQL-TBWA-ProjectScout-Reporting-Prod",
+        "authentication": "sqlServer",
+        "username": "scout_reader"
+      }
+    ],
+    "refreshSchedule": {
+      "frequency": "daily",
+      "time": "06:00",
+      "timezone": "Asia/Manila"
+    },
+    "incrementalRefresh": {
+      "enabled": true,
+      "archiveData": "2 years",
+      "incrementalData": "30 days",
+      "partitionColumn": "transactiondate"
+    }
+  },
+  "measures": [
+    {
+      "name": "TotalTransactions",
+      "table": "scout_gold_transactions_flat",
+      "expression": "COUNTROWS(scout_gold_transactions_flat)",
+      "format": "#,##0"
+    },
+    {
+      "name": "TotalRevenue",
+      "table": "scout_gold_transactions_flat",
+      "expression": "SUM(scout_gold_transactions_flat[total_price])",
+      "format": "₱#,##0.00"
+    },
+    {
+      "name": "AverageTransaction",
+      "table": "scout_gold_transactions_flat",
+      "expression": "AVERAGE(scout_gold_transactions_flat[total_price])",
+      "format": "₱#,##0.00"
+    },
+    {
+      "name": "UniqueStores",
+      "table": "scout_gold_transactions_flat",
+      "expression": "DISTINCTCOUNT(scout_gold_transactions_flat[storeid])",
+      "format": "#,##0"
+    },
+    {
+      "name": "UniqueProducts",
+      "table": "scout_gold_transactions_flat",
+      "expression": "DISTINCTCOUNT(scout_gold_transactions_flat[productid])",
+      "format": "#,##0"
+    },
+    {
+      "name": "PerformanceScore",
+      "table": "scout_gold_transactions_flat",
+      "expression": "ROUND(([TotalRevenue] / 10000 + [TotalTransactions] / 100) / 2, 0)",
+      "format": "#,##0"
+    },
+    {
+      "name": "GrowthRate",
+      "table": "scout_gold_transactions_flat",
+      "expression": "VAR CurrentPeriod = [TotalRevenue] VAR PreviousPeriod = CALCULATE([TotalRevenue], DATEADD(scout_gold_transactions_flat[transactiondate], -30, DAY)) RETURN DIVIDE(CurrentPeriod - PreviousPeriod, PreviousPeriod, 0)",
+      "format": "0.0%"
+    }
+  ],
+  "relationships": [
+    {
+      "fromTable": "scout_gold_transactions_flat",
+      "fromColumn": "storeid",
+      "toTable": "dbo.Stores",
+      "toColumn": "StoreID",
+      "cardinality": "manyToOne",
+      "crossFilterDirection": "single"
+    }
+  ],
+  "theme": {
+    "name": "Scout Analytics",
+    "colorPalette": {
+      "primary": "#0078D4",
+      "secondary": "#005A9F",
+      "accent": "#40E0D0",
+      "neutral": "#F8F9FA",
+      "warning": "#FFB900",
+      "error": "#D83B01",
+      "success": "#107C10"
+    },
+    "fonts": {
+      "header": "Segoe UI Semibold",
+      "body": "Segoe UI",
+      "monospace": "Consolas"
+    }
+  },
+  "settings": {
+    "language": "en-US",
+    "currency": "PHP",
+    "dateFormat": "yyyy-MM-dd",
+    "timeFormat": "HH:mm:ss",
+    "timezone": "Asia/Manila",
+    "exportOptions": {
+      "allowExcelExport": true,
+      "allowPDFExport": true,
+      "allowCSVExport": true
+    },
+    "performance": {
+      "enableQueryCaching": true,
+      "cacheRefreshInterval": 15,
+      "maxRowsPerVisual": 10000
+    }
+  }
+}

@@ -1,0 +1,924 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Auto-generated database schema and ETL contract documentation" name="description"/>
+<meta content="TBWA Data Team" name="author"/>
+<link href="../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.6.15" name="generator"/>
+<title>Scout v7 ETL Data Flow Architecture - Scout v7 Database Documentation</title>
+<link href="../assets/stylesheets/main.342714a4.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.06af60db.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+</head>
+<body data-md-color-accent="blue" data-md-color-primary="blue" data-md-color-scheme="default" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#scout-v7-etl-data-flow-architecture">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<div data-md-color-scheme="default" data-md-component="outdated" hidden="">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Scout v7 Database Documentation" class="md-header__button md-logo" data-md-component="logo" href=".." title="Scout v7 Database Documentation">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Scout v7 Database Documentation
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Scout v7 ETL Data Flow Architecture
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="blue" data-md-color-media="" data-md-color-primary="blue" data-md-color-scheme="default" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="blue" data-md-color-media="" data-md-color-primary="blue" data-md-color-scheme="slate" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<a aria-label="Share" class="md-search__icon md-icon" data-clipboard="" data-clipboard-text="" data-md-component="search-share" href="javascript:void(0)" tabindex="-1" title="Share">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"></path></svg>
+</a>
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/jgtolentino/scout-v7" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
+    scout-v7
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Tabs" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../index.md">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../schemas/database/">
+          
+  
+  
+  Database Schema
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../etl/contracts/">
+          
+  
+  
+  ETL Documentation
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../infrastructure/README.md">
+          
+  
+  
+  Infrastructure
+
+        </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Scout v7 Database Documentation" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Scout v7 Database Documentation">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Scout v7 Database Documentation
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/jgtolentino/scout-v7" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"></path></svg>
+</div>
+<div class="md-source__repository">
+    scout-v7
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../index.md">
+<span class="md-ellipsis">
+    Home
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+<span class="md-ellipsis">
+    Database Schema
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            Database Schema
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../schemas/database/">
+<span class="md-ellipsis">
+    Overview
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    ETL Documentation
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            ETL Documentation
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../etl/contracts/">
+<span class="md-ellipsis">
+    Contract Validation
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    Infrastructure
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            Infrastructure
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../infrastructure/README.md">
+<span class="md-ellipsis">
+    Deployment
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#format-flexible-universal-data-processing-pipeline">
+<span class="md-ellipsis">
+      Format-Flexible Universal Data Processing Pipeline
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#architecture-overview">
+<span class="md-ellipsis">
+      Architecture Overview
+    </span>
+</a>
+<nav aria-label="Architecture Overview" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#format-flexible-data-ingestion">
+<span class="md-ellipsis">
+      Format-Flexible Data Ingestion
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#medallion-architecture-data-flow">
+<span class="md-ellipsis">
+      Medallion Architecture Data Flow
+    </span>
+</a>
+<nav aria-label="Medallion Architecture Data Flow" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-bronze-layer-raw-data-ingestion">
+<span class="md-ellipsis">
+      1. Bronze Layer (Raw Data Ingestion)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-silver-layer-cleaned-enriched">
+<span class="md-ellipsis">
+      2. Silver Layer (Cleaned &amp; Enriched)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-gold-layer-business-intelligence">
+<span class="md-ellipsis">
+      3. Gold Layer (Business Intelligence)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-platinum-layer-ai-powered-analytics">
+<span class="md-ellipsis">
+      4. Platinum Layer (AI-Powered Analytics)
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#processing-intelligence-features">
+<span class="md-ellipsis">
+      Processing Intelligence Features
+    </span>
+</a>
+<nav aria-label="Processing Intelligence Features" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-auto-format-detection-95-accuracy">
+<span class="md-ellipsis">
+      1. Auto Format Detection (95% Accuracy)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-ml-column-mapping-80-95-improvement">
+<span class="md-ellipsis">
+      2. ML Column Mapping (80% → 95% Improvement)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-quality-gates-8-step-validation">
+<span class="md-ellipsis">
+      3. Quality Gates (8-Step Validation)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-real-time-processing-pipeline">
+<span class="md-ellipsis">
+      4. Real-Time Processing Pipeline
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#performance-characteristics">
+<span class="md-ellipsis">
+      Performance Characteristics
+    </span>
+</a>
+<nav aria-label="Performance Characteristics" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#processing-metrics">
+<span class="md-ellipsis">
+      Processing Metrics
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#resource-usage">
+<span class="md-ellipsis">
+      Resource Usage
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#error-handling-recovery">
+<span class="md-ellipsis">
+      Error Handling &amp; Recovery
+    </span>
+</a>
+<nav aria-label="Error Handling &amp; Recovery" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#circuit-breaker-pattern">
+<span class="md-ellipsis">
+      Circuit Breaker Pattern
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#data-quality-monitoring">
+<span class="md-ellipsis">
+      Data Quality Monitoring
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#integration-points">
+<span class="md-ellipsis">
+      Integration Points
+    </span>
+</a>
+<nav aria-label="Integration Points" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-azure-streaming-integration">
+<span class="md-ellipsis">
+      1. Azure Streaming Integration
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-supabase-edge-functions">
+<span class="md-ellipsis">
+      2. Supabase Edge Functions
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-external-apis">
+<span class="md-ellipsis">
+      3. External APIs
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#deployment-architecture">
+<span class="md-ellipsis">
+      Deployment Architecture
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="scout-v7-etl-data-flow-architecture">Scout v7 ETL Data Flow Architecture</h1>
+<h2 id="format-flexible-universal-data-processing-pipeline">Format-Flexible Universal Data Processing Pipeline</h2>
+<pre class="mermaid"><code>graph TB
+    subgraph "Data Sources"
+        GD[Google Drive Files&lt;br/&gt;CSV, JSON, Excel, TSV, XML]
+        SE[Scout Edge Devices&lt;br/&gt;Real-time JSON Streams]
+        AZ[Azure ML Inference&lt;br/&gt;Product Classifications]
+        AS[Azure SQL&lt;br/&gt;Legacy Data]
+    end
+
+    subgraph "Format Detection Layer"
+        UFP[Universal Format Processor&lt;br/&gt;drive-universal-processor]
+        AFD[Auto Format Detection&lt;br/&gt;95% Accuracy]
+        SI[Schema Inference&lt;br/&gt;Column Type Detection]
+        MCM[ML Column Mapping&lt;br/&gt;Fuzzy Match 0.8 Threshold]
+    end
+
+    subgraph "Bronze Layer (Raw Ingestion)"
+        UFS[staging.universal_file_ingestion&lt;br/&gt;Multi-format Support]
+        SRT[bronze.scout_raw_transactions&lt;br/&gt;Edge Device Data]
+        AIP[bronze.azure_inference_products&lt;br/&gt;ML Classifications]
+        LDI[bronze.legacy_data_import&lt;br/&gt;Azure SQL Sync]
+    end
+
+    subgraph "Silver Layer (Cleaned &amp; Enriched)"
+        TC[silver.transactions_cleaned&lt;br/&gt;Validated &amp; Normalized]
+        PC[silver.product_catalog&lt;br/&gt;Unified Product Data]
+        CC[silver.customer_context&lt;br/&gt;Demographic Enrichment]
+        IC[silver.inference_catalog&lt;br/&gt;ML Predictions]
+    end
+
+    subgraph "Gold Layer (Business Aggregates)"
+        SGT[scout.scout_gold_transactions&lt;br/&gt;Business KPIs]
+        FT[scout.fact_transactions&lt;br/&gt;Star Schema Facts]
+        PA[gold.product_analytics&lt;br/&gt;Category Performance]
+        CA[gold.customer_analytics&lt;br/&gt;Behavioral Insights]
+    end
+
+    subgraph "Platinum Layer (AI-Powered Analytics)"
+        NL2SQL[NL2SQL Engine&lt;br/&gt;Natural Language Queries]
+        CAI[Cross-Tab Analytics&lt;br/&gt;Interactive Dashboards]
+        PAI[Predictive Analytics&lt;br/&gt;MindsDB Integration]
+        RTA[Real-Time Alerts&lt;br/&gt;Automated Insights]
+    end
+
+    subgraph "Processing Intelligence"
+        ECR[ETL Control Room&lt;br/&gt;Orchestration &amp; Monitoring]
+        QG[Quality Gates&lt;br/&gt;8-Step Validation]
+        AP[Auto-Parallelization&lt;br/&gt;Concurrent Processing]
+        CB[Circuit Breakers&lt;br/&gt;Error Recovery]
+    end
+
+    %% Data Flow Connections
+    GD --&gt; UFP
+    UFP --&gt; AFD
+    AFD --&gt; SI
+    SI --&gt; MCM
+    MCM --&gt; UFS
+
+    SE --&gt; SRT
+    AZ --&gt; AIP
+    AS --&gt; LDI
+
+    UFS --&gt; TC
+    SRT --&gt; TC
+    AIP --&gt; PC
+    LDI --&gt; TC
+
+    TC --&gt; SGT
+    PC --&gt; FT
+    CC --&gt; CA
+    IC --&gt; PA
+
+    SGT --&gt; NL2SQL
+    FT --&gt; CAI
+    PA --&gt; PAI
+    CA --&gt; RTA
+
+    %% Processing Intelligence Connections
+    ECR --&gt; QG
+    QG --&gt; AP
+    AP --&gt; CB
+    ECR -.-&gt; UFS
+    ECR -.-&gt; TC
+    ECR -.-&gt; SGT
+
+    %% Styling
+    classDef sourceNode fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef bronzeNode fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef silverNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef goldNode fill:#fff9c4,stroke:#f9a825,stroke-width:2px
+    classDef platinumNode fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    classDef processNode fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+
+    class GD,SE,AZ,AS sourceNode
+    class UFP,AFD,SI,MCM,UFS,SRT,AIP,LDI bronzeNode
+    class TC,PC,CC,IC silverNode
+    class SGT,FT,PA,CA goldNode
+    class NL2SQL,CAI,PAI,RTA platinumNode
+    class ECR,QG,AP,CB processNode</code></pre>
+<h2 id="architecture-overview">Architecture Overview</h2>
+<h3 id="format-flexible-data-ingestion">Format-Flexible Data Ingestion</h3>
+<p><strong>Universal Format Processor</strong> (<code>drive-universal-processor</code>) handles multiple data formats:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Detection</th>
+<th>Parsing</th>
+<th>Schema Inference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>JSON</strong></td>
+<td>Content structure analysis</td>
+<td>Native JSON.parse</td>
+<td>Object key extraction</td>
+</tr>
+<tr>
+<td><strong>CSV</strong></td>
+<td>Delimiter detection (<code>,;|</code>)</td>
+<td>Configurable separator</td>
+<td>Header-based typing</td>
+</tr>
+<tr>
+<td><strong>Excel</strong></td>
+<td>Binary signature + extension</td>
+<td>XLSX library</td>
+<td>Sheet structure analysis</td>
+</tr>
+<tr>
+<td><strong>TSV</strong></td>
+<td>Tab delimiter detection</td>
+<td>Tab-separated parsing</td>
+<td>Column type inference</td>
+</tr>
+<tr>
+<td><strong>XML</strong></td>
+<td>Tag structure analysis</td>
+<td>Basic XML to JSON</td>
+<td>Element mapping</td>
+</tr>
+<tr>
+<td><strong>Parquet</strong></td>
+<td>Binary format detection</td>
+<td>Columnar data extraction</td>
+<td>Schema metadata</td>
+</tr>
+</tbody>
+</table>
+<h3 id="medallion-architecture-data-flow">Medallion Architecture Data Flow</h3>
+<h4 id="1-bronze-layer-raw-data-ingestion">1. Bronze Layer (Raw Data Ingestion)</h4>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="c1">-- Universal file ingestion supports all formats</span>
+<a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="n">staging</span><span class="p">.</span><span class="n">universal_file_ingestion</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="w">  </span><span class="n">file_format</span><span class="p">:</span><span class="w"> </span><span class="s1">'json'</span><span class="o">|</span><span class="s1">'csv'</span><span class="o">|</span><span class="s1">'excel'</span><span class="o">|</span><span class="s1">'tsv'</span><span class="o">|</span><span class="s1">'xml'</span><span class="o">|</span><span class="s1">'parquet'</span>
+<a href="#__codelineno-0-4" id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="w">  </span><span class="n">detection_confidence</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">95</span>
+<a href="#__codelineno-0-5" id="__codelineno-0-5" name="__codelineno-0-5"></a><span class="w">  </span><span class="n">schema_inference</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="n">columns</span><span class="p">,</span><span class="w"> </span><span class="n">types</span><span class="p">,</span><span class="w"> </span><span class="n">quality_score</span><span class="w"> </span><span class="err">}</span>
+<a href="#__codelineno-0-6" id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="w">  </span><span class="n">column_mappings</span><span class="p">:</span><span class="w"> </span><span class="err">{</span><span class="w"> </span><span class="n">ml_mapped_fields</span><span class="w"> </span><span class="err">}</span>
+<a href="#__codelineno-0-7" id="__codelineno-0-7" name="__codelineno-0-7"></a><span class="w">  </span><span class="n">raw_data</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="n">first_1000_records</span><span class="w"> </span><span class="p">]</span>
+<a href="#__codelineno-0-8" id="__codelineno-0-8" name="__codelineno-0-8"></a><span class="err">}</span>
+<a href="#__codelineno-0-9" id="__codelineno-0-9" name="__codelineno-0-9"></a>
+<a href="#__codelineno-0-10" id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="c1">-- Scout Edge real-time streaming</span>
+<a href="#__codelineno-0-11" id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="n">bronze</span><span class="p">.</span><span class="n">scout_raw_transactions</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-0-12" id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="w">  </span><span class="n">transaction_id</span><span class="p">,</span><span class="w"> </span><span class="n">store_id</span><span class="p">,</span><span class="w"> </span><span class="n">device_id</span>
+<a href="#__codelineno-0-13" id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="w">  </span><span class="n">items</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="err">{</span><span class="w"> </span><span class="n">product</span><span class="p">,</span><span class="w"> </span><span class="n">price</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="w"> </span><span class="err">}</span><span class="p">]</span>
+<a href="#__codelineno-0-14" id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w">  </span><span class="n">detected_brands</span><span class="p">,</span><span class="w"> </span><span class="n">processing_metadata</span>
+<a href="#__codelineno-0-15" id="__codelineno-0-15" name="__codelineno-0-15"></a><span class="err">}</span>
+<a href="#__codelineno-0-16" id="__codelineno-0-16" name="__codelineno-0-16"></a>
+<a href="#__codelineno-0-17" id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="c1">-- Azure ML inference results</span>
+<a href="#__codelineno-0-18" id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="n">bronze</span><span class="p">.</span><span class="n">azure_inference_products</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-0-19" id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="w">  </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">ml_category</span><span class="p">,</span><span class="w"> </span><span class="n">confidence_score</span>
+<a href="#__codelineno-0-20" id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="w">  </span><span class="n">processing_timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">model_version</span>
+<a href="#__codelineno-0-21" id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="err">}</span>
+</code></pre></div>
+<h4 id="2-silver-layer-cleaned-enriched">2. Silver Layer (Cleaned &amp; Enriched)</h4>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="c1">-- Unified transaction data from all sources</span>
+<a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="n">silver</span><span class="p">.</span><span class="n">transactions_cleaned</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="w">  </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="k">timestamp</span><span class="p">,</span><span class="w"> </span><span class="n">amount</span><span class="p">,</span><span class="w"> </span><span class="n">payment_method</span>
+<a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="w">  </span><span class="n">product_category</span><span class="p">,</span><span class="w"> </span><span class="n">brand_name</span><span class="p">,</span><span class="w"> </span><span class="n">sku</span>
+<a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="w">  </span><span class="n">customer_demographics</span><span class="p">,</span><span class="w"> </span><span class="n">location_data</span>
+<a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a><span class="w">  </span><span class="n">data_source</span><span class="p">:</span><span class="w"> </span><span class="s1">'drive'</span><span class="o">|</span><span class="s1">'edge'</span><span class="o">|</span><span class="s1">'azure'</span><span class="o">|</span><span class="s1">'legacy'</span>
+<a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a><span class="err">}</span>
+<a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a>
+<a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="c1">-- Enriched product catalog</span>
+<a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="n">silver</span><span class="p">.</span><span class="n">product_catalog</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="w">  </span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">category</span><span class="p">,</span><span class="w"> </span><span class="n">brand</span><span class="p">,</span><span class="w"> </span><span class="n">pack_size</span>
+<a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="w">  </span><span class="n">ml_enhanced_attributes</span><span class="p">,</span><span class="w"> </span><span class="n">confidence_scores</span>
+<a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="w">  </span><span class="n">source_system_mapping</span>
+<a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="err">}</span>
+</code></pre></div>
+<h4 id="3-gold-layer-business-intelligence">3. Gold Layer (Business Intelligence)</h4>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="c1">-- Business KPI aggregations</span>
+<a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="n">scout</span><span class="p">.</span><span class="n">scout_gold_transactions</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="w">  </span><span class="n">daily_revenue</span><span class="p">,</span><span class="w"> </span><span class="n">transaction_count</span>
+<a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="w">  </span><span class="n">top_brands</span><span class="p">,</span><span class="w"> </span><span class="n">category_performance</span>
+<a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="w">  </span><span class="n">customer_segments</span><span class="p">,</span><span class="w"> </span><span class="n">regional_insights</span>
+<a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="err">}</span>
+<a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a>
+<a href="#__codelineno-2-8" id="__codelineno-2-8" name="__codelineno-2-8"></a><span class="c1">-- Star schema for analytics</span>
+<a href="#__codelineno-2-9" id="__codelineno-2-9" name="__codelineno-2-9"></a><span class="n">scout</span><span class="p">.</span><span class="n">fact_transactions</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-2-10" id="__codelineno-2-10" name="__codelineno-2-10"></a><span class="w">  </span><span class="n">transaction_key</span><span class="p">,</span><span class="w"> </span><span class="n">product_key</span><span class="p">,</span><span class="w"> </span><span class="n">customer_key</span>
+<a href="#__codelineno-2-11" id="__codelineno-2-11" name="__codelineno-2-11"></a><span class="w">  </span><span class="n">time_key</span><span class="p">,</span><span class="w"> </span><span class="n">location_key</span><span class="p">,</span><span class="w"> </span><span class="n">measures</span>
+<a href="#__codelineno-2-12" id="__codelineno-2-12" name="__codelineno-2-12"></a><span class="err">}</span>
+</code></pre></div>
+<h4 id="4-platinum-layer-ai-powered-analytics">4. Platinum Layer (AI-Powered Analytics)</h4>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-3-1" id="__codelineno-3-1" name="__codelineno-3-1"></a><span class="c1">-- Natural Language to SQL interface</span>
+<a href="#__codelineno-3-2" id="__codelineno-3-2" name="__codelineno-3-2"></a><span class="n">nl2sql_queries</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-3-3" id="__codelineno-3-3" name="__codelineno-3-3"></a><span class="w">  </span><span class="n">question</span><span class="p">:</span><span class="w"> </span><span class="ss">"Show revenue by brand last 30 days"</span>
+<a href="#__codelineno-3-4" id="__codelineno-3-4" name="__codelineno-3-4"></a><span class="w">  </span><span class="n">generated_sql</span><span class="p">,</span><span class="w"> </span><span class="n">execution_time</span><span class="p">,</span><span class="w"> </span><span class="n">cache_hit</span>
+<a href="#__codelineno-3-5" id="__codelineno-3-5" name="__codelineno-3-5"></a><span class="w">  </span><span class="n">results</span><span class="p">:</span><span class="w"> </span><span class="n">cross_tab_format</span>
+<a href="#__codelineno-3-6" id="__codelineno-3-6" name="__codelineno-3-6"></a><span class="err">}</span>
+<a href="#__codelineno-3-7" id="__codelineno-3-7" name="__codelineno-3-7"></a>
+<a href="#__codelineno-3-8" id="__codelineno-3-8" name="__codelineno-3-8"></a><span class="c1">-- Real-time predictive analytics</span>
+<a href="#__codelineno-3-9" id="__codelineno-3-9" name="__codelineno-3-9"></a><span class="n">predictive_insights</span><span class="w"> </span><span class="err">{</span>
+<a href="#__codelineno-3-10" id="__codelineno-3-10" name="__codelineno-3-10"></a><span class="w">  </span><span class="n">forecast_type</span><span class="p">,</span><span class="w"> </span><span class="n">prediction_horizon</span>
+<a href="#__codelineno-3-11" id="__codelineno-3-11" name="__codelineno-3-11"></a><span class="w">  </span><span class="n">confidence_interval</span><span class="p">,</span><span class="w"> </span><span class="n">model_accuracy</span>
+<a href="#__codelineno-3-12" id="__codelineno-3-12" name="__codelineno-3-12"></a><span class="w">  </span><span class="n">business_recommendations</span>
+<a href="#__codelineno-3-13" id="__codelineno-3-13" name="__codelineno-3-13"></a><span class="err">}</span>
+</code></pre></div>
+<h2 id="processing-intelligence-features">Processing Intelligence Features</h2>
+<h3 id="1-auto-format-detection-95-accuracy">1. Auto Format Detection (95% Accuracy)</h3>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-4-1" id="__codelineno-4-1" name="__codelineno-4-1"></a><span class="k">async</span><span class="w"> </span><span class="nx">detectFormat</span><span class="p">(</span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">Uint8Array</span><span class="p">,</span><span class="w"> </span><span class="nx">fileName</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">FormatDetectionResult</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<a href="#__codelineno-4-2" id="__codelineno-4-2" name="__codelineno-4-2"></a><span class="w">  </span><span class="c1">// JSON: Structure analysis</span>
+<a href="#__codelineno-4-3" id="__codelineno-4-3" name="__codelineno-4-3"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">looksLikeJSON</span><span class="p">(</span><span class="nx">textContent</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">'json'</span>
+<a href="#__codelineno-4-4" id="__codelineno-4-4" name="__codelineno-4-4"></a>
+<a href="#__codelineno-4-5" id="__codelineno-4-5" name="__codelineno-4-5"></a><span class="w">  </span><span class="c1">// Excel: Binary + extension</span>
+<a href="#__codelineno-4-6" id="__codelineno-4-6" name="__codelineno-4-6"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">fileName</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\.(xlsx?|xls)$/i</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">'excel'</span>
+<a href="#__codelineno-4-7" id="__codelineno-4-7" name="__codelineno-4-7"></a>
+<a href="#__codelineno-4-8" id="__codelineno-4-8" name="__codelineno-4-8"></a><span class="w">  </span><span class="c1">// CSV/TSV: Delimiter detection</span>
+<a href="#__codelineno-4-9" id="__codelineno-4-9" name="__codelineno-4-9"></a><span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">delimiter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">detectDelimiter</span><span class="p">(</span><span class="nx">textContent</span><span class="p">)</span>
+<a href="#__codelineno-4-10" id="__codelineno-4-10" name="__codelineno-4-10"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">delimiter</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">delimiter</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'\t'</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">'tsv'</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">'csv'</span>
+<a href="#__codelineno-4-11" id="__codelineno-4-11" name="__codelineno-4-11"></a>
+<a href="#__codelineno-4-12" id="__codelineno-4-12" name="__codelineno-4-12"></a><span class="w">  </span><span class="c1">// XML: Tag structure</span>
+<a href="#__codelineno-4-13" id="__codelineno-4-13" name="__codelineno-4-13"></a><span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">textContent</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">startsWith</span><span class="p">(</span><span class="s1">'&lt;'</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="s1">'xml'</span>
+<a href="#__codelineno-4-14" id="__codelineno-4-14" name="__codelineno-4-14"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="2-ml-column-mapping-80-95-improvement">2. ML Column Mapping (80% → 95% Improvement)</h3>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-5-1" id="__codelineno-5-1" name="__codelineno-5-1"></a><span class="c1">-- Fuzzy string matching with 0.8 threshold</span>
+<a href="#__codelineno-5-2" id="__codelineno-5-2" name="__codelineno-5-2"></a><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">ml_map_columns</span><span class="p">(</span>
+<a href="#__codelineno-5-3" id="__codelineno-5-3" name="__codelineno-5-3"></a><span class="w">  </span><span class="n">source_columns</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">'prod_name'</span><span class="p">,</span><span class="w"> </span><span class="s1">'cat'</span><span class="p">,</span><span class="w"> </span><span class="s1">'amt'</span><span class="p">],</span>
+<a href="#__codelineno-5-4" id="__codelineno-5-4" name="__codelineno-5-4"></a><span class="w">  </span><span class="n">target_schema</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="s1">'scout_standard'</span><span class="p">,</span>
+<a href="#__codelineno-5-5" id="__codelineno-5-5" name="__codelineno-5-5"></a><span class="w">  </span><span class="n">confidence_threshold</span><span class="w"> </span><span class="p">:</span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">.</span><span class="mi">8</span>
+<a href="#__codelineno-5-6" id="__codelineno-5-6" name="__codelineno-5-6"></a><span class="p">);</span>
+<a href="#__codelineno-5-7" id="__codelineno-5-7" name="__codelineno-5-7"></a>
+<a href="#__codelineno-5-8" id="__codelineno-5-8" name="__codelineno-5-8"></a><span class="c1">-- Results: [</span>
+<a href="#__codelineno-5-9" id="__codelineno-5-9" name="__codelineno-5-9"></a><span class="c1">--   { source: 'prod_name', target: 'product_name', confidence: 0.92 }</span>
+<a href="#__codelineno-5-10" id="__codelineno-5-10" name="__codelineno-5-10"></a><span class="c1">--   { source: 'cat', target: 'category', confidence: 0.85 }</span>
+<a href="#__codelineno-5-11" id="__codelineno-5-11" name="__codelineno-5-11"></a><span class="c1">--   { source: 'amt', target: 'amount', confidence: 0.95 }</span>
+<a href="#__codelineno-5-12" id="__codelineno-5-12" name="__codelineno-5-12"></a><span class="c1">-- ]</span>
+</code></pre></div>
+<h3 id="3-quality-gates-8-step-validation">3. Quality Gates (8-Step Validation)</h3>
+<ol>
+<li><strong>Format Detection</strong> → Confidence ≥ 0.8</li>
+<li><strong>Schema Inference</strong> → Column types identified</li>
+<li><strong>ML Column Mapping</strong> → Fuzzy match threshold</li>
+<li><strong>Data Quality Check</strong> → Missing values &lt; 10%</li>
+<li><strong>Business Rule Validation</strong> → Category constraints</li>
+<li><strong>Duplicate Detection</strong> → Deduplication logic</li>
+<li><strong>Integration Testing</strong> → End-to-end validation</li>
+<li><strong>Performance Monitoring</strong> → Processing time &lt; 30s</li>
+</ol>
+<h3 id="4-real-time-processing-pipeline">4. Real-Time Processing Pipeline</h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant GD as Google Drive
+    participant UFP as Universal Processor
+    participant Bronze as Bronze Layer
+    participant Silver as Silver Layer
+    participant Gold as Gold Layer
+    participant AI as AI Analytics
+
+    GD-&gt;&gt;UFP: Upload CSV/JSON/Excel file
+    UFP-&gt;&gt;UFP: Auto-detect format (95% accuracy)
+    UFP-&gt;&gt;UFP: Infer schema &amp; map columns
+    UFP-&gt;&gt;Bronze: Store in universal_file_ingestion
+
+    Note over Bronze: Quality Gates 1-3
+    Bronze-&gt;&gt;Silver: Transform &amp; enrich data
+
+    Note over Silver: Quality Gates 4-6
+    Silver-&gt;&gt;Gold: Aggregate business metrics
+
+    Note over Gold: Quality Gates 7-8
+    Gold-&gt;&gt;AI: Enable NL2SQL &amp; predictive analytics
+
+    AI--&gt;&gt;GD: Analytics dashboard ready</code></pre>
+<h2 id="performance-characteristics">Performance Characteristics</h2>
+<h3 id="processing-metrics">Processing Metrics</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Latency</th>
+<th>Throughput</th>
+<th>Accuracy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Format Detection</strong></td>
+<td>&lt;100ms</td>
+<td>1000 files/min</td>
+<td>95%</td>
+</tr>
+<tr>
+<td><strong>Schema Inference</strong></td>
+<td>&lt;200ms</td>
+<td>500 schemas/min</td>
+<td>90%</td>
+</tr>
+<tr>
+<td><strong>ML Column Mapping</strong></td>
+<td>&lt;500ms</td>
+<td>200 mappings/min</td>
+<td>95%</td>
+</tr>
+<tr>
+<td><strong>Bronze→Silver</strong></td>
+<td>&lt;2s</td>
+<td>10K records/min</td>
+<td>98%</td>
+</tr>
+<tr>
+<td><strong>Silver→Gold</strong></td>
+<td>&lt;5s</td>
+<td>5K aggregations/min</td>
+<td>99%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="resource-usage">Resource Usage</h3>
+<ul>
+<li><strong>Memory</strong>: 512MB per worker process</li>
+<li><strong>CPU</strong>: 2 cores for parallel processing</li>
+<li><strong>Storage</strong>: 10GB/month for 1M records</li>
+<li><strong>Cache</strong>: Redis 1GB for column mappings</li>
+</ul>
+<h2 id="error-handling-recovery">Error Handling &amp; Recovery</h2>
+<h3 id="circuit-breaker-pattern">Circuit Breaker Pattern</h3>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-6-1" id="__codelineno-6-1" name="__codelineno-6-1"></a><span class="c1">// Auto-recovery for failed format detection</span>
+<a href="#__codelineno-6-2" id="__codelineno-6-2" name="__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">detectionFailures</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a href="#__codelineno-6-3" id="__codelineno-6-3" name="__codelineno-6-3"></a><span class="w">  </span><span class="nx">fallbackToManualMapping</span><span class="p">()</span>
+<a href="#__codelineno-6-4" id="__codelineno-6-4" name="__codelineno-6-4"></a><span class="w">  </span><span class="nx">alertAdministrator</span><span class="p">()</span>
+<a href="#__codelineno-6-5" id="__codelineno-6-5" name="__codelineno-6-5"></a><span class="p">}</span>
+<a href="#__codelineno-6-6" id="__codelineno-6-6" name="__codelineno-6-6"></a>
+<a href="#__codelineno-6-7" id="__codelineno-6-7" name="__codelineno-6-7"></a><span class="c1">// Graceful degradation</span>
+<a href="#__codelineno-6-8" id="__codelineno-6-8" name="__codelineno-6-8"></a><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">mlColumnMappingFails</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<a href="#__codelineno-6-9" id="__codelineno-6-9" name="__codelineno-6-9"></a><span class="w">  </span><span class="nx">useRuleBasedMapping</span><span class="p">()</span><span class="w">  </span><span class="c1">// 80% accuracy vs 95%</span>
+<a href="#__codelineno-6-10" id="__codelineno-6-10" name="__codelineno-6-10"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="data-quality-monitoring">Data Quality Monitoring</h3>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-7-1" id="__codelineno-7-1" name="__codelineno-7-1"></a><span class="c1">-- Real-time quality metrics</span>
+<a href="#__codelineno-7-2" id="__codelineno-7-2" name="__codelineno-7-2"></a><span class="k">SELECT</span>
+<a href="#__codelineno-7-3" id="__codelineno-7-3" name="__codelineno-7-3"></a><span class="w">  </span><span class="n">file_format</span><span class="p">,</span>
+<a href="#__codelineno-7-4" id="__codelineno-7-4" name="__codelineno-7-4"></a><span class="w">  </span><span class="k">AVG</span><span class="p">(</span><span class="n">detection_confidence</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">avg_confidence</span><span class="p">,</span>
+<a href="#__codelineno-7-5" id="__codelineno-7-5" name="__codelineno-7-5"></a><span class="w">  </span><span class="k">AVG</span><span class="p">((</span><span class="n">schema_inference</span><span class="o">-&gt;&gt;</span><span class="s1">'qualityScore'</span><span class="p">)::</span><span class="nb">decimal</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">quality_score</span><span class="p">,</span>
+<a href="#__codelineno-7-6" id="__codelineno-7-6" name="__codelineno-7-6"></a><span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'failed'</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">failure_count</span>
+<a href="#__codelineno-7-7" id="__codelineno-7-7" name="__codelineno-7-7"></a><span class="k">FROM</span><span class="w"> </span><span class="n">staging</span><span class="p">.</span><span class="n">universal_file_ingestion</span>
+<a href="#__codelineno-7-8" id="__codelineno-7-8" name="__codelineno-7-8"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">'1 hour'</span>
+<a href="#__codelineno-7-9" id="__codelineno-7-9" name="__codelineno-7-9"></a><span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">file_format</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="integration-points">Integration Points</h2>
+<h3 id="1-azure-streaming-integration">1. Azure Streaming Integration</h3>
+<ul>
+<li><strong>Event Hub</strong> → Real-time data ingestion</li>
+<li><strong>Stream Analytics</strong> → Complex event processing</li>
+<li><strong>Service Bus</strong> → Message queue management</li>
+<li><strong>ML Inference</strong> → Predictive model scoring</li>
+</ul>
+<h3 id="2-supabase-edge-functions">2. Supabase Edge Functions</h3>
+<ul>
+<li><strong>drive-universal-processor</strong> → Format-flexible ingestion</li>
+<li><strong>nl2sql</strong> → Natural language analytics</li>
+<li><strong>ingest-stream</strong> → Real-time data processing</li>
+</ul>
+<h3 id="3-external-apis">3. External APIs</h3>
+<ul>
+<li><strong>Google Drive API</strong> → File metadata &amp; content</li>
+<li><strong>Azure Cognitive Services</strong> → AI enrichment</li>
+<li><strong>MindsDB</strong> → Predictive analytics</li>
+<li><strong>Slack/Teams</strong> → Alert notifications</li>
+</ul>
+<h2 id="deployment-architecture">Deployment Architecture</h2>
+<div class="highlight"><pre><span></span><code><a href="#__codelineno-8-1" id="__codelineno-8-1" name="__codelineno-8-1"></a><span class="c1"># Production deployment configuration</span>
+<a href="#__codelineno-8-2" id="__codelineno-8-2" name="__codelineno-8-2"></a><span class="nt">services</span><span class="p">:</span>
+<a href="#__codelineno-8-3" id="__codelineno-8-3" name="__codelineno-8-3"></a><span class="w">  </span><span class="nt">universal-processor</span><span class="p">:</span>
+<a href="#__codelineno-8-4" id="__codelineno-8-4" name="__codelineno-8-4"></a><span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<a href="#__codelineno-8-5" id="__codelineno-8-5" name="__codelineno-8-5"></a><span class="w">    </span><span class="nt">resources</span><span class="p">:</span>
+<a href="#__codelineno-8-6" id="__codelineno-8-6" name="__codelineno-8-6"></a><span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">"512Mi"</span>
+<a href="#__codelineno-8-7" id="__codelineno-8-7" name="__codelineno-8-7"></a><span class="w">      </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">"500m"</span>
+<a href="#__codelineno-8-8" id="__codelineno-8-8" name="__codelineno-8-8"></a><span class="w">    </span><span class="nt">env</span><span class="p">:</span>
+<a href="#__codelineno-8-9" id="__codelineno-8-9" name="__codelineno-8-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DETECTION_CONFIDENCE_THRESHOLD=0.8</span>
+<a href="#__codelineno-8-10" id="__codelineno-8-10" name="__codelineno-8-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ML_MAPPING_ENABLED=true</span>
+<a href="#__codelineno-8-11" id="__codelineno-8-11" name="__codelineno-8-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CACHE_TTL=3600</span>
+<a href="#__codelineno-8-12" id="__codelineno-8-12" name="__codelineno-8-12"></a>
+<a href="#__codelineno-8-13" id="__codelineno-8-13" name="__codelineno-8-13"></a><span class="w">  </span><span class="nt">etl-orchestrator</span><span class="p">:</span>
+<a href="#__codelineno-8-14" id="__codelineno-8-14" name="__codelineno-8-14"></a><span class="w">    </span><span class="nt">replicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<a href="#__codelineno-8-15" id="__codelineno-8-15" name="__codelineno-8-15"></a><span class="w">    </span><span class="nt">resources</span><span class="p">:</span>
+<a href="#__codelineno-8-16" id="__codelineno-8-16" name="__codelineno-8-16"></a><span class="w">      </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="s">"256Mi"</span>
+<a href="#__codelineno-8-17" id="__codelineno-8-17" name="__codelineno-8-17"></a><span class="w">      </span><span class="nt">cpu</span><span class="p">:</span><span class="w"> </span><span class="s">"250m"</span>
+<a href="#__codelineno-8-18" id="__codelineno-8-18" name="__codelineno-8-18"></a><span class="w">    </span><span class="nt">schedule</span><span class="p">:</span><span class="w"> </span><span class="s">"*/15</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*"</span><span class="w">  </span><span class="c1"># Every 15 minutes</span>
+<a href="#__codelineno-8-19" id="__codelineno-8-19" name="__codelineno-8-19"></a>
+<a href="#__codelineno-8-20" id="__codelineno-8-20" name="__codelineno-8-20"></a><span class="w">  </span><span class="nt">monitoring</span><span class="p">:</span>
+<a href="#__codelineno-8-21" id="__codelineno-8-21" name="__codelineno-8-21"></a><span class="w">    </span><span class="nt">prometheus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">enabled</span>
+<a href="#__codelineno-8-22" id="__codelineno-8-22" name="__codelineno-8-22"></a><span class="w">    </span><span class="nt">grafana</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">enabled</span>
+<a href="#__codelineno-8-23" id="__codelineno-8-23" name="__codelineno-8-23"></a><span class="w">    </span><span class="nt">alertmanager</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">enabled</span>
+<a href="#__codelineno-8-24" id="__codelineno-8-24" name="__codelineno-8-24"></a><span class="w">    </span><span class="nt">slack_webhook</span><span class="p">:</span><span class="w"> </span><span class="s">"${SLACK_WEBHOOK_URL}"</span>
+</code></pre></div>
+<p>This architecture provides a robust, format-flexible data processing pipeline that can handle any file type from Google Drive while maintaining high accuracy, performance, and reliability through the Scout v7 medallion architecture.</p>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/jgtolentino/scout-v7" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.highlight", "search.share", "content.code.copy"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+<script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+# Scout UI Backlog - Normalized YAML Format
+# Purpose: Track features implemented elsewhere but not yet in Scout Dashboard UI v6.0
+# Source of Truth: This file is the canonical backlog registry
+
+backlog_metadata:
+  version: "1.0.0"
+  last_updated: "2025-08-29"
+  total_items: 10
+  status_counts:
+    proposed: 8
+    in_review: 2
+    blocked: 0
+
+backlog_items:
+  - id: SCOUT-BL-001
+    title: "Predictive revenue & share forecasting (ForecastChart)"
+    source:
+      module: "ops/analytics"
+      files:
+        - "apps/ops-analytics/src/components/ForecastChart.tsx"
+        - "packages/contracts/src/forecast.ts"
+      evidence:
+        - "ForecastChart component with time series prediction"
+        - "Revenue forecasting algorithms implemented"
+    ui_target:
+      tab: "Overview"
+      card: "revenue_timeseries"
+      position: "chart_overlay_toggle"
+    rpc_contracts:
+      - name: "scout_forecast_revenue"
+        status: "exists"
+        schema: "scout"
+      - name: "scout_forecast_share" 
+        status: "exists"
+        schema: "scout"
+    status: "proposed"
+    complexity: "M"
+    owner: "analytics"
+    priority: "high"
+    effort_estimate: "3-5 days"
+    notes: |
+      Port ForecastChart component and expose as toggle on revenue trend.
+      Display confidence intervals and cone of uncertainty.
+      Ensure CI performance and a11y compliance.
+
+  - id: SCOUT-BL-002
+    title: "Saved Queries & History with sharing"
+    source:
+      module: "command-center"
+      files:
+        - "apps/command-center/src/components/SavedQueryBar.tsx"
+        - "supabase/functions/saved_queries/*"
+      evidence:
+        - "SavedQueryBar component exists"
+        - "Query history and sharing functionality"
+    ui_target:
+      tab: "AI"
+      card: "chat_interface"
+      position: "top_toolbar"
+    rpc_contracts:
+      - name: "saved_queries_list"
+        status: "exists"
+        schema: "public"
+      - name: "saved_queries_run"
+        status: "exists"
+        schema: "public"
+      - name: "saved_queries_share"
+        status: "needs_implementation"
+        schema: "public"
+    status: "proposed"
+    complexity: "M"
+    owner: "platform"
+    priority: "medium"
+    effort_estimate: "2-3 days"
+    notes: |
+      Add compact "Saved Queries" strip to AI tab.
+      Enable copy URL with filters and pin to sidebar functionality.
+
+  - id: SCOUT-BL-003
+    title: "Insight Templates (Reusable analysis prompts)"
+    source:
+      module: "advisor/suqi"
+      files:
+        - "apps/advisor/src/templates/InsightTemplates.tsx"
+        - "apps/suqi/src/prompts/retail_insights.json"
+      evidence:
+        - "Pre-built insight templates for retail analysis"
+        - "Price sensitivity, substitution, geo expansion templates"
+    ui_target:
+      tab: "AI"
+      card: "chat_interface" 
+      position: "templates_drawer"
+    rpc_contracts:
+      - name: "insight_templates_list"
+        status: "needs_implementation"
+        schema: "public"
+    status: "proposed"
+    complexity: "S"
+    owner: "ai_team"
+    priority: "medium"
+    effort_estimate: "1-2 days"
+    notes: |
+      Templates for common retail analyses: price sensitivity, substitution patterns, geo expansion.
+      Frontend presets mapping to existing Scout queries.
+      Publish template JSON in repo and link to MCP.
+
+  - id: SCOUT-BL-004
+    title: "Smart Alerts & Threshold Subscriptions"
+    source:
+      module: "notifications/alerts"
+      files:
+        - "apps/notifications/src/components/AlertsManager.tsx"
+        - "supabase/functions/alerts_engine/*"
+      evidence:
+        - "AlertsManager component with threshold monitoring"
+        - "Email and Slack notification integrations"
+    ui_target:
+      tab: "Overview"
+      card: "kpi_grid"
+      position: "bell_icon_per_card"
+    rpc_contracts:
+      - name: "alerts_create"
+        status: "exists"
+        schema: "notifications"
+      - name: "alerts_list"
+        status: "exists"
+        schema: "notifications"
+      - name: "alerts_trigger"
+        status: "exists"
+        schema: "notifications"
+    status: "in_review"
+    complexity: "L"
+    owner: "platform"
+    priority: "high"
+    effort_estimate: "5-7 days"
+    notes: |
+      Bell icon on KPI cards with "Create alert" functionality.
+      Support threshold and anomaly detection modes.
+      Email/Slack integration with proper RLS handling.
+
+  - id: SCOUT-BL-005
+    title: "Export & Scheduled Reports Engine"
+    source:
+      module: "reporting"
+      files:
+        - "apps/reporting/src/components/ExportManager.tsx"
+        - "supabase/functions/report_generator/*"
+      evidence:
+        - "Export functionality for PNG/CSV/PDF formats"
+        - "Scheduled report generation system"
+    ui_target:
+      tab: "All tabs"
+      card: "card_footer"
+      position: "export_schedule_buttons"
+    rpc_contracts:
+      - name: "report_create"
+        status: "exists"
+        schema: "reporting"
+      - name: "export_sign_url"
+        status: "exists"
+        schema: "reporting"
+      - name: "schedule_report"
+        status: "exists"
+        schema: "reporting"
+    status: "proposed"
+    complexity: "L"
+    owner: "platform"
+    priority: "medium"
+    effort_estimate: "4-6 days"
+    notes: |
+      Card footer "Export" (PNG/CSV/PDF) and "Schedule" buttons.
+      Add loading/disabled states when RLS blocks access.
+      Integration with existing signed URL system.
+
+  - id: SCOUT-BL-006
+    title: "Advanced Geo Hexbin Visualization"
+    source:
+      module: "geo-labs"
+      files:
+        - "apps/geo-labs/src/components/HexbinMap.tsx"
+        - "packages/geo/src/hexbin-processor.ts"
+      evidence:
+        - "Hexagonal binning for geographic data visualization"
+        - "Alternative to choropleth maps for density analysis"
+    ui_target:
+      tab: "Geography"
+      card: "geo_map"
+      position: "map_type_toggle"
+    rpc_contracts:
+      - name: "scout_geo_hexbin"
+        status: "exists"
+        schema: "scout"
+    status: "proposed"
+    complexity: "L"
+    owner: "geo_team"
+    priority: "low"
+    effort_estimate: "6-8 days"
+    notes: |
+      Toggle between choropleth and hexbin visualization modes.
+      Feature flag GEO_HEXBIN=1 (CI ensures off by default).
+      Advanced geographic analysis for power users.
+
+  - id: SCOUT-BL-007
+    title: "Cohorts & AB Testing Overlays"
+    source:
+      module: "experiments"
+      files:
+        - "apps/experiments/src/components/CohortAnalysis.tsx"
+        - "apps/experiments/src/components/ABTestOverlay.tsx"
+      evidence:
+        - "Cohort performance tracking"
+        - "AB test result visualization with treatment/control"
+    ui_target:
+      tab: "Mix, Competitive"
+      card: "overlay_ribbons"
+      position: "chart_overlays"
+    rpc_contracts:
+      - name: "scout_cohort_perf"
+        status: "exists"
+        schema: "experiments"
+      - name: "scout_ab_test_summary"
+        status: "exists"
+        schema: "experiments"
+    status: "proposed"
+    complexity: "M"
+    owner: "analytics"
+    priority: "low"
+    effort_estimate: "4-5 days"
+    notes: |
+      Overlay treatment/control ribbons on charts.
+      Tooltips with confidence intervals.
+      Advanced experimental analysis features.
+
+  - id: SCOUT-BL-008
+    title: "Design System Analytics Panel"
+    source:
+      module: "creative-studio"
+      files:
+        - "apps/creative-studio/src/analytics/ComponentUsage.tsx"
+        - "packages/design-system/src/usage-tracker.ts"
+      evidence:
+        - "Track usage of design system components"
+        - "Component adoption and governance metrics"
+    ui_target:
+      tab: "AI"
+      card: "sub_panel"
+      position: "about_section"
+    rpc_contracts:
+      - name: "design_system_usage"
+        status: "exists"
+        schema: "design_analytics"
+    status: "proposed"
+    complexity: "S"
+    owner: "design_system"
+    priority: "low"
+    effort_estimate: "1-2 days"
+    notes: |
+      Usage analytics for UI kit components.
+      Helps with design system governance and adoption tracking.
+
+  - id: SCOUT-BL-009
+    title: "Dark Mode & Advanced Theming"
+    source:
+      module: "theme-lab"
+      files:
+        - "apps/theme-lab/src/ThemeProvider.tsx"
+        - "packages/ui/src/theme/dark-mode.ts"
+      evidence:
+        - "Dark mode implementation with theme switching"
+        - "Advanced theming system with CSS variables"
+    ui_target:
+      tab: "Global"
+      card: "header_toggle"
+      position: "theme_selector"
+    rpc_contracts: []
+    status: "in_review"
+    complexity: "M"
+    owner: "design_system"
+    priority: "medium"
+    effort_estimate: "3-4 days"
+    notes: |
+      Global theme toggle with system preference detection.
+      Ensure Code Connect mappings document theme tokens.
+      Accessibility compliance for color contrast.
+
+  - id: SCOUT-BL-010
+    title: "Localization & Regional Formatting"
+    source:
+      module: "intl"
+      files:
+        - "apps/intl/src/LocaleProvider.tsx"
+        - "packages/i18n/src/formatters.ts"
+      evidence:
+        - "Internationalization setup for en-PH, en-US"
+        - "Currency, number, and date formatting"
+    ui_target:
+      tab: "Global"
+      card: "settings_menu"
+      position: "locale_selector"
+    rpc_contracts: []
+    status: "proposed"
+    complexity: "M"
+    owner: "platform"
+    priority: "low"
+    effort_estimate: "4-5 days"
+    notes: |
+      Regional settings: currency (PHP/USD), number format, date format.
+      CI snapshot testing per locale.
+      Proper timezone handling for Philippine market.
+
+# Process workflow:
+# 1. New backlog item → append to this file
+# 2. When promoted to release:
+#    - Move from Backlog → PRD Functional Requirements  
+#    - Add contracts to packages/contracts
+#    - Add UI story, tests, Code Connect mapping
+#    - Update CHANGELOG.md
+# 3. CI validation ensures backlog stays synchronized with source evidence

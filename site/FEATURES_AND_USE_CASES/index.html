@@ -1,0 +1,1136 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Auto-generated database schema and ETL contract documentation">
+      
+      
+        <meta name="author" content="TBWA Data Team">
+      
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
+    
+    
+      
+        <title>Scout v7 Features & Use Cases Specification - Scout v7 Database Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#scout-v7-features-use-cases-specification" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Scout v7 Database Documentation" class="md-header__button md-logo" aria-label="Scout v7 Database Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Scout v7 Database Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Scout v7 Features &amp; Use Cases Specification
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jgtolentino/scout-v7" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    scout-v7
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../index.md" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../schemas/database/" class="md-tabs__link">
+          
+  
+  
+  Database Schema
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../etl/contracts/" class="md-tabs__link">
+          
+  
+  
+  ETL Documentation
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../infrastructure/README.md" class="md-tabs__link">
+          
+  
+  
+  Infrastructure
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Scout v7 Database Documentation" class="md-nav__button md-logo" aria-label="Scout v7 Database Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Scout v7 Database Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jgtolentino/scout-v7" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    scout-v7
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Database Schema
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Database Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schemas/database/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ETL Documentation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            ETL Documentation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../etl/contracts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contract Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Infrastructure
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Infrastructure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infrastructure/README.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="scout-v7-features-use-cases-specification">Scout v7 Features &amp; Use Cases Specification</h1>
+<p><strong>Complete feature enumeration and role-based use cases for TBWA Project Scout v7</strong></p>
+<hr />
+<h1 id="features-complete">Features (Complete)</h1>
+<h2 id="a-data-architecture">A) Data &amp; Architecture</h2>
+<h3 id="supabase-medallion-pipeline">Supabase Medallion Pipeline</h3>
+<ul>
+<li><strong>Bronze (Raw)</strong> → <strong>Silver (Clean)</strong> → <strong>Gold (KPIs/Views)</strong> → <strong>Platinum (Frameworks/Benchmarks/CES)</strong></li>
+<li>Complete data lineage with quality gates at each layer</li>
+<li>Automated ETL with CRISP-DM methodology integration</li>
+</ul>
+<h3 id="approved-views-for-edge-functions-read-only">Approved Views for Edge Functions (Read-Only)</h3>
+<p><strong>Gold Layer Views:</strong>
+- <code>gold_customer_activity</code> - Customer behavior and interaction patterns
+- <code>gold_product_combinations</code> - Basket analysis and product associations
+- <code>gold_persona_region_metrics</code> - Geographic persona distribution and performance</p>
+<p><strong>Platinum Layer Views:</strong>
+- <code>platinum_recommendations</code> - AI-generated recommendations with ROI projections
+- <code>platinum_basket_combos</code> - Advanced basket combination insights
+- <code>platinum_persona_insights</code> - Deep persona behavioral analysis</p>
+<p><strong>Consumption Views:</strong>
+- <code>v_store_kpi_platinum</code> - Store-level KPI dashboard data
+- <code>v_store_persona_mix</code> - Store persona composition analysis
+- <code>v_distributor_network_platinum</code> - Distributor network intelligence
+- <code>v_store_sales_hourly</code> - Hourly sales pattern analysis</p>
+<h3 id="hybrid-cag-rag-architecture">Hybrid CAG + RAG Architecture</h3>
+<p><strong>CAG (Cache) - Static Data:</strong>
+- Master product catalog
+- Geographic hierarchy (barangay/municipality/region)
+- KPI definitions and business rules
+- Static taxonomies and classifications</p>
+<p><strong>RAG (Retrieval) - Dynamic Data:</strong>
+- Fresh transaction streams
+- Daily brand share calculations
+- Real-time substitution patterns
+- Price elasticity metrics
+- Predictive analytics outputs
+- Creative Effectiveness Score (CES) data</p>
+<h3 id="security-access-control">Security &amp; Access Control</h3>
+<ul>
+<li><strong>Role-Based Row Level Security (RLS)</strong></li>
+<li><strong>Conformed Metric Access</strong> - No raw table exposure from Edge Functions</li>
+<li><strong>Bruno-routed secrets</strong> - Zero credential handling by Claude</li>
+<li><strong>Read-only data paths</strong> from Edge Functions to data layer</li>
+</ul>
+<hr />
+<h2 id="b-intelligence-models">B) Intelligence &amp; Models</h2>
+<h3 id="dynamic-persona-system">Dynamic Persona System</h3>
+<ul>
+<li><strong>Data-Driven Clustering</strong> - Not limited to 4 static personas</li>
+<li><strong>Similarity Scoring</strong> - Continuous persona matching with confidence levels</li>
+<li><strong>Rules-Augmented Classification</strong> - Business logic overlay on ML clustering</li>
+<li><strong>Dynamic Persona Creation</strong> - Auto-generate new personas when similarity falls below threshold</li>
+</ul>
+<h3 id="transaction-inference-engine">Transaction Inference Engine</h3>
+<p><strong>Bidirectional Inference:</strong>
+- <strong>Items from Context</strong> - Infer SKUs from amount/time/location patterns
+- <strong>Gap Completion</strong> - Infer missing transactions from inventory/cash deltas
+- <strong>Pattern Matching</strong> - Use basket combos and time-of-day patterns
+- <strong>Probabilistic Completion</strong> - Statistical confidence scoring for inferences</p>
+<p><strong>Time-Series Forecasting (Optional):</strong>
+- Hour/day horizon demand predictions
+- Store-level inventory optimization
+- Staffing requirement forecasting</p>
+<h3 id="recommendations-engine-roi-linked">Recommendations Engine (ROI-Linked)</h3>
+<p><strong>Recommendation Types:</strong>
+- <strong>Inventory</strong> - Stock optimization with projected ROI
+- <strong>Pricing</strong> - Dynamic pricing suggestions with elasticity consideration
+- <strong>Marketing</strong> - Persona-targeted promotional recommendations
+- <strong>Supply/Sales</strong> - Distribution and sales strategy optimization</p>
+<p><strong>Features:</strong>
+- <strong>Persona-Aware</strong> - Tailored to customer segment preferences
+- <strong>Role-Aware</strong> - Customized for user role (owner/distributor/brand manager)
+- <strong>Projected Impact</strong> - Quantified ROI and success probability</p>
+<h3 id="reinforcement-learning-loop">Reinforcement Learning Loop</h3>
+<ul>
+<li><strong>Unified Feedback Logging</strong> - <code>model_feedback</code> table captures all interactions</li>
+<li><strong>Action Types</strong> - accept/reject/correct/ignore recommendations</li>
+<li><strong>Policy Tuning</strong> - Bandit/RL-ready architecture for continuous improvement</li>
+<li><strong>Performance Tracking</strong> - Model effectiveness measurement over time</li>
+</ul>
+<h3 id="model-architecture-philosophy">Model Architecture Philosophy</h3>
+<ul>
+<li><strong>Model-Agnostic</strong> - Support heuristic + statistical + ML approaches</li>
+<li><strong>No Vendor Lock</strong> - Platform-independent implementations</li>
+<li><strong>Confidence Scoring</strong> - All predictions include uncertainty estimates</li>
+<li><strong>Explainable AI</strong> - Business-interpretable model outputs</li>
+</ul>
+<hr />
+<h2 id="c-edge-functions-supabase">C) Edge Functions (Supabase)</h2>
+<h3 id="core-ai-functions">Core AI Functions</h3>
+<p><strong><code>inferTransaction()</code></strong>
+- <strong>Purpose</strong> - Enrich and complete partial transaction data
+- <strong>Features</strong> - Forecast when requested, confidence scoring, partial success handling
+- <strong>Response Codes</strong> - 206 (partial completion), 422 (validation failure), 200 (success)
+- <strong>Input</strong> - Partial transaction context (amount, time, location, available items)
+- <strong>Output</strong> - Completed transaction with confidence scores</p>
+<p><strong><code>matchPersona()</code></strong>
+- <strong>Purpose</strong> - Assign customers to behavioral personas
+- <strong>Algorithm</strong> - Cluster similarity + business rules
+- <strong>Features</strong> - Confidence scoring, dynamic persona creation
+- <strong>Threshold Management</strong> - Create new personas when similarity &lt; threshold
+- <strong>Output</strong> - Persona assignment with similarity score and characteristics</p>
+<p><strong><code>generateRecommendations()</code></strong>
+- <strong>Purpose</strong> - Generate role-aware business recommendations
+- <strong>Features</strong> - Projected ROI calculation, recommendation logging
+- <strong>Personalization</strong> - Persona-aware and role-specific suggestions
+- <strong>Types</strong> - Inventory, pricing, marketing, operational recommendations
+- <strong>Feedback Loop</strong> - Integration with <code>model_feedback</code> for continuous learning</p>
+<h3 id="data-access-layer-dal">Data Access Layer (DAL)</h3>
+<ul>
+<li><strong>View-Only Access</strong> - Exclusively uses gold/platinum views</li>
+<li><strong>Clean Function Routing</strong> - Claude/SuperClaude compatible interfaces</li>
+<li><strong>Performance Optimized</strong> - &lt;1.2s CAG, &lt;3s RAG response times</li>
+<li><strong>Error Handling</strong> - Comprehensive error responses with actionable guidance</li>
+</ul>
+<hr />
+<h2 id="d-schema-additions">D) Schema Additions</h2>
+<h3 id="new-tables">New Tables</h3>
+<p><strong><code>persona_cluster</code></strong>
+- Dynamic clustering results
+- Optional embedding centroids for ML-based matching
+- Cluster characteristics and business interpretation
+- Performance metrics per cluster</p>
+<p><strong><code>buyer_persona</code></strong>
+- Current persona assignments for customers
+- Similarity scores and confidence levels
+- Assignment history and evolution tracking
+- Business-relevant persona characteristics</p>
+<p><strong><code>transaction_inference</code></strong>
+- Inferred transaction fields with confidence scores
+- Original vs. inferred data comparison
+- Inference methodology and model version
+- Quality assurance flags and manual overrides</p>
+<p><strong><code>sales_forecast</code></strong> (Optional)
+- Store-level demand predictions by time horizon
+- Confidence intervals and prediction accuracy
+- Historical forecast vs. actual performance
+- Input features and model interpretability</p>
+<p><strong><code>recommendation</code></strong>
+- Issued recommendations with projected ROI
+- Recommendation type, target persona, and business context
+- Implementation status and actual vs. projected outcomes
+- User feedback and effectiveness measurement</p>
+<p><strong><code>model_feedback</code></strong>
+- Reinforcement learning feedback loop
+- User actions: accept/reject/correct/ignore
+- Context and reasoning for feedback
+- Model performance impact tracking</p>
+<hr />
+<h2 id="e-agentic-strategy-pipeline-mckinsey-grade">E) Agentic Strategy Pipeline (McKinsey-Grade)</h2>
+<h3 id="strategic-intelligence-workflow">Strategic Intelligence Workflow</h3>
+<p><strong>Maya</strong> (Context Discovery) →
+<strong>Claudia</strong> (Stakeholder Analysis) →
+<strong>Gagambi</strong> (Market &amp; Competitive Intelligence) →
+<strong>Manus</strong> (Framework Application: Porter/BCG/SWOT/Value Chain) →
+<strong>Echo</strong> (Insight Extraction) →
+<strong>Ace</strong> (Options &amp; Trade-offs Analysis) →
+<strong>Yummy</strong> (Prioritized Recommendations) →
+<strong>Deckgen</strong> (Executive Presentation) →
+<strong>Basher</strong> (90/180/365 Day Roadmap)</p>
+<h3 id="orchestration">Orchestration</h3>
+<ul>
+<li><strong>Sari-Sari Advanced Expert</strong> - Master orchestrator</li>
+<li><strong>CAG+RAG Integration</strong> - Seamless data access across pipeline</li>
+<li><strong>Sub-Agent Coordination</strong> - Intelligent task routing and result synthesis</li>
+<li><strong>Executive Artifacts</strong> - McKinsey-quality deliverables</li>
+</ul>
+<hr />
+<h2 id="f-dashboard-ux-scout-v6">F) Dashboard &amp; UX (Scout v6)</h2>
+<h3 id="dashboard-structure">Dashboard Structure</h3>
+<p><strong>Tab Organization:</strong>
+- <strong>Executive</strong> - C-suite KPIs and strategic overview
+- <strong>Analytics</strong> - Deep-dive analysis and diagnostic tools
+- <strong>Brands</strong> - Brand performance and competitive analysis
+- <strong>Geo</strong> - Geographic performance and territory insights
+- <strong>Strategy</strong> - Strategic planning and scenario analysis</p>
+<h3 id="ui-components">UI Components</h3>
+<ul>
+<li><strong>KPI Cards</strong> - Real-time performance indicators</li>
+<li><strong>Predictive Charts</strong> - Forecasting and trend visualization</li>
+<li><strong>Barangay Choropleths</strong> - Geographic heat maps</li>
+<li><strong>Persona Mix Panels</strong> - Customer segment visualization</li>
+<li><strong>Recommendations Feed</strong> - AI suggestions with accept/dismiss logging</li>
+</ul>
+<h3 id="design-standards">Design Standards</h3>
+<ul>
+<li><strong>TBWA/SMP Styling</strong> - Brand-compliant design system</li>
+<li><strong>Power BI-Level Polish</strong> - Professional dashboard aesthetics</li>
+<li><strong>Technology Stack</strong> - React + Tailwind + Supabase hooks</li>
+<li><strong>Responsive Design</strong> - Mobile-first with desktop optimization</li>
+</ul>
+<hr />
+<h2 id="g-gold-standard-alignment-fmcg">G) Gold-Standard Alignment (FMCG)</h2>
+<h3 id="reference-standards">Reference Standards</h3>
+<ul>
+<li><strong>Academic</strong> - <em>Marketing Metrics</em>, <em>How Brands Grow</em>, <em>Retail Analytics</em></li>
+<li><strong>Industry</strong> - IPA/WARC effectiveness frameworks</li>
+<li><strong>Methodological</strong> - MMM, market basket analysis, demand elasticity, RFM/CLV</li>
+<li><strong>Creative</strong> - CES + WARC/IPA creative effectiveness measurement</li>
+</ul>
+<h3 id="analytical-methods">Analytical Methods</h3>
+<p><strong>Market Mix Modeling (MMM)</strong>
+- Multi-touch attribution across channels
+- Media effectiveness and optimization
+- Incremental lift measurement</p>
+<p><strong>Market Basket Analysis</strong>
+- Apriori and FP-Growth algorithms
+- Association rules mining
+- Cross-selling opportunity identification</p>
+<p><strong>Demand Elasticity</strong>
+- Price sensitivity analysis
+- Promotional effectiveness measurement
+- Competitive response modeling</p>
+<p><strong>Customer Analytics</strong>
+- RFM (Recency, Frequency, Monetary) segmentation
+- Customer Lifetime Value (CLV) prediction
+- Churn probability and retention strategies</p>
+<hr />
+<h2 id="h-orchestration-security">H) Orchestration &amp; Security</h2>
+<h3 id="superclaude-integration">SuperClaude Integration</h3>
+<ul>
+<li><strong>Agent Registration</strong> - Formal agent manifest and capability declaration</li>
+<li><strong>Prompt Engineering</strong> - Standardized prompt templates and validation</li>
+<li><strong>Registry Management</strong> - Centralized agent discovery and version control</li>
+<li><strong>Validation Framework</strong> - Automated testing and quality assurance</li>
+</ul>
+<h3 id="security-architecture">Security Architecture</h3>
+<ul>
+<li><strong>Bruno Secret Routing</strong> - Centralized credential management</li>
+<li><strong>Zero Claude Credentials</strong> - No direct credential access for AI agents</li>
+<li><strong>Read-Only Data Paths</strong> - Secure data access from Edge Functions</li>
+<li><strong>Audit Trail</strong> - Comprehensive logging of all data access and modifications</li>
+</ul>
+<hr />
+<h2 id="i-development-infrastructure-quality">I) Development &amp; Infrastructure Quality</h2>
+<h3 id="performance-targets">Performance Targets</h3>
+<ul>
+<li><strong>CAG Response Time</strong> - &lt;1.2 seconds for cached data retrieval</li>
+<li><strong>RAG Response Time</strong> - &lt;3 seconds for fresh data queries</li>
+<li><strong>Metric Alignment</strong> - ≥90% consistency across data layers</li>
+<li><strong>User Adoption</strong> - Cross-role engagement and utilization metrics</li>
+</ul>
+<h3 id="code-quality-standards">Code Quality Standards</h3>
+<p><strong>JavaScript/TypeScript Hygiene:</strong>
+- JSX components in <code>.tsx</code> files only
+- Vite React plugin configuration
+- <code>tsconfig.json</code> with <code>jsx: react-jsx</code> setting
+- Comprehensive type safety and linting</p>
+<p><strong>Development Workflow:</strong>
+- Soft reload capabilities for rapid development
+- Validation hooks for agent registry updates
+- Automated testing and quality gates
+- Performance monitoring and optimization</p>
+<hr />
+<h1 id="use-cases-by-role">Use Cases (By Role)</h1>
+<h2 id="store-owner-sari-sari-entrepreneur">Store Owner (Sari-sari Entrepreneur)</h2>
+<h3 id="daily-operations">Daily Operations</h3>
+<p><strong>Auto-Complete Missing Sales</strong>
+- Log cash and change at day end
+- System infers missing SKUs and quantities
+- Confidence levels surfaced for validation
+- Manual override capability for corrections</p>
+<p><strong>Demand Forecasting</strong>
+- Next 24-72 hour demand predictions
+- Preparation guidance for stock and staffing
+- Weather and event-based adjustments
+- Historical accuracy tracking</p>
+<p><strong>Inventory Management</strong>
+- <strong>Stockout Prevention</strong> - Proactive alerts with reorder suggestions
+- <strong>ROI Calculation</strong> - Quantified impact of avoided stockouts
+- <strong>Supplier Integration</strong> - Direct reorder capabilities where available
+- <strong>Seasonal Planning</strong> - Holiday and event-based inventory optimization</p>
+<h3 id="customer-experience">Customer Experience</h3>
+<p><strong>Persona-Based Promotions</strong>
+- Student morning combo recommendations
+- Senior citizen essential bundles
+- Family weekend packages
+- Seasonal promotional ideas</p>
+<p><strong>Smart Pricing</strong>
+- Margin optimization suggestions on high-velocity items
+- Low-elasticity item identification
+- Competitive pricing alerts
+- Dynamic promotional pricing</p>
+<p><strong>Point-of-Sale Intelligence</strong>
+- Up-sell suggestions at checkout
+- Cross-sell recommendations based on basket analysis
+- Customer preference learning
+- Loyalty program integration</p>
+<hr />
+<h2 id="distributor-supplier">Distributor / Supplier</h2>
+<h3 id="territory-management">Territory Management</h3>
+<p><strong>Geographic Intelligence</strong>
+- <strong>Barangay-Level Heatmaps</strong> - Demand spikes and gap identification
+- <strong>Territory Performance</strong> - Comparative analysis across regions
+- <strong>Market Penetration</strong> - Opportunity identification and expansion planning
+- <strong>Competitive Landscape</strong> - Share analysis and positioning insights</p>
+<p><strong>Network Optimization</strong>
+- <strong>Stock Planning</strong> - Store-specific restock recommendations prioritized by ROI
+- <strong>Route Optimization</strong> - Efficient delivery routing based on predicted demand
+- <strong>Capacity Management</strong> - Focus routes where predicted demand exceeds capacity
+- <strong>Performance Tracking</strong> - Delivery effectiveness and customer satisfaction</p>
+<h3 id="product-management">Product Management</h3>
+<p><strong>Slow-Mover Recovery</strong>
+- Identify products moving slowly in specific locations
+- Targeted promotional recommendations where peer stores succeed
+- Transfer suggestions between high/low performing locations
+- Clearance strategy optimization</p>
+<p><strong>Demand Planning</strong>
+- Aggregate demand forecasting across network
+- Seasonal pattern recognition and planning
+- New product introduction strategies
+- Inventory level optimization</p>
+<hr />
+<h2 id="brand-manager-fmcg">Brand Manager (FMCG)</h2>
+<h3 id="market-intelligence">Market Intelligence</h3>
+<p><strong>Share &amp; Penetration Tracking</strong>
+- Real-time market share monitoring via Gold views
+- Penetration analysis by geographic segment
+- Competitive positioning and movement alerts
+- Category growth and decline patterns</p>
+<p><strong>Substitution Analysis</strong>
+- Competitive substitution pattern identification
+- Brand switching behavior analysis
+- Price sensitivity and elasticity measurement
+- Promotional cannibalisation assessment</p>
+<h3 id="campaign-effectiveness">Campaign Effectiveness</h3>
+<p><strong>Promotional ROI</strong>
+- Real-time promotional performance tracking
+- Elasticity estimates by micro-region
+- Cross-promotional impact analysis
+- Campaign optimization recommendations</p>
+<p><strong>Creative Effectiveness</strong>
+- <strong>Persona Lift Analysis</strong> - Which creative/offers move which personas
+- <strong>CES Integration</strong> - Creative Effectiveness Score tracking
+- <strong>WARC/IPA Alignment</strong> - Industry benchmark comparison
+- <strong>Multi-touch Attribution</strong> - Campaign interaction effects</p>
+<h3 id="strategic-planning">Strategic Planning</h3>
+<p><strong>Scenario Analysis</strong>
+- Price/promotion mix trade-off modeling
+- Competitive response simulation
+- Market expansion opportunity assessment
+- Resource allocation optimization</p>
+<hr />
+<h2 id="tbwa-strategist-executive">TBWA Strategist / Executive</h2>
+<h3 id="strategic-intelligence">Strategic Intelligence</h3>
+<p><strong>McKinsey-Style Reporting</strong>
+- Auto-generated strategic reports from real data
+- Executive summary with key insights and recommendations
+- Risk assessment and mitigation strategies
+- KPI dashboard with strategic context</p>
+<p><strong>Creative Strategy</strong>
+- <strong>Creative Effectiveness Overlays</strong> - CES + WARC/IPA linkage to sales outcomes
+- <strong>Campaign Performance Analysis</strong> - Multi-dimensional effectiveness measurement
+- <strong>Brand Health Monitoring</strong> - Long-term brand equity tracking
+- <strong>Competitive Intelligence</strong> - Market positioning and share of voice analysis</p>
+<h3 id="client-management">Client Management</h3>
+<p><strong>Strategy Pipeline Management</strong>
+- Client-specific strategy runbooks per region
+- 90/180/365-day milestone tracking
+- Deliverable management and progress monitoring
+- Stakeholder communication and reporting</p>
+<p><strong>Business Development</strong>
+- Market opportunity identification and sizing
+- Competitive landscape analysis and positioning
+- Pitch support with data-driven insights
+- ROI projection and business case development</p>
+<hr />
+<h2 id="analyst-operations">Analyst / Operations</h2>
+<h3 id="diagnostic-tools">Diagnostic Tools</h3>
+<p><strong>One-Click Diagnostics</strong>
+- <strong>Top Driver Analysis</strong> (Echo) - Automated insight identification
+- <strong>Outlier Detection</strong> - Statistical anomaly identification
+- <strong>Data Quality Assessment</strong> - Completeness and accuracy monitoring
+- <strong>Performance Benchmarking</strong> - Industry and peer comparison</p>
+<h3 id="model-management">Model Management</h3>
+<p><strong>Feedback Curation</strong>
+- Review inference edits and recommendation outcomes
+- Model performance tuning and optimization
+- User feedback analysis and integration
+- Continuous improvement implementation</p>
+<p><strong>Governance &amp; Audit</strong>
+- <strong>Transaction Inference Audit</strong> - Review <code>transaction_inference</code> table for accuracy
+- <strong>Model Feedback Analysis</strong> - Examine <code>model_feedback</code> for patterns and insights
+- <strong>Compliance Monitoring</strong> - Ensure adherence to business rules and regulations
+- <strong>Performance Reporting</strong> - Model effectiveness and business impact measurement</p>
+<h3 id="operations-excellence">Operations Excellence</h3>
+<p><strong>Process Optimization</strong>
+- Workflow efficiency analysis and improvement
+- Automation opportunity identification
+- Resource allocation optimization
+- Performance standard establishment and monitoring</p>
+<p><strong>Quality Assurance</strong>
+- Data validation and cleansing procedures
+- Model output verification and testing
+- User acceptance testing and feedback integration
+- Continuous improvement process management</p>
+<hr />
+<h2 id="implementation-roadmap">Implementation Roadmap</h2>
+<h3 id="phase-1-foundation-q1">Phase 1: Foundation (Q1)</h3>
+<ul>
+<li>Medallion architecture implementation</li>
+<li>Core Edge Functions development</li>
+<li>Basic dashboard with essential KPIs</li>
+<li>Initial persona system deployment</li>
+</ul>
+<h3 id="phase-2-intelligence-q2">Phase 2: Intelligence (Q2)</h3>
+<ul>
+<li>Advanced AI models and recommendations</li>
+<li>Full agentic strategy pipeline</li>
+<li>Enhanced dashboard with predictive analytics</li>
+<li>Reinforcement learning loop activation</li>
+</ul>
+<h3 id="phase-3-scale-q3">Phase 3: Scale (Q3)</h3>
+<ul>
+<li>Multi-region deployment</li>
+<li>Advanced creative effectiveness integration</li>
+<li>Full SuperClaude orchestration</li>
+<li>Enterprise-grade security and compliance</li>
+</ul>
+<h3 id="phase-4-optimization-q4">Phase 4: Optimization (Q4)</h3>
+<ul>
+<li>Performance optimization and scaling</li>
+<li>Advanced analytics and insights</li>
+<li>Full automation and self-service capabilities</li>
+<li>Strategic planning and scenario modeling</li>
+</ul>
+<hr />
+<p><em>This specification serves as the definitive guide for Scout v7 development and implementation. All features and use cases are designed to deliver measurable business value while maintaining technical excellence and user experience standards.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/jgtolentino/scout-v7" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.highlight", "search.share", "content.code.copy"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      
+    
+  </body>
+</html>

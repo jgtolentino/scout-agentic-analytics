@@ -1,0 +1,192 @@
+{
+  "uid": "scout-v7-autosync",
+  "title": "Scout v7 — Auto-Sync & Task Framework",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "editable": true,
+  "style": "dark",
+  "time": { "from": "now-24h", "to": "now" },
+  "tags": ["Scout", "Auto-Sync", "ETL", "Operational"],
+  "__inputs": [
+    {
+      "name": "DS_MSSQL",
+      "label": "MSSQL",
+      "type": "datasource",
+      "pluginId": "mssql",
+      "pluginName": "Microsoft SQL Server"
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "task",
+        "label": "Task",
+        "type": "query",
+        "datasource": "${DS_MSSQL}",
+        "refresh": 2,
+        "hide": 0,
+        "includeAll": true,
+        "allValue": "",
+        "query": "SELECT DISTINCT task_name AS __text, task_name AS __value FROM system.v_task_status ORDER BY task_name",
+        "definition": "SELECT DISTINCT task_name FROM system.v_task_status",
+        "multi": true
+      },
+      {
+        "name": "hours",
+        "label": "Window (h)",
+        "type": "custom",
+        "query": "1,3,6,12,24,48,168",
+        "current": { "text": "24", "value": "24" },
+        "options": [
+          { "text": "1", "value": "1" },
+          { "text": "3", "value": "3" },
+          { "text": "6", "value": "6" },
+          { "text": "12", "value": "12" },
+          { "text": "24", "value": "24" },
+          { "text": "48", "value": "48" },
+          { "text": "168", "value": "168" }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Running Tasks (last 15m)",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT COUNT(1) AS running_count\nFROM system.v_task_status WITH (NOLOCK)\nWHERE status = 'RUNNING'\n  AND last_heartbeat >= DATEADD(MINUTE, -15, SYSUTCDATETIME())\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "horizontal", "colorMode": "value", "graphMode": "none", "justifyMode": "center" },
+      "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
+    },
+    {
+      "type": "stat",
+      "title": "Success Rate (last ${hours}h)",
+      "id": 2,
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH w AS (\n  SELECT status\n  FROM system.v_task_run_history WITH (NOLOCK)\n  WHERE start_time >= DATEADD(HOUR, -CAST(@hours AS int), SYSUTCDATETIME())\n    AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\n)\nSELECT CASE WHEN COUNT(*) = 0 THEN 1.0 ELSE SUM(CASE WHEN status = 'SUCCESS' THEN 1 ELSE 0 END)*1.0/COUNT(*) END AS success_rate",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "graphMode": "none" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 1 } }
+    },
+    {
+      "type": "stat",
+      "title": "Last Export Rows",
+      "id": 3,
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT TOP 1 COALESCE(value_int, 0) AS rows_exported\nFROM system.task_events WITH (NOLOCK)\nWHERE event_name = 'EXPORT_WRITTEN'\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\nORDER BY event_time DESC",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "type": "gauge",
+      "title": "Last Parity Diff Ratio",
+      "id": 4,
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT TOP 1 COALESCE(value_float, 0) AS parity_diff_ratio\nFROM system.task_events WITH (NOLOCK)\nWHERE event_name = 'PARITY_DIFF_RATIO'\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\nORDER BY event_time DESC",
+          "refId": "A"
+        }
+      ],
+      "options": { "showThresholdLabels": false, "showThresholdMarkers": true, "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Run Duration (ms) by Task",
+      "id": 5,
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "time_series",
+          "rawSql": "SELECT end_time AS time, CAST(duration_ms AS bigint) AS value, task_name AS metric\nFROM system.v_task_run_history WITH (NOLOCK)\nWHERE start_time >= DATEADD(HOUR, -CAST(@hours AS int), SYSUTCDATETIME())\n  AND status IN ('SUCCESS','FAILED')\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\nORDER BY end_time",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "options": { "legend": { "showLegend": true } }
+    },
+    {
+      "type": "bargauge",
+      "title": "Exports per Hour (last ${hours}h)",
+      "id": 6,
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "WITH e AS (\n  SELECT DATEADD(HOUR, DATEDIFF(HOUR, 0, event_time), 0) AS hr,\n         COUNT(*) AS exports\n  FROM system.task_events WITH (NOLOCK)\n  WHERE event_name = 'EXPORT_WRITTEN'\n    AND event_time >= DATEADD(HOUR, -CAST(@hours AS int), SYSUTCDATETIME())\n    AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\n  GROUP BY DATEADD(HOUR, DATEDIFF(HOUR, 0, event_time), 0)\n)\nSELECT CONVERT(varchar(16), hr, 120) AS label, exports AS value\nFROM e ORDER BY hr",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Last 50 Runs",
+      "id": 7,
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT TOP 50\n  run_id,\n  task_name,\n  status,\n  start_time,\n  end_time,\n  duration_ms,\n  rows_processed,\n  error_message\nFROM system.v_task_run_history WITH (NOLOCK)\nWHERE start_time >= DATEADD(HOUR, -CAST(@hours AS int), SYSUTCDATETIME())\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\nORDER BY start_time DESC",
+          "refId": "A"
+        }
+      ],
+      "options": { "showHeader": true }
+    },
+    {
+      "type": "table",
+      "title": "Recent Errors",
+      "id": 8,
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "datasource": "${DS_MSSQL}",
+      "targets": [
+        {
+          "format": "table",
+          "rawSql": "SELECT TOP 100\n  event_time,\n  task_name,\n  event_name,\n  COALESCE(details, error_message, CAST(value_text AS nvarchar(4000))) AS details\nFROM system.task_events WITH (NOLOCK)\nWHERE severity IN ('ERROR','FATAL')\n  AND event_time >= DATEADD(HOUR, -CAST(@hours AS int), SYSUTCDATETIME())\n  AND (@task = '' OR task_name IN (SELECT value FROM STRING_SPLIT(@task, ',')))\nORDER BY event_time DESC",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

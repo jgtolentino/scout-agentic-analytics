@@ -1,0 +1,21 @@
+services:
+  autosync:
+    image: ghcr.io/jgtolentino/scout-agentic-analytics/auto-sync:latest
+    restart: unless-stopped
+    environment:
+      AZSQL_HOST: ${AZSQL_HOST:-sqltbwaprojectscoutserver.database.windows.net}
+      AZSQL_DB: ${AZSQL_DB:-SQL-TBWA-ProjectScout-Reporting-Prod}
+      AZSQL_USER_WRITER: ${AZSQL_USER_WRITER:-TBWA}
+      AZSQL_PASS_WRITER: ${AZSQL_PASS_WRITER:-R@nd0mPA$$2025!}
+      OUTDIR: /app/exports
+      SYNC_INTERVAL: "60"
+      LOG_LEVEL: INFO
+      AZURE_SQL_ODBC: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=tcp:${AZSQL_HOST:-sqltbwaprojectscoutserver.database.windows.net},1433;DATABASE=${AZSQL_DB:-SQL-TBWA-ProjectScout-Reporting-Prod};UID=${AZSQL_USER_WRITER:-TBWA};PWD=${AZSQL_PASS_WRITER:-R@nd0mPA$$2025!};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+    volumes:
+      - ./exports:/app/exports
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

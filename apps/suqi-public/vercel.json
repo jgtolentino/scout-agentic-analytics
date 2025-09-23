@@ -1,0 +1,50 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "env": {
+    "AZURE_SQL_SERVER": "sqltbwaprojectscoutserver.database.windows.net",
+    "AZURE_SQL_DATABASE": "SQL-TBWA-ProjectScout-Reporting-Prod",
+    "AZURE_SQL_USER": "sqladmin",
+    "AZURE_SQL_PASSWORD": "Azure_pw26",
+    "AZURE_SQL_PORT": "1433",
+    "AZURE_SQL_ENCRYPT": "true"
+  },
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=240, stale-while-revalidate=300"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/consumer-behavior",
+      "permanent": false
+    }
+  ]
+}

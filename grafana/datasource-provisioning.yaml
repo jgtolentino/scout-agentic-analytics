@@ -1,0 +1,17 @@
+apiVersion: 1
+datasources:
+  - name: Azure SQL Prod
+    type: mssql
+    uid: azure-sql-prod
+    url: ${AZSQL_HOST}:1433
+    user: ${AZSQL_USER_READER}
+    secureJsonData:
+      password: ${AZSQL_PASS_READER}
+    jsonData:
+      database: ${AZSQL_DB}
+      encrypt: true
+      sslMode: require
+      connectionTimeout: 30
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400

@@ -1,0 +1,461 @@
+name: Database Schema Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sql/**/*.sql'
+      - 'migrations/**/*.sql'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'sql/**/*.sql'
+      - 'migrations/**/*.sql'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      dry_run:
+        description: 'Dry run (validate only)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  validate-sql:
+    runs-on: ubuntu-latest
+    outputs:
+      sql-files-changed: ${{ steps.check-changes.outputs.sql-files-changed }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for SQL file changes
+      id: check-changes
+      run: |
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+        else
+          BASE_SHA="${{ github.event.before }}"
+          HEAD_SHA="${{ github.sha }}"
+        fi
+
+        SQL_FILES=$(git diff --name-only $BASE_SHA $HEAD_SHA | grep -E '\.(sql)$' || true)
+
+        if [ -n "$SQL_FILES" ]; then
+          echo "sql-files-changed=true" >> $GITHUB_OUTPUT
+          echo "📄 SQL files changed:"
+          echo "$SQL_FILES"
+        else
+          echo "sql-files-changed=false" >> $GITHUB_OUTPUT
+          echo "✅ No SQL files changed"
+        fi
+
+    - name: Set up Python
+      if: steps.check-changes.outputs.sql-files-changed == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install SQL validation tools
+      if: steps.check-changes.outputs.sql-files-changed == 'true'
+      run: |
+        python -m pip install --upgrade pip
+        pip install sqlfluff pyodbc
+
+    - name: Validate SQL syntax
+      if: steps.check-changes.outputs.sql-files-changed == 'true'
+      run: |
+        # Configure sqlfluff for SQL Server
+        cat > .sqlfluff << EOF
+        [sqlfluff]
+        dialect = tsql
+        templater = jinja
+        exclude_rules = L034,L036
+        max_line_length = 120
+
+        [sqlfluff:rules:L010]
+        capitalisation_policy = upper
+
+        [sqlfluff:rules:L030]
+        capitalisation_policy = upper
+        EOF
+
+        # Validate all SQL files
+        find sql/ -name "*.sql" -type f | while read -r file; do
+          echo "🔍 Validating $file"
+          sqlfluff lint "$file" || exit 1
+        done
+
+        echo "✅ SQL syntax validation passed"
+
+    - name: Check for breaking changes
+      if: steps.check-changes.outputs.sql-files-changed == 'true'
+      run: |
+        # Check for potentially breaking DDL operations
+        BREAKING_PATTERNS=(
+          "DROP TABLE"
+          "DROP COLUMN"
+          "ALTER TABLE.*DROP"
+          "DROP VIEW"
+          "DROP PROCEDURE"
+          "DROP FUNCTION"
+        )
+
+        BREAKING_FOUND=false
+
+        for pattern in "${BREAKING_PATTERNS[@]}"; do
+          if git diff HEAD~1 -- sql/ | grep -i "$pattern"; then
+            echo "⚠️ Potentially breaking change detected: $pattern"
+            BREAKING_FOUND=true
+          fi
+        done
+
+        if [ "$BREAKING_FOUND" = true ]; then
+          echo "❌ Breaking changes detected. Please review carefully."
+          echo "breaking-changes=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ No breaking changes detected"
+          echo "breaking-changes=false" >> $GITHUB_OUTPUT
+        fi
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: validate-sql
+    if: |
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')) &&
+      needs.validate-sql.outputs.sql-files-changed == 'true'
+    environment: staging
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyodbc asyncio
+
+        # Install ODBC Driver for SQL Server
+        curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        apt-get update
+        ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+    - name: Deploy to staging database
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER_STAGING }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE_STAGING }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        # Create deployment script
+        cat > deploy_staging.py << 'EOF'
+        import pyodbc
+        import os
+        import sys
+        import glob
+        from pathlib import Path
+
+        def execute_sql_files():
+            connection_string = (
+                f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                f"SERVER={os.getenv('AZURE_SQL_SERVER')};"
+                f"DATABASE={os.getenv('AZURE_SQL_DATABASE')};"
+                f"UID={os.getenv('AZURE_SQL_USER')};"
+                f"PWD={os.getenv('AZURE_SQL_PASSWORD')};"
+                f"Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+            )
+
+            try:
+                conn = pyodbc.connect(connection_string)
+                cursor = conn.cursor()
+
+                # Execute SQL files in order
+                sql_files = sorted(glob.glob('sql/*.sql'))
+
+                for sql_file in sql_files:
+                    print(f"🚀 Executing {sql_file}")
+
+                    with open(sql_file, 'r') as f:
+                        sql_content = f.read()
+
+                    # Split by GO statements and execute separately
+                    batches = [batch.strip() for batch in sql_content.split('GO') if batch.strip()]
+
+                    for batch in batches:
+                        if batch.strip():
+                            cursor.execute(batch)
+
+                    conn.commit()
+                    print(f"✅ Completed {sql_file}")
+
+                conn.close()
+                print("✅ Staging deployment completed successfully")
+
+            except Exception as e:
+                print(f"❌ Deployment failed: {e}")
+                sys.exit(1)
+
+        if __name__ == '__main__':
+            execute_sql_files()
+        EOF
+
+        python deploy_staging.py
+
+    - name: Run post-deployment validation
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER_STAGING }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE_STAGING }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        cd etl/agents
+        python schema_sync_agent.py --mode validate
+
+        if [ $? -ne 0 ]; then
+          echo "❌ Post-deployment validation failed"
+          exit 1
+        fi
+
+        echo "✅ Staging deployment validation passed"
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [validate-sql, deploy-staging]
+    if: |
+      github.event_name == 'push' && github.ref == 'refs/heads/main' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyodbc asyncio
+
+        # Install ODBC Driver for SQL Server
+        curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list
+        apt-get update
+        ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+    - name: Create production backup
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        # Create a schema snapshot before deployment
+        cat > create_backup.py << 'EOF'
+        import pyodbc
+        import os
+        import json
+        from datetime import datetime
+
+        connection_string = (
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+            f"SERVER={os.getenv('AZURE_SQL_SERVER')};"
+            f"DATABASE={os.getenv('AZURE_SQL_DATABASE')};"
+            f"UID={os.getenv('AZURE_SQL_USER')};"
+            f"PWD={os.getenv('AZURE_SQL_PASSWORD')};"
+            f"Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+        )
+
+        try:
+            conn = pyodbc.connect(connection_string)
+            cursor = conn.cursor()
+
+            # Create schema snapshot
+            cursor.execute("EXEC system.sp_schema_snapshot @output_format = 'JSON'")
+            snapshot = cursor.fetchall()
+
+            backup_file = f"schema_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+            with open(backup_file, 'w') as f:
+                json.dump([dict(zip([col[0] for col in cursor.description], row)) for row in snapshot], f, indent=2)
+
+            print(f"✅ Schema backup created: {backup_file}")
+            conn.close()
+
+        except Exception as e:
+            print(f"❌ Backup creation failed: {e}")
+            exit(1)
+        EOF
+
+        python create_backup.py
+
+    - name: Deploy to production database
+      if: github.event.inputs.dry_run != 'true'
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        # Use the same deployment script as staging
+        cat > deploy_production.py << 'EOF'
+        import pyodbc
+        import os
+        import sys
+        import glob
+        from pathlib import Path
+
+        def execute_sql_files():
+            connection_string = (
+                f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+                f"SERVER={os.getenv('AZURE_SQL_SERVER')};"
+                f"DATABASE={os.getenv('AZURE_SQL_DATABASE')};"
+                f"UID={os.getenv('AZURE_SQL_USER')};"
+                f"PWD={os.getenv('AZURE_SQL_PASSWORD')};"
+                f"Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+            )
+
+            try:
+                conn = pyodbc.connect(connection_string)
+                cursor = conn.cursor()
+
+                # Execute SQL files in order
+                sql_files = sorted(glob.glob('sql/*.sql'))
+
+                for sql_file in sql_files:
+                    print(f"🚀 Executing {sql_file}")
+
+                    with open(sql_file, 'r') as f:
+                        sql_content = f.read()
+
+                    # Split by GO statements and execute separately
+                    batches = [batch.strip() for batch in sql_content.split('GO') if batch.strip()]
+
+                    for batch in batches:
+                        if batch.strip():
+                            cursor.execute(batch)
+
+                    conn.commit()
+                    print(f"✅ Completed {sql_file}")
+
+                conn.close()
+                print("✅ Production deployment completed successfully")
+
+            except Exception as e:
+                print(f"❌ Deployment failed: {e}")
+                sys.exit(1)
+
+        if __name__ == '__main__':
+            execute_sql_files()
+        EOF
+
+        python deploy_production.py
+
+    - name: Run production smoke tests
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        # Run production smoke test
+        cat > smoke_test.py << 'EOF'
+        import pyodbc
+        import os
+        import sys
+
+        connection_string = (
+            f"DRIVER={{ODBC Driver 18 for SQL Server}};"
+            f"SERVER={os.getenv('AZURE_SQL_SERVER')};"
+            f"DATABASE={os.getenv('AZURE_SQL_DATABASE')};"
+            f"UID={os.getenv('AZURE_SQL_USER')};"
+            f"PWD={os.getenv('AZURE_SQL_PASSWORD')};"
+            f"Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+        )
+
+        try:
+            conn = pyodbc.connect(connection_string)
+            cursor = conn.cursor()
+
+            # Run production smoke test
+            cursor.execute("EXEC system.sp_production_smoke_test")
+            result = cursor.fetchone()
+
+            if result and result[0] == 0:
+                print("✅ Production smoke test passed")
+            else:
+                print(f"❌ Production smoke test failed with {result[0] if result else 'unknown'} failures")
+                sys.exit(1)
+
+            conn.close()
+
+        except Exception as e:
+            print(f"❌ Smoke test failed: {e}")
+            sys.exit(1)
+        EOF
+
+        python smoke_test.py
+
+    - name: Update schema drift status
+      env:
+        AZURE_SQL_SERVER: ${{ secrets.AZURE_SQL_SERVER }}
+        AZURE_SQL_DATABASE: ${{ secrets.AZURE_SQL_DATABASE }}
+        AZURE_SQL_USER: ${{ secrets.AZURE_SQL_USER }}
+        AZURE_SQL_PASSWORD: ${{ secrets.AZURE_SQL_PASSWORD }}
+      run: |
+        cd etl/agents
+
+        # Mark deployed changes as synced
+        python -c "
+        import asyncio
+        import sys
+        sys.path.append('.')
+        from schema_sync_agent import SchemaSyncAgent
+
+        async def update_status():
+            agent = SchemaSyncAgent()
+
+            # Get all PR_CREATED records
+            conn = await agent.get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT drift_id FROM system.schema_drift_log
+                WHERE sync_status = 'PR_CREATED'
+                AND sync_pr_number IS NOT NULL
+            ''')
+
+            drift_ids = [row[0] for row in cursor.fetchall()]
+            conn.close()
+
+            if drift_ids:
+                await agent.update_drift_status(drift_ids, 'SYNCED')
+                print(f'✅ Marked {len(drift_ids)} changes as synced')
+
+        asyncio.run(update_status())
+        "
+
+        echo "✅ Production deployment completed successfully"

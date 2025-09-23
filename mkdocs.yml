@@ -1,0 +1,68 @@
+site_name: Scout v7 Database Documentation
+site_description: Auto-generated database schema and ETL contract documentation
+site_author: TBWA Data Team
+repo_url: https://github.com/jgtolentino/scout-v7
+repo_name: scout-v7
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search
+  - mermaid2
+
+nav:
+  - Home: index.md
+  - Database Schema:
+    - Overview: schemas/database.md
+  - ETL Documentation:
+    - Contract Validation: etl/contracts.md
+  - Infrastructure:
+    - Deployment: infrastructure/README.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jgtolentino/scout-v7
+  version:
+    provider: mike

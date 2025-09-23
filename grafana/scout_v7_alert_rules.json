@@ -1,0 +1,112 @@
+[
+  {
+    "uid": "scout-v7-parity-high",
+    "title": "Scout v7: Parity diff too high",
+    "condition": "C",
+    "data": [
+      {
+        "refId": "A",
+        "queryType": "",
+        "relativeTimeRange": { "from": 3600, "to": 0 },
+        "datasourceUid": "-100",
+        "model": {
+          "format": "table",
+          "rawSql": "SELECT TOP 1 COALESCE(value_float, 0) AS val\nFROM system.task_events\nWHERE event_name='PARITY_DIFF_RATIO'\nORDER BY event_time DESC",
+          "refId": "A"
+        }
+      },
+      {
+        "refId": "B",
+        "queryType": "threshold",
+        "relativeTimeRange": { "from": 3600, "to": 0 },
+        "datasourceUid": "__expr__",
+        "model": {
+          "type": "threshold",
+          "conditions": [],
+          "expression": "A",
+          "reducer": "last",
+          "operator": "gt",
+          "threshold": 0.01
+        }
+      },
+      {
+        "refId": "C",
+        "queryType": "classic_conditions",
+        "relativeTimeRange": { "from": 3600, "to": 0 },
+        "datasourceUid": "__expr__",
+        "model": {
+          "type": "classic_conditions",
+          "conditions": [
+            {
+              "evaluator": { "params": [0.01], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A"] },
+              "reducer": { "params": [], "type": "last" },
+              "type": "query"
+            }
+          ]
+        }
+      }
+    ],
+    "execErrState": "Alerting",
+    "for": "2m",
+    "noDataState": "NoData",
+    "orgId": 1,
+    "labels": { "service": "scout-v7", "severity": "warning" }
+  },
+  {
+    "uid": "scout-v7-failures",
+    "title": "Scout v7: Task failures detected (30m)",
+    "condition": "C",
+    "data": [
+      {
+        "refId": "A",
+        "queryType": "",
+        "relativeTimeRange": { "from": 1800, "to": 0 },
+        "datasourceUid": "-100",
+        "model": {
+          "format": "table",
+          "rawSql": "SELECT COUNT(*) AS failures\nFROM system.v_task_run_history\nWHERE start_time >= DATEADD(MINUTE, -30, SYSUTCDATETIME())\n  AND status='FAILED'",
+          "refId": "A"
+        }
+      },
+      {
+        "refId": "B",
+        "queryType": "threshold",
+        "relativeTimeRange": { "from": 1800, "to": 0 },
+        "datasourceUid": "__expr__",
+        "model": {
+          "type": "threshold",
+          "conditions": [],
+          "expression": "A",
+          "reducer": "last",
+          "operator": "gt",
+          "threshold": 0
+        }
+      },
+      {
+        "refId": "C",
+        "queryType": "classic_conditions",
+        "relativeTimeRange": { "from": 1800, "to": 0 },
+        "datasourceUid": "__expr__",
+        "model": {
+          "type": "classic_conditions",
+          "conditions": [
+            {
+              "evaluator": { "params": [0], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A"] },
+              "reducer": { "params": [], "type": "last" },
+              "type": "query"
+            }
+          ]
+        }
+      }
+    ],
+    "execErrState": "Error",
+    "for": "0m",
+    "noDataState": "NoData",
+    "orgId": 1,
+    "labels": { "service": "scout-v7", "severity": "critical" }
+  }
+]

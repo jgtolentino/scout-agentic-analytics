@@ -1,0 +1,2 @@
+Msg 50000, Level 16, State 1, Server sqltbwaprojectscoutserver, Procedure dbo.sp_validate_v24, Line 49
+View dbo.v_transactions_flat_v24 is missing

@@ -1,15 +1,14 @@
 {
   "pages": {
-    "/layout": [
+    "/api/export/custom/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
+      "static/chunks/app/api/export/custom/route.js"
     ],
-    "/page": [
+    "/api/export/[type]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/api/export/[type]/route.js"
     ]
   }
 }

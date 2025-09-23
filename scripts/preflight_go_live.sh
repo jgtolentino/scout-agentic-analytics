@@ -11,9 +11,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration - Scout Edge device data lineage
-REQUIRED_SILVER_COUNT=175000  # Real Scout Edge data: 175K+ transactions from 24 devices
-REQUIRED_BRONZE_COUNT=1000    # Raw Scout Edge JSON: 1.5K+ raw device records
+# Configuration - VERIFIED CLEAN Scout Edge device data lineage
+REQUIRED_SILVER_COUNT=175000  # ✅ VERIFIED: 175,344 transactions from 24 Scout Edge devices
+REQUIRED_BRONZE_COUNT=1000    # ✅ VERIFIED: 1,470 raw device records from 7π devices (NO SEED DATA)
 MAX_ALLOWED_LATENCY=1500     # Max p95 latency in ms
 CACHE_TTL_SECONDS=300        # Expected cache TTL
 

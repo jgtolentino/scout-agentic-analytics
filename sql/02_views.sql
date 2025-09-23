@@ -8,20 +8,42 @@ CREATE OR ALTER VIEW dbo.v_transactions_flat_production
 AS
 SELECT
   -- IDs / store
-  canonical_tx_id = LOWER(REPLACE(COALESCE(JSON_VALUE(pt.payload_json,'$.transactionId'), pt.sessionId),'-','')),
-  transaction_id  = LOWER(REPLACE(COALESCE(JSON_VALUE(pt.payload_json,'$.transactionId'), pt.sessionId),'-','')),
+  canonical_tx_id = LOWER(REPLACE(COALESCE(
+    CASE WHEN ISJSON(pt.payload_json) = 1
+         THEN JSON_VALUE(pt.payload_json,'$.transactionId')
+         ELSE NULL END,
+    pt.sessionId),'-','')),
+  transaction_id  = LOWER(REPLACE(COALESCE(
+    CASE WHEN ISJSON(pt.payload_json) = 1
+         THEN JSON_VALUE(pt.payload_json,'$.transactionId')
+         ELSE NULL END,
+    pt.sessionId),'-','')),
   device_id       = CAST(pt.deviceId AS varchar(64)),
   store_id        = TRY_CAST(pt.storeId AS int),
   store_name      = CONCAT(N'Store_', pt.storeId),
 
   -- Business fields (null-safe; derive from payload if present)
-  brand           = JSON_VALUE(pt.payload_json,'$.items[0].brandName'),
-  product_name    = JSON_VALUE(pt.payload_json,'$.items[0].productName'),
-  category        = JSON_VALUE(pt.payload_json,'$.items[0].category'),
-  total_amount    = TRY_CONVERT(decimal(18,2), JSON_VALUE(pt.payload_json,'$.totals.totalAmount')),
-  total_items     = TRY_CONVERT(int,             JSON_VALUE(pt.payload_json,'$.totals.totalItems')),
-  payment_method  = JSON_VALUE(pt.payload_json,'$.transactionContext.paymentMethod'),
-  audio_transcript= JSON_VALUE(pt.payload_json,'$.transactionContext.audioTranscript'),
+  brand           = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN JSON_VALUE(pt.payload_json,'$.items[0].brandName')
+                         ELSE NULL END,
+  product_name    = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN JSON_VALUE(pt.payload_json,'$.items[0].productName')
+                         ELSE NULL END,
+  category        = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN JSON_VALUE(pt.payload_json,'$.items[0].category')
+                         ELSE NULL END,
+  total_amount    = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN TRY_CONVERT(decimal(18,2), JSON_VALUE(pt.payload_json,'$.totals.totalAmount'))
+                         ELSE NULL END,
+  total_items     = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN TRY_CONVERT(int, JSON_VALUE(pt.payload_json,'$.totals.totalItems'))
+                         ELSE NULL END,
+  payment_method  = CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN JSON_VALUE(pt.payload_json,'$.transactionContext.paymentMethod')
+                         ELSE NULL END,
+  audio_transcript= CASE WHEN ISJSON(pt.payload_json) = 1
+                         THEN JSON_VALUE(pt.payload_json,'$.transactionContext.audioTranscript')
+                         ELSE NULL END,
 
   -- Authoritative time (ONLY from SalesInteractions)
   txn_ts          = si.TransactionDate,
@@ -43,7 +65,11 @@ SELECT
 
 FROM dbo.PayloadTransactions pt
 LEFT JOIN dbo.SalesInteractions si
-  ON LOWER(REPLACE(COALESCE(JSON_VALUE(pt.payload_json,'$.transactionId'), pt.sessionId),'-',''))
+  ON LOWER(REPLACE(COALESCE(
+    CASE WHEN ISJSON(pt.payload_json) = 1
+         THEN JSON_VALUE(pt.payload_json,'$.transactionId')
+         ELSE NULL END,
+    pt.sessionId),'-',''))
    = LOWER(REPLACE(si.InteractionID,'-',''));
 GO
 

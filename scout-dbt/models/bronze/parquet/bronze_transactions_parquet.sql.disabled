@@ -1,0 +1,31 @@
+{{ config(
+    materialized='external',
+    location='azure://scoutdatalake.blob.core.windows.net/bronze/transactions/*.parquet'
+) }}
+
+WITH raw_data AS (
+    SELECT
+        transaction_id,
+        store_id,
+        device_id,
+        transaction_date,
+        transaction_time,
+        basket_size,
+        total_amount,
+        payment_method,
+        customer_type,
+        municipality,
+        barangay,
+        latitude,
+        longitude,
+        data_source,
+        ingested_at,
+        _metadata
+    FROM read_parquet('{{ var("parquet_path") }}/transactions/*.parquet')
+)
+
+SELECT
+    {{ md5_hash(['transaction_id', 'store_id', 'transaction_date']) }} as canonical_id,
+    *,
+    {{ current_timestamp_tz() }} as loaded_at
+FROM raw_data

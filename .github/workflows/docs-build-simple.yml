@@ -1,0 +1,75 @@
+name: Documentation Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**/*'
+      - 'sql/**/*.sql'
+      - '.github/workflows/docs-build-simple.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**/*'
+      - 'sql/**/*.sql'
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force complete documentation rebuild'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install MkDocs and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+
+    - name: Update documentation timestamp
+      run: |
+        # Update the timestamp in the documentation
+        sed -i "s/Last updated: .*/Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")/g" docs/index.md
+
+    - name: Build documentation
+      run: |
+        mkdocs build --verbose --strict
+
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation-site
+        path: site/
+        retention-days: 30
+
+    - name: Deploy to GitHub Pages
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        mkdocs gh-deploy --force --verbose
+
+    - name: Create deployment summary
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: |
+        echo "📚 Documentation deployed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 View at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Generated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY

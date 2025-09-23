@@ -1,0 +1,7 @@
+pyodbc==5.1.0
+pandas==2.2.2
+openpyxl==3.1.5
+pyarrow==16.1.0
+sqlalchemy==2.0.32
+tenacity==8.5.0
+python-dotenv==1.0.1

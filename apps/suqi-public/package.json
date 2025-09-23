@@ -1,0 +1,43 @@
+{
+  "name": "suqi-public",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.87.4",
+    "@tanstack/react-query-devtools": "^5.87.4",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^11.5.6",
+    "lucide-react": "^0.447.0",
+    "mssql": "^11.0.1",
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.12.7",
+    "tailwindcss": "^3.4.13",
+    "tedious": "^18.6.1",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "@types/mssql": "^9.1.5",
+    "@types/node": "^22.7.4",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/tedious": "^4.0.14",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.12.0",
+    "eslint-config-next": "^15.0.3",
+    "playwright": "1.55.0",
+    "postcss": "^8.4.47",
+    "typescript": "^5.6.2"
+  }
+}

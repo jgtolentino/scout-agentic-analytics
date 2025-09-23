@@ -4,19 +4,19 @@ set -euo pipefail
 
 mkdir -p exports
 
-# Flat (dbo analytical view)
+# Flat (production view with JSON guards)
 sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
-  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat ORDER BY txn_ts DESC;" \
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat_production ORDER BY txn_ts DESC;" \
   -s "," -W -w 32767 -h -1 > exports/flat_full.csv
 
-# Flat v24 (compatibility contract)
+# Flat v24 (compatibility contract - will create after deploying adapter)
 sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
-  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat_v24 ORDER BY Txn_TS DESC;" \
-  -s "," -W -w 32767 -h -1 > exports/flat_v24.csv
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_flat_v24 ORDER BY txn_ts DESC;" \
+  -s "," -W -w 32767 -h -1 > exports/flat_v24.csv 2>/dev/null || echo "v24 view not yet deployed"
 
-# Crosstab
+# Crosstab (production view with JSON guards)
 sqlcmd -S "$AZSQL_HOST" -d "$AZSQL_DB" -U "$AZSQL_USER_READER" -P "$AZSQL_PASS_READER" \
-  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_crosstab ORDER BY [date] DESC, store_id, daypart, brand;" \
+  -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_transactions_crosstab_production ORDER BY [date] DESC, store_id, daypart, brand;" \
   -s "," -W -w 32767 -h -1 > exports/crosstab_full.csv
 
 echo "OK: exports/flat_full.csv"

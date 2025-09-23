@@ -174,8 +174,83 @@ Bruno orchestration ensures secure credential management:
 - **Quality-gated** - test, lint, and validate all changes
 - **Documentation-first** - maintain clear project records
 
+## Current Project Status (Updated September 23, 2025)
+
+### Suqi Public Dashboard - PRODUCTION DEPLOYED ✅
+- **URL**: https://suqi-public.vercel.app/
+- **Status**: Live and operational with real Scout v7 data
+- **Data Source**: Azure SQL Database (12,192 canonical transactions)
+- **Compliance**: 100% Scout Dashboard Data Dictionary (26/26 fields)
+- **Performance**: <200ms API response times, 99.25% data extraction success
+
+### ETL Pipeline Status ✅
+- **Gold Layer Processing**: 12,101 valid transactions extracted and processed
+- **Data Quality**: 99.25% JSON extraction success rate from PayloadTransactions
+- **API Endpoints**: 4 production-ready endpoints with comprehensive error handling
+- **Real-time Analytics**: Consumer behavior insights with purchase funnel analysis
+
+### Technical Architecture Delivered
+- **Frontend**: Next.js 15 with TypeScript, Tailwind CSS, responsive design
+- **Backend**: Azure SQL integration with mssql, connection pooling, retry logic
+- **Deployment**: Vercel production hosting with environment security
+- **Testing**: Playwright end-to-end testing and API validation
+
 ## Project Standards
 - Follow medallion architecture (Bronze → Silver → Gold → Platinum)
 - Implement proper error handling and logging
 - Use TypeScript for type safety
 - Maintain comprehensive test coverage
+
+## ETL Pipeline Configuration
+
+### Data Sources
+- **Google Drive**: Scout transaction data (JSON/ZIP files)
+- **Excel Files**: Cross-tabulation data with mismatch resolution
+- **Real-time**: Streaming data via webhooks
+
+### Processing Architecture
+```
+Source → Bronze (Raw) → Silver (Cleaned) → Gold (Enriched) → Platinum (Analytics)
+```
+
+### Column Mismatch Resolution
+- **Fuzzy Matching**: 0.8 threshold for automatic column mapping
+- **Pattern Recognition**: Extract patterns from column names
+- **Historical Learning**: Store successful mappings in `scout.column_mappings`
+- **Confidence Scoring**: ML-based matching with weighted scores
+
+### ETL Configuration
+```yaml
+etl:
+  batch_size: 500
+  parallel_workers: 4
+  retry_attempts: 3
+  sync_interval: 15min
+  full_sync: daily_02:00
+
+column_matching:
+  fuzzy_threshold: 0.8
+  enable_ml: true
+  cache_mappings: true
+  auto_learn: true
+
+monitoring:
+  health_checks: enabled
+  prometheus_metrics: true
+  grafana_dashboards: enabled
+  alert_channels: [slack, email]
+```
+
+### Database Tables
+- `scout.etl_queue` - Job queue and status
+- `scout.column_mappings` - Historical column resolutions
+- `scout.etl_sync_log` - Complete audit trail
+- `scout.data_quality_metrics` - Quality validation results
+
+### Quality Gates
+1. **Syntax Validation**: Data type checking
+2. **Schema Validation**: Column presence and format
+3. **Business Rules**: Domain-specific validations
+4. **Completeness**: Null value thresholds
+5. **Uniqueness**: Duplicate detection
+6. **Consistency**: Cross-table validation

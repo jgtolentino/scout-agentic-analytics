@@ -1,0 +1,9 @@
+{
+  "/api/scout/behavior/route": "/api/scout/behavior",
+  "/api/scout/trends/route": "/api/scout/trends",
+  "/api/scout/kpis/route": "/api/scout/kpis",
+  "/_not-found/page": "/_not-found",
+  "/api/scout/transactions/route": "/api/scout/transactions",
+  "/page": "/",
+  "/consumer-behavior/page": "/consumer-behavior"
+}

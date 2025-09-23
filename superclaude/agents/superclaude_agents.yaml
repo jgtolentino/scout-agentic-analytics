@@ -1,0 +1,322 @@
+version: 1
+orchestrator:
+  name: superclaude
+  runtime: claude-code-cli
+  routing:
+    # Claude only decides plan; all execution goes to Bruno
+    code_executor: bruno
+    default_safety: no-creds-to-llm
+  telemetry:
+    exporter: azure-application-insights
+    ai_connection: ${APPINSIGHTS_CONNECTION_STRING}
+  policy:
+    pii_redaction: enabled
+    token_budget_guardrails: enabled
+    max_parallel_tools: 8
+  identity:
+    mode: azure-workload-identity  # no static secrets
+    audience: api://scout-v7
+  bus:
+    type: azure-service-bus
+    namespace: ${ASB_NAMESPACE}
+    topology:
+      topics:
+        - name: scout.autosync.events
+        - name: scout.etl.tasks
+        - name: scout.alerts
+      subscriptions:
+        - {topic: scout.autosync.events, name: agents}
+        - {topic: scout.alerts, name: ops}
+
+executors:
+  - id: bruno
+    kind: secure-executor
+    runtime: docker
+    image: ghcr.io/insightpulseai/bruno-executor:stable
+    isolation: rootless
+    policy:
+      allow_net: vnet-internal-only
+      deny_shell_outside_container: true
+    secrets:
+      source: azure-key-vault
+      vault_name: ${AKV_NAME}
+      refs:
+        AZSQL_WRITER_CSTRING: secrets/sql-writer-cs
+        AZ_BLOB_CONN: secrets/blob-conn
+        ASB_CONN: secrets/servicebus-conn
+    identity:
+      mode: azure-msi
+    networking:
+      private_links:
+        - azure-sql
+        - blob
+        - servicebus
+      egress_policy: block-external
+    observability:
+      logs: appinsights
+      metrics: prometheus
+
+storage:
+  sql:
+    server: ${AZSQL_SERVER_FQDN}
+    database: ${AZSQL_DB}
+    auth: msi
+    private_link: enabled
+    rls: enabled
+  blob:
+    account: ${BLOB_ACCOUNT}
+    container: scout-exports
+    auth: msi
+    private_link: enabled
+
+queues:
+  - name: scout.autosync.events
+    type: topic
+  - name: scout.etl.tasks
+    type: topic
+  - name: scout.alerts
+    type: topic
+
+# =========================
+# Agent Profiles (16 total)
+# =========================
+agents:
+
+# 1) AutoSync Agent
+  - id: autosync-agent
+    purpose: Change Tracking driven exporter for gold.vw_FlatExport with run tracking.
+    entrypoint:
+      image: ghcr.io/jgtolentino/scout-agentic-analytics/auto-sync:latest
+      cmd: ["python","-m","agents.auto_sync"]
+    inputs:
+      - trigger: schedule
+        cron: "*/1 * * * *"  # every minute
+      - trigger: bus
+        topic: scout.etl.tasks
+        filter: "task == 'AUTO_SYNC_FLAT'"
+    outputs:
+      - topic: scout.autosync.events
+    config:
+      sql_server: ${AZSQL_SERVER_FQDN}
+      database: ${AZSQL_DB}
+      use_change_tracking: true
+      flat_view: gold.vw_FlatExport
+      crosstab_view: gold.vw_CrossTabExport
+      export_container: scout-exports
+      sleep_seconds: 60
+    security:
+      runs_as: msi
+      db_role: etl_writer
+      network: vnet-internal
+      secrets: [AZSQL_WRITER_CSTRING, AZ_BLOB_CONN]
+    health:
+      liveness: http://:8080/healthz
+      readiness: http://:8080/ready
+    sla:
+      rto_seconds: 120
+      rpo_seconds: 60
+
+# 2) Task Framework Agent
+  - id: task-framework-agent
+    purpose: Registers tasks, starts/stops runs, logs events/heartbeats/metrics.
+    entrypoint:
+      image: ghcr.io/insightpulseai/scout-task-framework:stable
+      cmd: ["./taskfw","--mode","daemon"]
+    inputs:
+      - trigger: bus
+        topic: scout.etl.tasks
+    config:
+      registry_proc: system.sp_task_register
+      run_begin_proc: system.sp_task_run_begin
+      run_end_proc: system.sp_task_run_end
+      event_proc: system.sp_task_event
+    security:
+      runs_as: msi
+      db_role: etl_ops
+
+# 3) Schema Sync Agent
+  - id: schema-sync-agent
+    purpose: Validates DB objects & applies drift fixes from declarative spec.
+    entrypoint:
+      image: ghcr.io/insightpulseai/schema-sync:stable
+      cmd: ["schemasync","--spec","/spec/db-spec.yaml","--apply"]
+    inputs:
+      - trigger: schedule
+        cron: "*/5 * * * *"
+    config:
+      drift_log_table: system.schema_drift_log
+      strict: true
+    security:
+      runs_as: msi
+      db_role: ddl_deployer
+
+# 4) Data Fabcon Agent
+  - id: data-fabcon-agent
+    purpose: Validates enrichment (demographics, substitution) and flags anomalies.
+    entrypoint:
+      image: ghcr.io/insightpulseai/data-fabcon:stable
+      cmd: ["python","-m","fabcon.main"]
+    inputs:
+      - trigger: bus
+        topic: scout.autosync.events
+        filter: "event == 'EXPORT_DONE'"
+    config:
+      checks:
+        - name: demographics_null_rate
+          sql: "SELECT 1.0*SUM(CASE WHEN age_group IS NULL THEN 1 ELSE 0 END)/COUNT(*) FROM silver.Transactions"
+          threshold: 0.5
+        - name: substitution_flag_consistency
+          sql: "SELECT COUNT(*) FROM silver.Transactions WHERE substitution_accepted=1 AND substitution_occurred=0"
+          threshold: 0
+    security:
+      runs_as: msi
+      db_role: read_analyze
+
+# 5) RetailBot (ScoutBot)
+  - id: retailbot
+    purpose: NL insights over flat/crosstab with safe SQL generation and caching.
+    entrypoint:
+      image: ghcr.io/insightpulseai/retailbot:stable
+      cmd: ["serve"]
+    inputs:
+      - trigger: http
+        path: /api/retail
+    config:
+      sql_read_role: scout_reader
+      views:
+        - gold.vw_FlatExport
+        - gold.vw_CrossTabExport
+      cache: redis
+    security:
+      runs_as: msi
+      db_role: scout_reader
+      no_creds_to_llm: true
+
+# 6) LearnBot
+  - id: learnbot
+    purpose: Guided ops tutorials & runbook Q/A over docs and SQL views.
+    entrypoint:
+      image: ghcr.io/insightpulseai/learnbot:stable
+      cmd: ["serve"]
+    inputs:
+      - trigger: http
+        path: /api/learn
+    config:
+      rag_sources:
+        - docs/operations_runbook.md
+        - docs/task_framework_guide.md
+      sql_read_role: scout_reader
+
+# 7) AdsBot
+  - id: adsbot
+    purpose: Campaign insights using same gold views + external media spend (optional).
+    entrypoint:
+      image: ghcr.io/insightpulseai/adsbot:stable
+      cmd: ["serve"]
+    inputs:
+      - trigger: http
+        path: /api/ads
+    config:
+      views:
+        - gold.vw_FlatExport
+        - gold.vw_CrossTabExport
+      external_data: media_spend_table
+    security:
+      runs_as: msi
+      db_role: scout_reader
+
+# 8) Dash Agent
+  - id: dash-agent
+    purpose: Generates React/Tailwind dashboards bound to exports/views.
+    entrypoint:
+      image: ghcr.io/insightpulseai/dashgen:stable
+      cmd: ["dashgen","--watch","--publish","/site"]
+    outputs:
+      - topic: scout.alerts
+    config:
+      data_sources:
+        - type: sql
+          role: scout_reader
+          views: [gold.vw_FlatExport, gold.vw_CrossTabExport]
+
+# 9) ChartVision Agent
+  - id: chartvision
+    purpose: Turns screenshots/specs into TSX chart components.
+    entrypoint:
+      image: ghcr.io/insightpulseai/chartvision:stable
+      cmd: ["serve"]
+    inputs:
+      - trigger: http
+        path: /api/chartvision
+
+# 10) VisualSynth Orchestrator
+  - id: visualsynth
+    purpose: Layout + role-binding for BI-like dashboards.
+    entrypoint:
+      image: ghcr.io/insightpulseai/visualsynth:stable
+      cmd: ["serve"]
+    inputs:
+      - trigger: http
+        path: /api/visualsynth
+
+# 11) Isko Agent
+  - id: isko
+    purpose: Logo/brand asset enrichment → Product dims.
+    entrypoint:
+      image: ghcr.io/insightpulseai/isko:stable
+      cmd: ["python","-m","isko.main"]
+    security:
+      runs_as: msi
+      blob_write: true
+
+# 12) WrenAI (NL→SQL)
+  - id: wrenai
+    purpose: Natural language → parameterized SQL → safe execution via Bruno.
+    entrypoint:
+      image: ghcr.io/insightpulseai/wrenai:stable
+      cmd: ["serve"]
+    security:
+      sql_execute: bruno-only
+      db_role: scout_reader
+
+# 13) ClaudeFallback Agent
+  - id: fallback-agent
+    purpose: iOS/edge inference fallback; never receives creds.
+    entrypoint:
+      image: ghcr.io/insightpulseai/edge-fallback:stable
+      cmd: ["serve"]
+    security:
+      no_persistent_storage: true
+
+# 14) ParityCheck Agent
+  - id: paritycheck
+    purpose: Runs dbo.sp_parity_flat_vs_crosstab and alerts if diff>1%.
+    entrypoint:
+      image: ghcr.io/insightpulseai/parity:stable
+      cmd: ["parity","--days","30","--threshold","0.01"]
+    inputs:
+      - trigger: schedule
+        cron: "15 2 * * *"  # 02:15 UTC
+    security:
+      runs_as: msi
+      db_role: etl_ops
+
+# 15) HealthCheck Agent
+  - id: healthcheck
+    purpose: Executes dbo.sp_scout_health_check; emits SLO metrics.
+    entrypoint:
+      image: ghcr.io/insightpulseai/healthcheck:stable
+      cmd: ["health","--interval","300"]
+    inputs:
+      - trigger: schedule
+        cron: "*/5 * * * *"  # every 5 minutes
+
+# 16) SmokeTest Agent
+  - id: smoketest
+    purpose: One-command 7-point go-live validation.
+    entrypoint:
+      image: ghcr.io/insightpulseai/smoketest:stable
+      cmd: ["smoke","--proc","system.sp_task_smoke_test"]
+    inputs:
+      - trigger: deploy
+        on: post-deployment

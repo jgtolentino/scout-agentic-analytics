@@ -1,0 +1,23 @@
+[Unit]
+Description=Scout v7 Auto Sync (tracked)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/scout-v7/.env.autosync
+WorkingDirectory=/opt/scout-v7
+ExecStart=/usr/bin/python3 etl/agents/auto_sync_tracked.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+User=scout
+Group=scout
+
+# Environment variables (can also be in EnvironmentFile)
+Environment="ODBCINI=/etc/odbc.ini"
+Environment="ODBCSYSINI=/etc"
+
+[Install]
+WantedBy=multi-user.target
