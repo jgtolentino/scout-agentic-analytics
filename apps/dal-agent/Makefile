@@ -636,3 +636,10 @@ inquiries-export: ## Export Overall, Tobacco, Laundry inquiry CSVs (parameterize
 
 inquiry-export: ## Alias for inquiries-export
 	@$(MAKE) inquiries-export DB="$(DB)" DATE_FROM="$(DATE_FROM)" DATE_TO="$(DATE_TO)" REGION="$(REGION)" STORE_ID="$(STORE_ID)"
+
+inquiries-headers: ## Print first row (headers) of key exports for quick schema audit
+	@echo "$(YELLOW)🔎 Export headers (quick audit):$(NC)"
+	@for f in out/inquiries_filtered/*/*.csv; do \
+		[ -f "$$f" ] || continue; \
+		printf "  - %s: " "$$f"; head -1 "$$f" || true; \
+	done

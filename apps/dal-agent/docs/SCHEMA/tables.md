@@ -904,6 +904,15 @@
 | dbo | TransactionItems | 8 | IsSubstitution | bit | 1 | NO |
 | dbo | TransactionItems | 9 | SubstitutedProductID | int | 4 | YES |
 | dbo | TransactionItems | 10 | SuggestionAccepted | bit | 1 | YES |
+| dbo | TransactionItems | 11 | sku_id | int | 4 | YES |
+| dbo | Transactions | 1 | transaction_id | bigint | 8 | NO |
+| dbo | Transactions | 2 | canonical_tx_id | varchar | 64 | NO |
+| dbo | Transactions | 3 | txn_ts | datetime2 | 6 | YES |
+| dbo | Transactions | 4 | store_id | int | 4 | YES |
+| dbo | Transactions | 5 | total_amount | decimal | 9 | YES |
+| dbo | Transactions | 6 | total_items | int | 4 | YES |
+| dbo | Transactions | 7 | created_at | datetime2 | 6 | YES |
+| dbo | Transactions | 8 | updated_at | datetime2 | 6 | YES |
 | dbo | TranscriptChunkAudit | 1 | AuditID | int | 4 | NO |
 | dbo | TranscriptChunkAudit | 2 | InteractionID | varchar | 60 | NO |
 | dbo | TranscriptChunkAudit | 3 | ChunkCount | int | 4 | NO |
@@ -942,6 +951,12 @@
 | dbo | UnbrandedCommodities | 2 | CommodityName | nvarchar | 200 | NO |
 | dbo | UnbrandedCommodities | 3 | LocalTerms | nvarchar | 510 | YES |
 | dbo | UnbrandedCommodities | 4 | CategoryID | int | 4 | YES |
+| etl | persona_inference_cache | 1 | canonical_tx_id | nvarchar | 128 | NO |
+| etl | persona_inference_cache | 2 | inferred_role | nvarchar | 200 | YES |
+| etl | persona_inference_cache | 3 | confidence_score | decimal | 5 | YES |
+| etl | persona_inference_cache | 4 | rule_source | nvarchar | 200 | YES |
+| etl | persona_inference_cache | 5 | created_at | datetime2 | 8 | YES |
+| etl | persona_inference_cache | 6 | updated_at | datetime2 | 8 | YES |
 | gold | scout_dashboard_transactions | 1 | id | nvarchar | 100 | NO |
 | gold | scout_dashboard_transactions | 2 | store_id | nvarchar | 40 | NO |
 | gold | scout_dashboard_transactions | 3 | timestamp | nvarchar | 60 | NO |
@@ -991,6 +1006,12 @@
 | ops | LocationLoadLog | 7 | EndedAt | datetime2 | 8 | YES |
 | ops | LocationLoadLog | 8 | Notes | nvarchar | 8000 | YES |
 | ops | LocationLoadLog | 9 | LoadStatus | varchar | 20 | YES |
+| ops | ObjectScripts | 1 | ScriptId | int | 4 | NO |
+| ops | ObjectScripts | 2 | SchemaName | sysname | 256 | NO |
+| ops | ObjectScripts | 3 | ObjectName | sysname | 256 | NO |
+| ops | ObjectScripts | 4 | ObjectType | nvarchar | 80 | NO |
+| ops | ObjectScripts | 5 | Script | nvarchar | -1 | NO |
+| ops | ObjectScripts | 6 | GeneratedAt | datetime2 | 7 | NO |
 | poc | brands | 1 | id | int | 4 | NO |
 | poc | brands | 2 | name | nvarchar | 1000 | YES |
 | poc | brands | 3 | category | nvarchar | 1000 | YES |
@@ -1081,6 +1102,10 @@
 | poc | transactions | 16 | request_type | nvarchar | 1000 | YES |
 | poc | transactions | 17 | transcription_text | nvarchar | -1 | YES |
 | poc | transactions | 18 | suggestion_accepted | bit | 1 | YES |
+| ref | BrandCategoryRules | 1 | brand_name | nvarchar | 400 | NO |
+| ref | BrandCategoryRules | 2 | taxonomy_code | varchar | 64 | NO |
+| ref | BrandCategoryRules | 3 | priority | tinyint | 1 | NO |
+| ref | BrandCategoryRules | 4 | rule_source | varchar | 50 | NO |
 | ref | NielsenCategories | 1 | category_code | nvarchar | 100 | NO |
 | ref | NielsenCategories | 2 | category_name | nvarchar | 400 | NO |
 | ref | NielsenCategories | 3 | department_code | nvarchar | 100 | NO |
@@ -1097,6 +1122,11 @@
 | ref | NielsenDepartments | 4 | is_active | bit | 1 | NO |
 | ref | NielsenDepartments | 5 | created_at | datetime2 | 8 | NO |
 | ref | NielsenDepartments | 6 | updated_at | datetime2 | 8 | NO |
+| ref | NielsenTaxonomy | 1 | taxonomy_id | int | 4 | NO |
+| ref | NielsenTaxonomy | 2 | taxonomy_code | varchar | 64 | NO |
+| ref | NielsenTaxonomy | 3 | taxonomy_name | varchar | 200 | NO |
+| ref | NielsenTaxonomy | 4 | level | tinyint | 1 | NO |
+| ref | NielsenTaxonomy | 5 | parent_id | int | 4 | YES |
 | ref | persona_rules | 1 | rule_id | int | 4 | NO |
 | ref | persona_rules | 2 | role_name | varchar | 40 | NO |
 | ref | persona_rules | 3 | priority | tinyint | 1 | NO |
@@ -1114,6 +1144,25 @@
 | ref | persona_rules | 15 | notes | nvarchar | 400 | YES |
 | ref | persona_rules | 16 | created_date | datetime2 | 8 | YES |
 | ref | persona_rules | 17 | is_active | bit | 1 | YES |
+| ref | ProductNielsenMap | 1 | ProductID | int | 4 | NO |
+| ref | ProductNielsenMap | 2 | taxonomy_id | int | 4 | NO |
+| ref | ProductNielsenMap | 3 | confidence | decimal | 5 | YES |
+| ref | ProductNielsenMap | 4 | mapped_at | datetime2 | 6 | NO |
+| ref | SkuDimensions | 1 | sku_id | int | 4 | NO |
+| ref | SkuDimensions | 2 | SkuCode | nvarchar | 200 | NO |
+| ref | SkuDimensions | 3 | SkuName | nvarchar | 600 | NO |
+| ref | SkuDimensions | 4 | BrandName | nvarchar | 510 | NO |
+| ref | SkuDimensions | 5 | BrandNameNorm | nvarchar | 8000 | YES |
+| ref | SkuDimensions | 6 | CategoryCode | nvarchar | 100 | YES |
+| ref | SkuDimensions | 7 | PackSize | nvarchar | 200 | YES |
+| ref | SkuDimensions | 8 | IsActive | bit | 1 | NO |
+| ref | SkuDimensions | 9 | CreatedUtc | datetime2 | 7 | NO |
+| ref | SkuDimensions | 10 | UpdatedUtc | datetime2 | 7 | NO |
+| ref | stg_SkuMap | 1 | SkuCode | nvarchar | 200 | NO |
+| ref | stg_SkuMap | 2 | SkuName | nvarchar | 600 | NO |
+| ref | stg_SkuMap | 3 | BrandName | nvarchar | 510 | NO |
+| ref | stg_SkuMap | 4 | CategoryCode | nvarchar | 100 | YES |
+| ref | stg_SkuMap | 5 | PackSize | nvarchar | 200 | YES |
 | Sample | StoryTelling | 1 | StoryID | int | 4 | NO |
 | Sample | StoryTelling | 2 | StoryContent | nvarchar | -1 | YES |
 | Sample | StoryTelling | 3 | StoryDate | datetime | 8 | YES |
@@ -1243,4 +1292,4 @@
 | staging | StoreLocationImport | 15 | EnrichedAt | datetime2 | 8 | YES |
 | staging | StoreLocationImport | 16 | LoadedAt | datetime2 | 8 | NO |
 |  |  |  |  |  |  | NO |
-| (1240 rows affected) |  |  |  |  |  | NO |
+| (1289 rows affected) |  |  |  |  |  | NO |

@@ -271,6 +271,19 @@ BEGIN
 
   IF OBJECT_ID('dbo.SalesInteractions','U') IS NULL
     THROW
+dbo	sp_DumpSchema	
+CREATE   PROCEDURE dbo.sp_DumpSchema
+  @Schemas nvarchar(max) = N'dbo,gold,ref,scout,bronze',
+  @Purge   bit = 1
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  IF @Purge = 1
+    TRUNCATE TABLE ops.ObjectScripts;
+
+  /* Parse schema list */
+  DECLARE @SchemasTbl TABLE(name 
 dbo	sp_refresh_analytics_views	
 -- Refresh views metadata
 CREATE   PROCEDURE dbo.sp_refresh_analytics_views
@@ -312,12 +325,205 @@ BEGIN
     DECLARE @mapped_transactions INT;
     DECLARE @unmapped_transactions INT;
     DECLARE @quality_rate 
+dbo	usp_dedupe_transactions	
+/* ---------- Dedup Procedure ---------- */
+CREATE   PROCEDURE dbo.usp_dedupe_transactions
+AS
+BEGIN
+  SET NOCOUNT ON;
+  ;WITH ranked AS (
+    SELECT *,
+           ROW_NUMBER() OVER(PARTITION BY canonical_tx_id ORDER BY txn_ts ASC, transaction_id ASC) AS r
 dbo	VerifyScoutMigration	CREATE PROCEDURE dbo.VerifyScoutMigration
 AS
 BEGIN
     DECLARE @errors INT = 0;
     IF NOT EXISTS(SELECT 1 FROM sys.tables WHERE name='SessionMatches')        SET @errors+=1;
     IF COL_LENGTH('dbo.SalesInteractions','TransactionDuration') IS NULL        S
+etl	sp_automap_products_to_nielsen	
+/* Automap using Brand→Category rules (Level 3) */
+CREATE   PROCEDURE etl.sp_automap_products_to_nielsen
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  ;WITH brand_tax AS (
+    SELECT r.brand_name,
+           n.taxonomy_id
+    FROM ref.BrandCategoryRules r
+    JOIN ref.Ni
+etl	sp_build_staging_views	
+CREATE   PROCEDURE etl.sp_build_staging_views
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  DECLARE @sql nvarchar(max);
+
+  /* Helper: resolve columns by priority list */
+  DECLARE @stores_src sysname, @tx_src sysname, @items_src sysname, @brands_src sysname, @products_sr
+etl	sp_load_fact_transaction_items	
+/* Load fact.transaction_items from dbo.TransactionItems */
+CREATE   PROCEDURE etl.sp_load_fact_transaction_items
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  INSERT INTO fact.transaction_items (
+    transaction_uuid, product_id, sku, brand_id, category, quantity, unit_
+etl	sp_load_fact_transactions	
+/* Load fact.transactions from dbo.Transactions */
+CREATE   PROCEDURE etl.sp_load_fact_transactions
+AS
+BEGIN
+  SET NOCOUNT ON;
+  INSERT INTO fact.transactions (
+    transaction_uuid, store_id, device_id, customer_id,
+    transaction_date, transaction_time
+etl	sp_migrate_brands	
+/* BRANDS */
+CREATE   PROCEDURE etl.sp_migrate_brands
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_brands','V') IS NULL RETURN;
+
+  INSERT INTO dbo.Brands (brand_name, parent_company, category)
+  SELECT DISTINCT NULLIF(LTRIM(RTRIM(brand_name)
+etl	sp_migrate_products	
+/* PRODUCTS (brand resolution by name) */
+CREATE   PROCEDURE etl.sp_migrate_products
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_products','V') IS NULL RETURN;
+
+  INSERT INTO dbo.Products (sku_code, product_name, brand_id, category, uom, pr
+etl	sp_migrate_sales_interactions	
+/* SALES INTERACTIONS */
+CREATE   PROCEDURE etl.sp_migrate_sales_interactions
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_sales_interactions','V') IS NULL RETURN;
+
+  INSERT INTO dbo.SalesInteractions (canonical_tx_id, interaction_ts, age_br
+etl	sp_migrate_stores	
+/* STORES */
+CREATE   PROCEDURE etl.sp_migrate_stores
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_stores','V') IS NULL RETURN;
+
+  INSERT INTO dbo.Stores (store_code, store_name, region, province, city_municipality, barangay, device_id)
+  SE
+etl	sp_migrate_transaction_items	
+/* TRANSACTION ITEMS */
+CREATE   PROCEDURE etl.sp_migrate_transaction_items
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_transaction_items','V') IS NULL RETURN;
+
+  INSERT INTO dbo.TransactionItems (canonical_tx_id, product_id, brand_id, cate
+etl	sp_migrate_transactions	
+/* TRANSACTIONS */
+CREATE   PROCEDURE etl.sp_migrate_transactions
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_transactions','V') IS NULL RETURN;
+
+  INSERT INTO dbo.Transactions (canonical_tx_id, txn_ts, store_id, total_amount, total_items)
+
+etl	sp_migrate_transactions_fixed	
+/* TRANSACTIONS - FIXED TYPE HANDLING */
+CREATE   PROCEDURE etl.sp_migrate_transactions_fixed
+AS
+BEGIN
+  SET NOCOUNT ON;
+  IF OBJECT_ID('analytics.v_stg_transactions','V') IS NULL RETURN;
+
+  INSERT INTO dbo.Transactions (canonical_tx_id, txn_ts, store_id,
+etl	sp_migration_dryrun	
+/* DRY RUN: row counts and dup diagnostics from staging */
+CREATE   PROCEDURE etl.sp_migration_dryrun
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  PRINT '== DRY RUN: staging counts ==';
+  IF OBJECT_ID('analytics.v_stg_stores','V') IS NOT NULL      SELECT 'v_stg_stores' 
+etl	sp_migration_execute	
+/* EXECUTE migration end-to-end */
+CREATE   PROCEDURE etl.sp_migration_execute
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  EXEC etl.sp_build_staging_views;
+
+  -- 1) domain refs
+  EXEC etl.sp_migrate_stores;
+  EXEC etl.sp_migrate_brands;
+  EXEC etl.sp_migrate_products;
+
+etl	sp_migration_execute_fixed	
+/* COMPLETE MIGRATION EXECUTION (FIXED) */
+CREATE   PROCEDURE etl.sp_migration_execute_fixed
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  PRINT '== Building staging views ==';
+  EXEC etl.sp_build_staging_views;
+
+  PRINT '== Step 1: Migrating stores ==';
+  EXEC etl.sp_mi
+etl	sp_report_nielsen_coverage	
+/* Coverage report */
+CREATE   PROCEDURE etl.sp_report_nielsen_coverage
+AS
+BEGIN
+  SET NOCOUNT ON;
+  SELECT
+    total_products   = (SELECT COUNT(*) FROM dbo.Products),
+    mapped_products  = (SELECT COUNT(DISTINCT ProductID) FROM ref.ProductNielsenMap),
+ 
+etl	sp_seed_nielsen_taxonomy_min	
+/* Minimal seed for Departments & Groups (extend later to full 1,100 modules) */
+CREATE   PROCEDURE etl.sp_seed_nielsen_taxonomy_min
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  -- Departments (Level 1) per reviewed standards
+  -- Examples; extend according to your doc:
+etl	sp_update_daily_sales_summary	
+/* Fixed peak-hour summary (no MODE()) */
+CREATE   PROCEDURE etl.sp_update_daily_sales_summary
+  @target_date date
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  DECLARE @peak_hour int;
+
+  WITH hours AS (
+    SELECT DATEPART(HOUR, t.transaction_time) AS h
+    FROM fact.tr
+etl	sp_update_persona_roles	
+/* ETL Procedure: Apply persona role inference to all transactions */
+CREATE   PROCEDURE etl.sp_update_persona_roles
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @rows_updated INT = 0;
+    DECLARE @start_time DATETIME2 = GETUTCDATE();
+
+    PRINT 'Starting pe
 gold	sp_extract_scout_dashboard_data	
 -- Main extraction procedure
 CREATE   PROCEDURE [gold].[sp_extract_scout_dashboard_data]
@@ -331,4 +537,4 @@ BEGIN
     -- Extract data with comprehensive mapping
     INS
 
-(49 rows affected)
+(69 rows affected)

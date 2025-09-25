@@ -1,0 +1,25 @@
+Parameterized Inquiry Export Summary
+Generated: Fri 26 Sep 2025 05:32:41 PST
+
+Configuration:
+- Date Range: 2025-06-28 to 2025-09-26
+- Region Filter: '(all regions)'
+- Store ID Filter: '(all stores)'
+- Category Filter: all
+- WHERE Clause: 1=1 AND txn_date >= '2025-06-28' AND txn_date <= '2025-09-26'
+
+Files Generated:
+- out/inquiries_filtered/laundry/purchase_profile_pdp.csv (202B)
+- out/inquiries_filtered/laundry/detergent_type.csv (202B)
+- out/inquiries_filtered/laundry/demo_gender_age_brand.csv (2.4K)
+- out/inquiries_filtered/tobacco/purchase_profile_pdp.csv (202B)
+- out/inquiries_filtered/tobacco/frequent_terms.csv (420B)
+- out/inquiries_filtered/tobacco/sales_daypart_weektype.csv (202B)
+- out/inquiries_filtered/overall/purchase_profile_pdp.csv (303B)
+- out/inquiries_filtered/overall/frequent_terms.csv (112B)
+- out/inquiries_filtered/overall/regional_distribution.csv (702B)
+
+Query Performance Notes:
+- Uses sargable predicates on txn_date for optimal index usage
+- WHERE clause applied consistently across all queries
+- Results filtered at database level for efficiency

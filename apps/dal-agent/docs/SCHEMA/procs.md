@@ -1638,6 +1638,84 @@ CREATE PROCEDURE dbo.sp_create_v_transactions_flat_min
 
 ```
 
+## dbo.sp_DumpSchema
+
+```sql
+
+```
+
+## CREATE   PROCEDURE dbo.sp_DumpSchema.
+
+```sql
+
+```
+
+##   @Schemas nvarchar(max) = N'dbo,gold,ref,scout,bronze',.
+
+```sql
+
+```
+
+##   @Purge   bit = 1.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   IF @Purge = 1.
+
+```sql
+
+```
+
+##     TRUNCATE TABLE ops.ObjectScripts;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   /* Parse schema list */.
+
+```sql
+
+```
+
+##   DECLARE @SchemasTbl TABLE(name .
+
+```sql
+
+```
+
 ## dbo.sp_refresh_analytics_views
 
 ```sql
@@ -1884,6 +1962,60 @@ CREATE PROCEDURE dbo.sp_create_v_transactions_flat_min
 
 ```
 
+## dbo.usp_dedupe_transactions
+
+```sql
+
+```
+
+## /* ---------- Dedup Procedure ---------- */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE dbo.usp_dedupe_transactions.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   ;WITH ranked AS (.
+
+```sql
+
+```
+
+##     SELECT *,.
+
+```sql
+
+```
+
+##            ROW_NUMBER() OVER(PARTITION BY canonical_tx_id ORDER BY txn_ts ASC, transaction_id ASC) AS r.
+
+```sql
+
+```
+
 ## dbo.VerifyScoutMigration
 
 ```sql
@@ -1915,6 +2047,1110 @@ CREATE PROCEDURE dbo.VerifyScoutMigration
 ```
 
 ##     IF COL_LENGTH('dbo.SalesInteractions','TransactionDuration') IS NULL        S.
+
+```sql
+
+```
+
+## etl.sp_automap_products_to_nielsen
+
+```sql
+
+```
+
+## /* Automap using Brand→Category rules (Level 3) */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_automap_products_to_nielsen.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   ;WITH brand_tax AS (.
+
+```sql
+
+```
+
+##     SELECT r.brand_name,.
+
+```sql
+
+```
+
+##            n.taxonomy_id.
+
+```sql
+
+```
+
+##     FROM ref.BrandCategoryRules r.
+
+```sql
+
+```
+
+##     JOIN ref.Ni.
+
+```sql
+
+```
+
+## etl.sp_build_staging_views
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_build_staging_views.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   DECLARE @sql nvarchar(max);.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   /* Helper: resolve columns by priority list */.
+
+```sql
+
+```
+
+##   DECLARE @stores_src sysname, @tx_src sysname, @items_src sysname, @brands_src sysname, @products_sr.
+
+```sql
+
+```
+
+## etl.sp_load_fact_transaction_items
+
+```sql
+
+```
+
+## /* Load fact.transaction_items from dbo.TransactionItems */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_load_fact_transaction_items.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO fact.transaction_items (.
+
+```sql
+
+```
+
+##     transaction_uuid, product_id, sku, brand_id, category, quantity, unit_.
+
+```sql
+
+```
+
+## etl.sp_load_fact_transactions
+
+```sql
+
+```
+
+## /* Load fact.transactions from dbo.Transactions */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_load_fact_transactions.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   INSERT INTO fact.transactions (.
+
+```sql
+
+```
+
+##     transaction_uuid, store_id, device_id, customer_id,.
+
+```sql
+
+```
+
+##     transaction_date, transaction_time.
+
+```sql
+
+```
+
+## etl.sp_migrate_brands
+
+```sql
+
+```
+
+## /* BRANDS */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_brands.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_brands','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.Brands (brand_name, parent_company, category).
+
+```sql
+
+```
+
+##   SELECT DISTINCT NULLIF(LTRIM(RTRIM(brand_name).
+
+```sql
+
+```
+
+## etl.sp_migrate_products
+
+```sql
+
+```
+
+## /* PRODUCTS (brand resolution by name) */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_products.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_products','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.Products (sku_code, product_name, brand_id, category, uom, pr.
+
+```sql
+
+```
+
+## etl.sp_migrate_sales_interactions
+
+```sql
+
+```
+
+## /* SALES INTERACTIONS */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_sales_interactions.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_sales_interactions','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.SalesInteractions (canonical_tx_id, interaction_ts, age_br.
+
+```sql
+
+```
+
+## etl.sp_migrate_stores
+
+```sql
+
+```
+
+## /* STORES */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_stores.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_stores','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.Stores (store_code, store_name, region, province, city_municipality, barangay, device_id).
+
+```sql
+
+```
+
+##   SE.
+
+```sql
+
+```
+
+## etl.sp_migrate_transaction_items
+
+```sql
+
+```
+
+## /* TRANSACTION ITEMS */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_transaction_items.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_transaction_items','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.TransactionItems (canonical_tx_id, product_id, brand_id, cate.
+
+```sql
+
+```
+
+## etl.sp_migrate_transactions
+
+```sql
+
+```
+
+## /* TRANSACTIONS */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_transactions.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_transactions','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.Transactions (canonical_tx_id, txn_ts, store_id, total_amount, total_items).
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+## etl.sp_migrate_transactions_fixed
+
+```sql
+
+```
+
+## /* TRANSACTIONS - FIXED TYPE HANDLING */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migrate_transactions_fixed.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_transactions','V') IS NULL RETURN;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   INSERT INTO dbo.Transactions (canonical_tx_id, txn_ts, store_id,.
+
+```sql
+
+```
+
+## etl.sp_migration_dryrun
+
+```sql
+
+```
+
+## /* DRY RUN: row counts and dup diagnostics from staging */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migration_dryrun.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   PRINT '== DRY RUN: staging counts ==';.
+
+```sql
+
+```
+
+##   IF OBJECT_ID('analytics.v_stg_stores','V') IS NOT NULL      SELECT 'v_stg_stores' .
+
+```sql
+
+```
+
+## etl.sp_migration_execute
+
+```sql
+
+```
+
+## /* EXECUTE migration end-to-end */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migration_execute.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   EXEC etl.sp_build_staging_views;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   -- 1) domain refs.
+
+```sql
+
+```
+
+##   EXEC etl.sp_migrate_stores;.
+
+```sql
+
+```
+
+##   EXEC etl.sp_migrate_brands;.
+
+```sql
+
+```
+
+##   EXEC etl.sp_migrate_products;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+## etl.sp_migration_execute_fixed
+
+```sql
+
+```
+
+## /* COMPLETE MIGRATION EXECUTION (FIXED) */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_migration_execute_fixed.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   PRINT '== Building staging views ==';.
+
+```sql
+
+```
+
+##   EXEC etl.sp_build_staging_views;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   PRINT '== Step 1: Migrating stores ==';.
+
+```sql
+
+```
+
+##   EXEC etl.sp_mi.
+
+```sql
+
+```
+
+## etl.sp_report_nielsen_coverage
+
+```sql
+
+```
+
+## /* Coverage report */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_report_nielsen_coverage.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+##   SELECT.
+
+```sql
+
+```
+
+##     total_products   = (SELECT COUNT(*) FROM dbo.Products),.
+
+```sql
+
+```
+
+##     mapped_products  = (SELECT COUNT(DISTINCT ProductID) FROM ref.ProductNielsenMap),.
+
+```sql
+
+```
+
+##  .
+
+```sql
+
+```
+
+## etl.sp_seed_nielsen_taxonomy_min
+
+```sql
+
+```
+
+## /* Minimal seed for Departments & Groups (extend later to full 1,100 modules) */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_seed_nielsen_taxonomy_min.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   -- Departments (Level 1) per reviewed standards.
+
+```sql
+
+```
+
+##   -- Examples; extend according to your doc:.
+
+```sql
+
+```
+
+## etl.sp_update_daily_sales_summary
+
+```sql
+
+```
+
+## /* Fixed peak-hour summary (no MODE()) */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_update_daily_sales_summary.
+
+```sql
+
+```
+
+##   @target_date date.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##   SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   DECLARE @peak_hour int;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##   WITH hours AS (.
+
+```sql
+
+```
+
+##     SELECT DATEPART(HOUR, t.transaction_time) AS h.
+
+```sql
+
+```
+
+##     FROM fact.tr.
+
+```sql
+
+```
+
+## etl.sp_update_persona_roles
+
+```sql
+
+```
+
+## /* ETL Procedure: Apply persona role inference to all transactions */.
+
+```sql
+
+```
+
+## CREATE   PROCEDURE etl.sp_update_persona_roles.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## BEGIN.
+
+```sql
+
+```
+
+##     SET NOCOUNT ON;.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##     DECLARE @rows_updated INT = 0;.
+
+```sql
+
+```
+
+##     DECLARE @start_time DATETIME2 = GETUTCDATE();.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##     PRINT 'Starting pe.
 
 ```sql
 
@@ -1998,7 +3234,7 @@ CREATE PROCEDURE dbo.VerifyScoutMigration
 
 ```
 
-## (49 rows affected).
+## (69 rows affected).
 
 ```sql
 

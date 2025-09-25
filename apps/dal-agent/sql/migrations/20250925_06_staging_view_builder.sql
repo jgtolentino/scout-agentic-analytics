@@ -175,7 +175,7 @@ BEGIN
                WHEN COL_LENGTH(@tx_src,'created_at') IS NOT NULL THEN 'created_at'
                ELSE 'NULL' END + N' AS txn_ts,
       ' + CASE WHEN COL_LENGTH(@tx_src,'StoreID') IS NOT NULL THEN 'CAST(StoreID AS int)'
-               WHEN COL_LENGTH(@tx_src,'store_id') IS NOT NULL THEN 'CAST(store_id AS int)'
+               WHEN COL_LENGTH(@tx_src,'store_id') IS NOT NULL THEN 'TRY_CONVERT(int, SUBSTRING(store_id, 4, 10))'
                ELSE 'NULL' END + N' AS store_id,
       ' + CASE WHEN COL_LENGTH(@tx_src,'TotalAmount') IS NOT NULL THEN 'TotalAmount'
                WHEN COL_LENGTH(@tx_src,'total_amount') IS NOT NULL THEN 'total_amount'

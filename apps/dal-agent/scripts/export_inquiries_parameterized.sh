@@ -106,12 +106,12 @@ build_where_clause() {
     local w="1=1"
 
     # Date range (sargable predicates)
-    w+=" AND txn_date >= '$DATE_FROM'"
-    w+=" AND txn_date <= '$DATE_TO'"
+    w+=" AND transaction_date >= '$DATE_FROM'"
+    w+=" AND transaction_date <= '$DATE_TO'"
 
     # Region filter
     if [[ -n "$REGION" ]]; then
-        w+=" AND Region = '$REGION'"
+        w+=" AND region = '$REGION'"
     fi
 
     # Store ID filter
@@ -146,7 +146,7 @@ echo ""
 mkdir -p "$OUTPUT_DIR"/{overall,tobacco,laundry}
 
 # Define base SQL query with parameterized filtering
-BASE_QUERY="FROM dbo.v_transactions_flat_production WHERE $WHERE_CLAUSE"
+BASE_QUERY="FROM gold.v_export_projection WHERE $WHERE_CLAUSE"
 
 echo -e "${YELLOW}📊 Exporting inquiry analytics with filters...${NC}"
 
@@ -172,9 +172,9 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "overall" ]]; then
         Category,
         COUNT(DISTINCT canonical_tx_id) AS transaction_count,
         COUNT(DISTINCT store_id) AS store_count,
-        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_transaction_value,
-        SUM(CASE WHEN CAST(total_items AS INT) = 1 THEN 1 ELSE 0 END) AS single_item_transactions,
-        COUNT(DISTINCT txn_date) AS active_days
+        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_transaction_value,
+        SUM(CASE WHEN CAST(basket_size AS INT) = 1 THEN 1 ELSE 0 END) AS single_item_transactions,
+        COUNT(DISTINCT transaction_date) AS active_days
     $BASE_QUERY
     AND Category IS NOT NULL
     GROUP BY Category
@@ -202,14 +202,14 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "overall" ]]; then
     # Regional distribution
     sql "SET NOCOUNT ON;
     SELECT
-        COALESCE(Region, '(Unknown)') AS region,
+        COALESCE(region, '(Unknown)') AS region,
         COUNT(DISTINCT canonical_tx_id) AS transactions,
         COUNT(DISTINCT store_id) AS stores,
-        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value,
-        MIN(txn_date) AS first_transaction,
-        MAX(txn_date) AS last_transaction
+        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value,
+        MIN(transaction_date) AS first_transaction,
+        MAX(transaction_date) AS last_transaction
     $BASE_QUERY
-    GROUP BY Region
+    GROUP BY region
     ORDER BY transactions DESC;" \
     "$OUTPUT_DIR/overall/regional_distribution.csv"
 fi
@@ -229,8 +229,8 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "tobacco" ]]; then
         store_id,
         COUNT(DISTINCT canonical_tx_id) AS tobacco_transactions,
         COUNT(DISTINCT txn_date) AS active_days,
-        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_tobacco_value,
-        AVG(CAST(total_items AS INT)) AS avg_items_per_transaction
+        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_tobacco_value,
+        AVG(CAST(basket_size AS INT)) AS avg_items_per_transaction
     FROM tobacco_filter
     GROUP BY store_id
     HAVING COUNT(DISTINCT canonical_tx_id) >= 5
@@ -240,17 +240,17 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "tobacco" ]]; then
     # Tobacco frequent terms
     sql "SET NOCOUNT ON;
     WITH tobacco_transcripts AS (
-        SELECT transcript_clean
+        SELECT audio_transcript
         $BASE_QUERY
-        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
-        AND transcript_clean IS NOT NULL
+        AND (category LIKE '%Tobacco%' OR category LIKE '%Cigarette%' OR category LIKE '%Smoke%')
+        AND audio_transcript IS NOT NULL
     ),
     tobacco_words AS (
         SELECT
             LOWER(TRIM(value)) AS word,
             COUNT(*) AS frequency
         FROM tobacco_transcripts
-        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(transcript_clean, ',', ' '), '.', ' '), ' ')
+        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(audio_transcript, ',', ' '), '.', ' '), ' ')
         WHERE LEN(TRIM(value)) > 2
         GROUP BY LOWER(TRIM(value))
     )
@@ -264,16 +264,16 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "tobacco" ]]; then
     sql "SET NOCOUNT ON;
     WITH tobacco_dayparts AS (
         SELECT
-            Daypart,
+            daypart,
             COUNT(DISTINCT canonical_tx_id) AS transactions,
-            AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value
+            AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value
         $BASE_QUERY
-        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
-        AND Daypart IS NOT NULL
-        GROUP BY Daypart
+        AND (category LIKE '%Tobacco%' OR category LIKE '%Cigarette%' OR category LIKE '%Smoke%')
+        AND daypart IS NOT NULL
+        GROUP BY daypart
     )
     SELECT
-        Daypart,
+        daypart,
         transactions,
         CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
         CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS percentage
@@ -297,8 +297,8 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "laundry" ]]; then
         store_id,
         COUNT(DISTINCT canonical_tx_id) AS laundry_transactions,
         COUNT(DISTINCT txn_date) AS active_days,
-        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_laundry_value,
-        COUNT(DISTINCT Category) AS category_variety
+        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_laundry_value,
+        COUNT(DISTINCT category) AS category_variety
     FROM laundry_filter
     GROUP BY store_id
     HAVING COUNT(DISTINCT canonical_tx_id) >= 3
@@ -309,16 +309,16 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "laundry" ]]; then
     sql "SET NOCOUNT ON;
     WITH laundry_products AS (
         SELECT
-            Category,
+            category,
             COUNT(DISTINCT canonical_tx_id) AS transactions,
-            AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value,
+            AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value,
             COUNT(DISTINCT store_id) AS store_count
         $BASE_QUERY
-        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
-        GROUP BY Category
+        AND (category LIKE '%Detergent%' OR category LIKE '%Soap%' OR category LIKE '%Fabric%' OR category LIKE '%Laundry%')
+        GROUP BY category
     )
     SELECT
-        Category AS detergent_type,
+        category AS detergent_type,
         transactions,
         CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
         store_count,
@@ -332,32 +332,32 @@ if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "laundry" ]]; then
     WITH laundry_demo AS (
         SELECT
             CASE
-                WHEN Demographics LIKE '%Male%' THEN 'Male'
-                WHEN Demographics LIKE '%Female%' THEN 'Female'
+                WHEN demographics LIKE '%Male%' THEN 'Male'
+                WHEN demographics LIKE '%Female%' THEN 'Female'
                 ELSE 'Unknown'
             END AS gender,
             CASE
-                WHEN Demographics LIKE '%20%' OR Demographics LIKE '%25%' THEN '20-29'
-                WHEN Demographics LIKE '%30%' OR Demographics LIKE '%35%' THEN '30-39'
-                WHEN Demographics LIKE '%40%' OR Demographics LIKE '%45%' THEN '40-49'
-                WHEN Demographics LIKE '%50%' OR Demographics LIKE '%55%' THEN '50-59'
+                WHEN demographics LIKE '%20%' OR demographics LIKE '%25%' THEN '20-29'
+                WHEN demographics LIKE '%30%' OR demographics LIKE '%35%' THEN '30-39'
+                WHEN demographics LIKE '%40%' OR demographics LIKE '%45%' THEN '40-49'
+                WHEN demographics LIKE '%50%' OR demographics LIKE '%55%' THEN '50-59'
                 ELSE 'Unknown'
             END AS age_group,
             COUNT(DISTINCT canonical_tx_id) AS transactions
         $BASE_QUERY
-        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
-        AND Demographics IS NOT NULL
+        AND (category LIKE '%Detergent%' OR category LIKE '%Soap%' OR category LIKE '%Fabric%' OR category LIKE '%Laundry%')
+        AND demographics IS NOT NULL
         GROUP BY
             CASE
-                WHEN Demographics LIKE '%Male%' THEN 'Male'
-                WHEN Demographics LIKE '%Female%' THEN 'Female'
+                WHEN demographics LIKE '%Male%' THEN 'Male'
+                WHEN demographics LIKE '%Female%' THEN 'Female'
                 ELSE 'Unknown'
             END,
             CASE
-                WHEN Demographics LIKE '%20%' OR Demographics LIKE '%25%' THEN '20-29'
-                WHEN Demographics LIKE '%30%' OR Demographics LIKE '%35%' THEN '30-39'
-                WHEN Demographics LIKE '%40%' OR Demographics LIKE '%45%' THEN '40-49'
-                WHEN Demographics LIKE '%50%' OR Demographics LIKE '%55%' THEN '50-59'
+                WHEN demographics LIKE '%20%' OR demographics LIKE '%25%' THEN '20-29'
+                WHEN demographics LIKE '%30%' OR demographics LIKE '%35%' THEN '30-39'
+                WHEN demographics LIKE '%40%' OR demographics LIKE '%45%' THEN '40-49'
+                WHEN demographics LIKE '%50%' OR demographics LIKE '%55%' THEN '50-59'
                 ELSE 'Unknown'
             END
     )
@@ -417,6 +417,15 @@ done
 
 if [[ $TOTAL_FILES -gt 10 ]]; then
     echo -e "${BLUE}  ... and $((TOTAL_FILES-10)) more files${NC}"
+fi
+
+## HEADER CHECK ##
+# Grep headers of a couple of key files to catch schema drift quickly
+if [ -f "out/inquiries_filtered/overall/store_profiles.csv" ]; then
+  head -1 out/inquiries_filtered/overall/store_profiles.csv >> out/inquiries_filtered/export_summary.txt || true
+fi
+if [ -f "out/inquiries_filtered/tobacco/demo_gender_age_brand.csv" ]; then
+  head -1 out/inquiries_filtered/tobacco/demo_gender_age_brand.csv >> out/inquiries_filtered/export_summary.txt || true
 fi
 
 # Finalize exit status

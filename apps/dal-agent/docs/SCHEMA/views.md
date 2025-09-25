@@ -1,5 +1,347 @@
 # Views
 
+## analytics.v_stg_brands
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_brands AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       BrandName AS brand_name,.
+
+```sql
+
+```
+
+##       NULL AS parent_company,.
+
+```sql
+
+```
+
+##       Category AS category.
+
+```sql
+
+```
+
+##     FROM [dbo].[Brands] WITH (NOLOCK);.
+
+```sql
+
+```
+
+## analytics.v_stg_products
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_products AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       NULL AS sku_code,.
+
+```sql
+
+```
+
+##       ProductName AS product_name,.
+
+```sql
+
+```
+
+##       NULL AS brand_name,.
+
+```sql
+
+```
+
+##       Category AS category,.
+
+```sql
+
+```
+
+##       NULL AS uom,.
+
+```sql
+
+```
+
+##       NULL AS price.
+
+```sql
+
+```
+
+##     FROM [dbo].[Products] WITH (NOLOCK);.
+
+```sql
+
+```
+
+## analytics.v_stg_sales_interactions
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_sales_interactions AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       Canonical_Tx_Id AS canonical_tx_id,.
+
+```sql
+
+```
+
+##       NULL AS interaction_ts,.
+
+```sql
+
+```
+
+##       NULL AS age_bracket,.
+
+```sql
+
+```
+
+##       Gender AS gender,.
+
+```sql
+
+```
+
+##       NULL AS emotion,.
+
+```sql
+
+```
+
+##       NULL AS confidence_score,.
+
+```sql
+
+```
+
+##       Devi.
+
+```sql
+
+```
+
+## analytics.v_stg_stores
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_stores AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       CAST(StoreID AS int) AS store_id,.
+
+```sql
+
+```
+
+##       NULL AS store_code,.
+
+```sql
+
+```
+
+##       StoreName AS store_name,.
+
+```sql
+
+```
+
+##       Region AS region,.
+
+```sql
+
+```
+
+##       NULL AS province,.
+
+```sql
+
+```
+
+##       NULL AS city_municipality,.
+
+```sql
+
+```
+
+##       Barangay AS bara.
+
+```sql
+
+```
+
+## analytics.v_stg_transaction_items
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_transaction_items AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       NULL AS canonical_tx_id,.
+
+```sql
+
+```
+
+##       NULL AS sku,.
+
+```sql
+
+```
+
+##       NULL AS brand,.
+
+```sql
+
+```
+
+##       NULL AS category,.
+
+```sql
+
+```
+
+##       quantity AS quantity,.
+
+```sql
+
+```
+
+##       unit_price AS unit_price,.
+
+```sql
+
+```
+
+##       NULL AS line_amount.
+
+```sql
+
+```
+
+##     FROM.
+
+```sql
+
+```
+
+## analytics.v_stg_transactions
+
+```sql
+
+```
+
+##     CREATE   VIEW analytics.v_stg_transactions AS.
+
+```sql
+
+```
+
+##     SELECT.
+
+```sql
+
+```
+
+##       id AS canonical_tx_id,.
+
+```sql
+
+```
+
+##       timestamp AS txn_ts,.
+
+```sql
+
+```
+
+##       CAST(store_id AS int) AS store_id,.
+
+```sql
+
+```
+
+##       peso_value AS total_amount,.
+
+```sql
+
+```
+
+##       basket_size AS total_items.
+
+```sql
+
+```
+
+##     FROM [gold].[scout_dashboa.
+
+```sql
+
+```
+
 ## dbo.ct_ageXbrand
 
 ```sql
@@ -1080,13 +1422,73 @@ CREATE VIEW dbo.v_duplicate_detection_monitor AS
 
 ```
 
+## dbo.v_flat_export_csvsafe
+
+```sql
+-- CSV-Safe Flat Export View
+```
+
+## -- Eliminates JSON parsing issues by cleaning text fields and removing CR/LF characters.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+## CREATE   VIEW dbo.v_flat_export_csvsafe AS.
+
+```sql
+
+```
+
+## WITH src AS (.
+
+```sql
+
+```
+
+##   SELECT.
+
+```sql
+
+```
+
+##       [Transaction_ID].
+
+```sql
+
+```
+
+##     , [Transaction_Value].
+
+```sql
+
+```
+
+##     , [Basket_Size].
+
+```sql
+
+```
+
+##    .
+
+```sql
+
+```
+
 ## dbo.v_flat_export_sheet
 
 ```sql
 -- ========================================================================
 ```
 
-## -- CREATE CORRECTED FLAT EXPORT VIEW.
+## -- CREATE CORRECTED FLAT EXPORT VIEW (Fix Join Multiplication).
 
 ```sql
 
@@ -1110,13 +1512,55 @@ CREATE VIEW dbo.v_duplicate_detection_monitor AS
 
 ```
 
-## WITH demo_agg AS (.
+## dbo.v_flat_export_with_roles
 
 ```sql
 
 ```
 
-##   -- A.
+##         CREATE VIEW dbo.v_flat_export_with_roles.
+
+```sql
+
+```
+
+##         AS.
+
+```sql
+
+```
+
+##         SELECT.
+
+```sql
+
+```
+
+##             vf.*,.
+
+```sql
+
+```
+
+##             pic.inferred_role,.
+
+```sql
+
+```
+
+##             pic.confidence_score AS role_confidence.
+
+```sql
+
+```
+
+##         FROM dbo.v_flat_export_sheet vf.
+
+```sql
+
+```
+
+##         LEFT JOIN etl.persona_inference.
 
 ```sql
 
@@ -2400,6 +2844,108 @@ CREATE VIEW dbo.v_xtab_time_category_abs AS
 
 ```
 
+## etl.v_persona_coverage_summary
+
+```sql
+
+```
+
+## /* Helper view to see persona rule application results */.
+
+```sql
+
+```
+
+## CREATE   VIEW etl.v_persona_coverage_summary.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## SELECT.
+
+```sql
+
+```
+
+##     pic.inferred_role,.
+
+```sql
+
+```
+
+##     COUNT(*) AS transaction_count,.
+
+```sql
+
+```
+
+##     AVG(pic.confidence_score) AS avg_confidence,.
+
+```sql
+
+```
+
+##     MIN(pic.confidence_score) AS mi.
+
+```sql
+
+```
+
+## gold.v_sample_sari_transactions
+
+```sql
+
+```
+
+## /* Sample sheet view using existing flat production view + demographics */.
+
+```sql
+
+```
+
+## CREATE   VIEW gold.v_sample_sari_transactions.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## WITH base AS (.
+
+```sql
+
+```
+
+##   SELECT.
+
+```sql
+
+```
+
+##     vt.transaction_id                               AS Transaction_ID,.
+
+```sql
+
+```
+
+##     TRY_CONVERT(decimal(18,2), vt.to.
+
+```sql
+
+```
+
 ## gold.v_transactions_crosstab
 
 ```sql
@@ -2538,6 +3084,216 @@ CREATE VIEW dbo.v_xtab_time_category_abs AS
 CREATE VIEW gold.v_transactions_flat_v24 AS SELECT * FROM dbo.v_transactions_flat_v24
 ```
 
+## gold.v_transactions_nielsen
+
+```sql
+
+```
+
+## /* Nielsen-aware transaction view (transaction × SKU × Nielsen) */.
+
+```sql
+
+```
+
+## CREATE   VIEW gold.v_transactions_nielsen.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## SELECT.
+
+```sql
+
+```
+
+##   si.canonical_tx_id,.
+
+```sql
+
+```
+
+##   si.TransactionDate,.
+
+```sql
+
+```
+
+##   si.StoreID,.
+
+```sql
+
+```
+
+##   i.ProductID,.
+
+```sql
+
+```
+
+##   p.ProductName,.
+
+```sql
+
+```
+
+##   p.Category AS product_category,.
+
+```sql
+
+```
+
+##   n.taxonomy.
+
+```sql
+
+```
+
+## gold.v_txn_best_interaction
+
+```sql
+
+```
+
+## /* Helper: choose a single interaction record per transaction (latest TransactionDate, with demographics) */.
+
+```sql
+
+```
+
+## CREATE   VIEW gold.v_txn_best_interaction.
+
+```sql
+
+```
+
+## AS.
+
+```sql
+
+```
+
+## WITH ranked AS (.
+
+```sql
+
+```
+
+##   SELECT.
+
+```sql
+
+```
+
+##     si.canonical_tx_id,.
+
+```sql
+
+```
+
+##     si.TransactionDate,.
+
+```sql
+
+```
+
+##     si.Age,.
+
+```sql
+
+```
+
+##     si.Gender,.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+## ref.v_ItemCategoryResolved
+
+```sql
+
+```
+
+## -- 7) Create analytics preference view: SKU-first, brand-fallback.
+
+```sql
+
+```
+
+## CREATE   VIEW ref.v_ItemCategoryResolved AS.
+
+```sql
+
+```
+
+## SELECT.
+
+```sql
+
+```
+
+##     ti.TransactionItemID,.
+
+```sql
+
+```
+
+##     ti.InteractionID,.
+
+```sql
+
+```
+
+##     ti.ProductID,.
+
+```sql
+
+```
+
+##     ti.Quantity,.
+
+```sql
+
+```
+
+##     ti.UnitPrice,.
+
+```sql
+
+```
+
+##     ti.sku_id,.
+
+```sql
+
+```
+
+## .
+
+```sql
+
+```
+
+##     -- SKU informatio.
+
+```sql
+
+```
+
 ## ref.v_persona_inference
 
 ```sql
@@ -2580,6 +3336,48 @@ CREATE VIEW gold.v_transactions_flat_v24 AS SELECT * FROM dbo.v_transactions_fla
 
 ```
 
+## ref.v_SkuCoverage
+
+```sql
+
+```
+
+## -- 8) Create coverage helper view.
+
+```sql
+
+```
+
+## CREATE   VIEW ref.v_SkuCoverage AS.
+
+```sql
+
+```
+
+## SELECT.
+
+```sql
+
+```
+
+##     total_transaction_items = COUNT(*),.
+
+```sql
+
+```
+
+##     items_with_sku = COUNT(CASE WHEN sku_id IS NOT NULL THEN 1 END),.
+
+```sql
+
+```
+
+##     items_with_brand_only = COUNT(CASE WHEN sku_id IS NULL THEN 1 END).
+
+```sql
+
+```
+
 ## sys.database_firewall_rules
 
 ```sql
@@ -2592,7 +3390,7 @@ CREATE VIEW sys.database_firewall_rules AS SELECT id, name, start_ip_address, en
 
 ```
 
-## (53 rows affected).
+## (67 rows affected).
 
 ```sql
 

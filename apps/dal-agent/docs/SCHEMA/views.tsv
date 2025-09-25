@@ -1,3 +1,60 @@
+analytics	v_stg_brands	
+    CREATE   VIEW analytics.v_stg_brands AS
+    SELECT
+      BrandName AS brand_name,
+      NULL AS parent_company,
+      Category AS category
+    FROM [dbo].[Brands] WITH (NOLOCK);
+analytics	v_stg_products	
+    CREATE   VIEW analytics.v_stg_products AS
+    SELECT
+      NULL AS sku_code,
+      ProductName AS product_name,
+      NULL AS brand_name,
+      Category AS category,
+      NULL AS uom,
+      NULL AS price
+    FROM [dbo].[Products] WITH (NOLOCK);
+analytics	v_stg_sales_interactions	
+    CREATE   VIEW analytics.v_stg_sales_interactions AS
+    SELECT
+      Canonical_Tx_Id AS canonical_tx_id,
+      NULL AS interaction_ts,
+      NULL AS age_bracket,
+      Gender AS gender,
+      NULL AS emotion,
+      NULL AS confidence_score,
+      Devi
+analytics	v_stg_stores	
+    CREATE   VIEW analytics.v_stg_stores AS
+    SELECT
+      CAST(StoreID AS int) AS store_id,
+      NULL AS store_code,
+      StoreName AS store_name,
+      Region AS region,
+      NULL AS province,
+      NULL AS city_municipality,
+      Barangay AS bara
+analytics	v_stg_transaction_items	
+    CREATE   VIEW analytics.v_stg_transaction_items AS
+    SELECT
+      NULL AS canonical_tx_id,
+      NULL AS sku,
+      NULL AS brand,
+      NULL AS category,
+      quantity AS quantity,
+      unit_price AS unit_price,
+      NULL AS line_amount
+    FROM
+analytics	v_stg_transactions	
+    CREATE   VIEW analytics.v_stg_transactions AS
+    SELECT
+      id AS canonical_tx_id,
+      timestamp AS txn_ts,
+      CAST(store_id AS int) AS store_id,
+      peso_value AS total_amount,
+      basket_size AS total_items
+    FROM [gold].[scout_dashboa
 dbo	ct_ageXbrand	CREATE VIEW dbo.ct_ageXbrand AS
 SELECT age_bracket, brand,
   COUNT(*) AS txn_cnt,
@@ -178,13 +235,30 @@ WITH payload_duplicates AS (
 SELECT
   CAST(GETDATE() AS date) as check_date,
   GETD
+dbo	v_flat_export_csvsafe	-- CSV-Safe Flat Export View
+-- Eliminates JSON parsing issues by cleaning text fields and removing CR/LF characters
+
+CREATE   VIEW dbo.v_flat_export_csvsafe AS
+WITH src AS (
+  SELECT
+      [Transaction_ID]
+    , [Transaction_Value]
+    , [Basket_Size]
+   
 dbo	v_flat_export_sheet	-- ========================================================================
--- CREATE CORRECTED FLAT EXPORT VIEW
+-- CREATE CORRECTED FLAT EXPORT VIEW (Fix Join Multiplication)
 -- ========================================================================
 
 CREATE   VIEW dbo.v_flat_export_sheet AS
-WITH demo_agg AS (
-  -- A
+dbo	v_flat_export_with_roles	
+        CREATE VIEW dbo.v_flat_export_with_roles
+        AS
+        SELECT
+            vf.*,
+            pic.inferred_role,
+            pic.confidence_score AS role_confidence
+        FROM dbo.v_flat_export_sheet vf
+        LEFT JOIN etl.persona_inference
 dbo	v_insight_base	CREATE VIEW dbo.v_insight_base AS
 SELECT
   -- Core identifiers
@@ -398,6 +472,23 @@ SELECT
     ti.total_price,
     t.ts as transaction_date,
     c.age_b
+etl	v_persona_coverage_summary	
+/* Helper view to see persona rule application results */
+CREATE   VIEW etl.v_persona_coverage_summary
+AS
+SELECT
+    pic.inferred_role,
+    COUNT(*) AS transaction_count,
+    AVG(pic.confidence_score) AS avg_confidence,
+    MIN(pic.confidence_score) AS mi
+gold	v_sample_sari_transactions	
+/* Sample sheet view using existing flat production view + demographics */
+CREATE   VIEW gold.v_sample_sari_transactions
+AS
+WITH base AS (
+  SELECT
+    vt.transaction_id                               AS Transaction_ID,
+    TRY_CONVERT(decimal(18,2), vt.to
 gold	v_transactions_crosstab	
 CREATE VIEW gold.v_transactions_crosstab AS
 SELECT
@@ -421,6 +512,41 @@ SELECT
   brand,
   pr
 gold	v_transactions_flat_v24	CREATE VIEW gold.v_transactions_flat_v24 AS SELECT * FROM dbo.v_transactions_flat_v24
+gold	v_transactions_nielsen	
+/* Nielsen-aware transaction view (transaction × SKU × Nielsen) */
+CREATE   VIEW gold.v_transactions_nielsen
+AS
+SELECT
+  si.canonical_tx_id,
+  si.TransactionDate,
+  si.StoreID,
+  i.ProductID,
+  p.ProductName,
+  p.Category AS product_category,
+  n.taxonomy
+gold	v_txn_best_interaction	
+/* Helper: choose a single interaction record per transaction (latest TransactionDate, with demographics) */
+CREATE   VIEW gold.v_txn_best_interaction
+AS
+WITH ranked AS (
+  SELECT
+    si.canonical_tx_id,
+    si.TransactionDate,
+    si.Age,
+    si.Gender,
+
+ref	v_ItemCategoryResolved	
+-- 7) Create analytics preference view: SKU-first, brand-fallback
+CREATE   VIEW ref.v_ItemCategoryResolved AS
+SELECT
+    ti.TransactionItemID,
+    ti.InteractionID,
+    ti.ProductID,
+    ti.Quantity,
+    ti.UnitPrice,
+    ti.sku_id,
+
+    -- SKU informatio
 ref	v_persona_inference	-- ========================================================================
 -- CREATE SIMPLIFIED PERSONA INFERENCE VIEW
 -- ========================================================================
@@ -428,6 +554,13 @@ ref	v_persona_inference	-- =====================================================
 CREATE   VIEW ref.v_persona_inference AS
 WITH base AS (
   -
+ref	v_SkuCoverage	
+-- 8) Create coverage helper view
+CREATE   VIEW ref.v_SkuCoverage AS
+SELECT
+    total_transaction_items = COUNT(*),
+    items_with_sku = COUNT(CASE WHEN sku_id IS NOT NULL THEN 1 END),
+    items_with_brand_only = COUNT(CASE WHEN sku_id IS NULL THEN 1 END)
 sys	database_firewall_rules	CREATE VIEW sys.database_firewall_rules AS SELECT id, name, start_ip_address, end_ip_address, create_date, modify_date FROM sys.database_firewall_rules_table
 
-(53 rows affected)
+(67 rows affected)

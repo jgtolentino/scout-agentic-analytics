@@ -1,0 +1,47 @@
+name: Mart Parity Gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, chore/**, feat/**, fix/** ]
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SQL Command Line Tools
+        run: |
+          # Install Microsoft SQL Server command-line tools
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+          sudo apt-get update
+          sudo apt-get install -y mssql-tools18 unixodbc-dev
+          echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bashrc
+          source ~/.bashrc
+      - name: Validate mart parity/types
+        env:
+          DB: ${{ secrets.SCOUT_PROD_DB_NAME }}
+        run: |
+          make mart-validate DB="$DB" || true
+          echo "---- VALIDATION OUTPUT ----"
+          cat out/validation/mart_types_counts.txt || true
+          # Hard assertions:
+          #  - mart rows = 12192, csv rows = 12192
+          #  - all crosstab deltas == 0 (when count column detected)
+          fail=0
+          mart=$(grep -A1 "Expect mart rows" -n out/validation/mart_types_counts.txt | tail -1 | sed 's/.*,//' | tr -d '[:space:]' || echo "")
+          csvs=$(grep -A1 "CSV-safe must match" -n out/validation/mart_types_counts.txt | tail -1 | sed 's/.*,//' | tr -d '[:space:]' || echo "")
+          [ "$mart" = "12192" ] || fail=1
+          [ "$csvs" = "12192" ] || fail=1
+          deltas=$(grep -i " delta" out/validation/mart_types_counts.txt | awk -F',' '{print $NF}' | tr -d ' ' | grep -v '^0' | wc -l || echo 0)
+          [ "$deltas" = "0" ] || fail=1
+          if [ "$fail" != "0" ]; then
+            echo "::error::Mart parity/type validation failed. See artifact."
+            exit 2
+          fi
+      - name: Upload validator report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mart-validation-${{ github.sha }}
+          path: out/validation/mart_types_counts.txt
+          if-no-files-found: error

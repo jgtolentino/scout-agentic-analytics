@@ -74,3 +74,39 @@
   - Coverage OK: true
   - Flat view rows: 33362
   - Brands missing CategoryCode: 105
+
+## 2025-09-25T19:07:43Z — Scout Bot
+- Migration(s): manual/unknown
+- Objects: 256 (tables 124, views 62, procs 68)
+- Summary: auto-doc sync
+- Checks:
+  - Coverage OK: true
+  - Flat view rows: 12192
+  - Brands missing CategoryCode: 105
+
+## 2025-09-25T19:10:06Z — Scout Bot
+- Migration(s): manual/unknown
+- Objects: 258 (tables 124, views 64, procs 68)
+- Summary: auto-doc sync
+- Checks:
+  - Coverage OK: true
+  - Flat view rows: 12192
+  - Brands missing CategoryCode: 105
+
+## 2025-09-25T19:14:48Z — Scout Bot
+- Migration(s): manual/unknown
+- Objects: 259 (tables 124, views 64, procs 69)
+- Summary: auto-doc sync
+- Checks:
+  - Coverage OK: true
+  - Flat view rows: 12192
+  - Brands missing CategoryCode: 105
+
+## 2025-09-25T19:17:29Z — Scout Bot
+- Migration(s): manual/unknown
+- Objects: 262 (tables 125, views 66, procs 69)
+- Summary: auto-doc sync
+- Checks:
+  - Coverage OK: true
+  - Flat view rows: 12192
+  - Brands missing CategoryCode: 105

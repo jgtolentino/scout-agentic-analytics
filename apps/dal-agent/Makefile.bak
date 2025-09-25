@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -347,3 +347,185 @@ daily-summary: check-connection ## Generate daily sales summary (fixed MODE() fu
 	@echo "$(YELLOW)📈 Generating daily sales summary...$(NC)"
 	@$(SQL) -Q "EXEC etl.sp_update_daily_sales_summary @target_date='$(shell date +%Y-%m-%d)';" || echo "$(YELLOW)⚠️ ops.data_quality_issues table may not exist yet$(NC)"
 	@echo "$(GREEN)✅ Daily summary generated$(NC)"
+
+# =============================================================================
+# LEGACY TO DBO V2.0 MIGRATION PIPELINE
+# =============================================================================
+
+migrate-build: check-connection ## Build staging views and migration procedures
+	@echo "$(YELLOW)🔧 Building migration infrastructure...$(NC)"
+	@$(SQL) -i sql/migrations/20250925_06_staging_view_builder.sql
+	@$(SQL) -i sql/migrations/20250925_07_migrate_existing_to_dbo.sql
+	@$(SQL) -i sql/migrations/20250925_08_migration_driver.sql
+	@echo "$(GREEN)✅ Migration infrastructure ready$(NC)"
+
+migrate-dryrun: migrate-build ## Dry run migration (counts + diagnostics only)
+	@echo "$(YELLOW)📊 Running migration dry run...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_build_staging_views;"
+	@$(SQL) -Q "EXEC etl.sp_migration_dryrun;"
+	@echo "$(GREEN)✅ Dry run completed$(NC)"
+
+migrate-exec: migrate-build ## Execute complete legacy → dbo v2.0 migration
+	@echo "$(YELLOW)🚀 Executing complete migration legacy → dbo v2.0...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_migration_execute;"
+	@$(MAKE) etl-load
+	@echo "$(GREEN)✅ Migration execution completed$(NC)"
+
+# =============================================================================
+# NIELSEN TAXONOMY DEPLOYMENT
+# =============================================================================
+
+taxonomy-apply: check-connection ## Deploy Nielsen taxonomy infrastructure
+	@echo "$(YELLOW)🏗️ Deploying Nielsen taxonomy infrastructure...$(NC)"
+	@$(SQL) -i sql/migrations/20250925_09_nielsen_taxonomy.sql
+	@$(SQL) -Q "EXEC etl.sp_seed_nielsen_taxonomy_min"
+	@echo "$(YELLOW)🏷️ Loading brand classification rules...$(NC)"
+	@$(SQL) -i sql/migrations/20250925_10_nielsen_brand_rules_seed.sql
+	@echo "$(GREEN)✅ Nielsen taxonomy infrastructure deployed$(NC)"
+
+taxonomy-autoclassify: check-connection ## Auto-classify products to Nielsen categories
+	@echo "$(YELLOW)🤖 Auto-classifying products using brand rules...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_automap_products_to_nielsen"
+	@echo "$(GREEN)✅ Product auto-classification completed$(NC)"
+
+taxonomy-coverage: check-connection ## Report Nielsen coverage statistics
+	@echo "$(YELLOW)📊 Nielsen taxonomy coverage report...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_report_nielsen_coverage"
+	@echo "$(GREEN)✅ Coverage report generated$(NC)"
+
+migrate-fixed: check-connection ## Run fixed migration procedures
+	@echo "$(YELLOW)🔧 Executing fixed migration procedures...$(NC)"
+	@$(SQL) -i sql/migrations/20250925_11_migration_fixes.sql
+	@$(SQL) -Q "EXEC etl.sp_migration_execute_fixed"
+	@echo "$(GREEN)✅ Fixed migration procedures completed$(NC)"
+
+# =============================================================================
+# NIELSEN 1,100 CATEGORY SYSTEM DEPLOYMENT
+# =============================================================================
+
+nielsen-1100-deploy: check-connection ## Deploy complete Nielsen 1,100 category system
+	@echo "$(YELLOW)🚀 Deploying Nielsen 1,100 Category System...$(NC)"
+	@echo "$(YELLOW)  → Deploying base taxonomy (227 categories)...$(NC)"
+	@$(SQL) -i sql/migrations/20250926_01_nielsen_1100_base_taxonomy.sql
+	@echo "$(YELLOW)  → Deploying brand mappings (111 brands, 315 combinations)...$(NC)"
+	@$(SQL) -i sql/migrations/20250926_02_nielsen_1100_brand_mappings.sql
+	@echo "$(YELLOW)  → Deploying expansion procedures (to reach 1,100+ categories)...$(NC)"
+	@$(SQL) -i sql/migrations/20250926_03_nielsen_expansion_procedures.sql
+	@echo "$(GREEN)✅ Nielsen 1,100 system deployment completed$(NC)"
+
+nielsen-1100-generate: check-connection ## Generate expanded categories (227 base → 1,100+)
+	@echo "$(YELLOW)🎯 Generating Nielsen 1,100 expanded categories...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_generate_nielsen_expansions"
+	@echo "$(GREEN)✅ Category expansion generation completed$(NC)"
+
+nielsen-1100-automap: check-connection ## Auto-map products to expanded Nielsen categories
+	@echo "$(YELLOW)🤖 Auto-mapping products to Nielsen 1,100 categories...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_automap_products_to_nielsen_expanded"
+	@echo "$(GREEN)✅ Product auto-mapping completed$(NC)"
+
+nielsen-1100-coverage: check-connection ## Generate Nielsen 1,100 coverage report
+	@echo "$(YELLOW)📊 Generating Nielsen 1,100 coverage report...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_report_nielsen_1100_coverage"
+	@echo "$(GREEN)✅ Coverage report generated$(NC)"
+
+nielsen-1100-report: check-connection ## Export Nielsen 1,100 analytics to CSV
+	@echo "$(YELLOW)📈 Exporting Nielsen 1,100 analytics...$(NC)"
+	@mkdir -p out/nielsen_1100
+	@echo "$(YELLOW)  → Exporting base taxonomy structure...$(NC)"
+	@$(SQL) -Q "SELECT * FROM ref.NielsenTaxonomy ORDER BY level, taxonomy_code" -s "," -W -h -1 > out/nielsen_1100/base_taxonomy.csv
+	@echo "$(YELLOW)  → Exporting expanded categories...$(NC)"
+	@$(SQL) -Q "SELECT nte.expanded_code, nte.expanded_name, nt.taxonomy_name as base_category, nte.category_weight FROM ref.NielsenTaxonomyExpanded nte JOIN ref.NielsenTaxonomy nt ON nt.taxonomy_id = nte.base_taxonomy_id ORDER BY nte.category_weight DESC" -s "," -W -h -1 > out/nielsen_1100/expanded_categories.csv
+	@echo "$(YELLOW)  → Exporting brand-category mappings...$(NC)"
+	@$(SQL) -Q "SELECT bcr.brand_name, bcr.taxonomy_code, nt.taxonomy_name, bcr.rule_source FROM ref.BrandCategoryRules bcr LEFT JOIN ref.NielsenTaxonomy nt ON nt.taxonomy_code = bcr.taxonomy_code ORDER BY bcr.rule_source, bcr.brand_name" -s "," -W -h -1 > out/nielsen_1100/brand_mappings.csv
+	@echo "$(YELLOW)  → Exporting product coverage...$(NC)"
+	@$(SQL) -Q "SELECT p.ProductName, p.Category, nt.taxonomy_name as nielsen_category, pnm.confidence FROM dbo.Products p LEFT JOIN ref.ProductNielsenMap pnm ON pnm.ProductID = p.ProductID LEFT JOIN ref.NielsenTaxonomy nt ON nt.taxonomy_id = pnm.taxonomy_id ORDER BY pnm.confidence DESC, p.ProductName" -s "," -W -h -1 > out/nielsen_1100/product_coverage.csv
+	@echo "$(GREEN)✅ Nielsen 1,100 analytics exported$(NC)"
+	@echo "$(BLUE)📁 Files created:$(NC)"
+	@ls -la out/nielsen_1100/*.csv | awk '{printf "  %s (%s bytes)\n", $$9, $$5}'
+
+nielsen-1100-validate: check-connection ## Validate Nielsen 1,100 system completeness
+	@echo "$(YELLOW)🔍 Validating Nielsen 1,100 system...$(NC)"
+	@echo "$(YELLOW)  → Checking taxonomy completeness...$(NC)"
+	@DEPT_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM ref.NielsenTaxonomy WHERE level = 1" -h -1 | tr -d ' \t\r\n'); \
+	if [ "$$DEPT_COUNT" -ge "10" ]; then \
+		echo "$(GREEN)    ✅ Departments: $$DEPT_COUNT (≥10 required)$(NC)"; \
+	else \
+		echo "$(RED)    ❌ Departments: $$DEPT_COUNT (<10, incomplete)$(NC)"; \
+	fi
+	@GROUPS_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM ref.NielsenTaxonomy WHERE level = 2" -h -1 | tr -d ' \t\r\n'); \
+	if [ "$$GROUPS_COUNT" -ge "20" ]; then \
+		echo "$(GREEN)    ✅ Product Groups: $$GROUPS_COUNT (≥20 required)$(NC)"; \
+	else \
+		echo "$(RED)    ❌ Product Groups: $$GROUPS_COUNT (<20, incomplete)$(NC)"; \
+	fi
+	@CATS_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM ref.NielsenTaxonomy WHERE level = 3" -h -1 | tr -d ' \t\r\n'); \
+	if [ "$$CATS_COUNT" -ge "50" ]; then \
+		echo "$(GREEN)    ✅ Base Categories: $$CATS_COUNT (≥50 required)$(NC)"; \
+	else \
+		echo "$(RED)    ❌ Base Categories: $$CATS_COUNT (<50, incomplete)$(NC)"; \
+	fi
+	@echo "$(YELLOW)  → Checking expansion system...$(NC)"
+	@EXP_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM ref.NielsenTaxonomyExpanded WHERE is_active = 1" -h -1 2>/dev/null | tr -d ' \t\r\n' || echo "0"); \
+	if [ "$$EXP_COUNT" -ge "1000" ]; then \
+		echo "$(GREEN)    ✅ Expanded Categories: $$EXP_COUNT (≥1,000 target achieved)$(NC)"; \
+	else \
+		echo "$(YELLOW)    ⚠️ Expanded Categories: $$EXP_COUNT (<1,000, run nielsen-1100-generate)$(NC)"; \
+	fi
+	@echo "$(YELLOW)  → Checking brand coverage...$(NC)"
+	@BRAND_COUNT=$$($(SQL) -Q "SELECT COUNT(DISTINCT brand_name) FROM ref.BrandCategoryRules WHERE rule_source = 'nielsen_1100'" -h -1 | tr -d ' \t\r\n'); \
+	if [ "$$BRAND_COUNT" -ge "100" ]; then \
+		echo "$(GREEN)    ✅ Nielsen 1100 Brands: $$BRAND_COUNT (≥100 target achieved)$(NC)"; \
+	else \
+		echo "$(RED)    ❌ Nielsen 1100 Brands: $$BRAND_COUNT (<100, incomplete brand mapping)$(NC)"; \
+	fi
+	@echo "$(YELLOW)  → Checking product mapping coverage...$(NC)"
+	@MAPPED_PRODUCTS=$$($(SQL) -Q "SELECT COUNT(DISTINCT ProductID) FROM ref.ProductNielsenMap" -h -1 | tr -d ' \t\r\n'); \
+	TOTAL_PRODUCTS=$$($(SQL) -Q "SELECT COUNT(*) FROM dbo.Products" -h -1 | tr -d ' \t\r\n'); \
+	COVERAGE_PCT=$$(echo "scale=1; $$MAPPED_PRODUCTS * 100 / $$TOTAL_PRODUCTS" | bc 2>/dev/null || echo "0"); \
+	if [ "$$(echo "$$COVERAGE_PCT >= 80" | bc 2>/dev/null)" = "1" ]; then \
+		echo "$(GREEN)    ✅ Product Coverage: $$MAPPED_PRODUCTS/$$TOTAL_PRODUCTS ($$COVERAGE_PCT%, ≥80% target)$(NC)"; \
+	else \
+		echo "$(YELLOW)    ⚠️ Product Coverage: $$MAPPED_PRODUCTS/$$TOTAL_PRODUCTS ($$COVERAGE_PCT%, <80%, run nielsen-1100-automap)$(NC)"; \
+	fi
+	@echo "$(GREEN)✅ Nielsen 1,100 system validation completed$(NC)"
+
+# =============================================================================
+# EXCEL PIVOT TABLE INTEGRATION
+# =============================================================================
+
+pivots-views: check-connection ## Deploy gold pivot views for Excel integration
+	@echo "$(YELLOW)📊 Deploying gold pivot views...$(NC)"
+	@$(SQL) -i sql/migrations/20250926_11_gold_pivot_views.sql
+	@echo "$(GREEN)✅ Gold pivot views deployed$(NC)"
+
+pivots-export: pivots-views ## Export Nielsen-backed CSV files for Excel pivot tables
+	@echo "$(YELLOW)📈 Exporting pivot data for Excel integration...$(NC)"
+	@mkdir -p out/pivots
+	@DB="$(DB)" OUT="out/pivots" ./scripts/export_pivot_data.sh
+	@echo "$(GREEN)✅ Pivot data exported to out/pivots/$(NC)"
+	@echo "$(BLUE)📁 Files ready for Excel:$(NC)"
+	@ls -la out/pivots/*.csv | awk '{printf "  📄 %s (%s bytes)\n", $$9, $$5}'
+
+pivots-test: check-connection ## Test pivot views return data
+	@echo "$(YELLOW)🧪 Testing pivot views...$(NC)"
+	@echo "$(YELLOW)  → Testing main pivot view...$(NC)"
+	@MAIN_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM gold.v_pivot_default" -h -1 | tr -d ' \t\r\n' || echo "ERROR"); \
+	if [[ "$$MAIN_COUNT" == "ERROR" ]]; then \
+		echo "$(RED)    ❌ Main pivot view failed$(NC)"; \
+	elif [[ "$$MAIN_COUNT" -gt "0" ]]; then \
+		echo "$(GREEN)    ✅ Main pivot view: $$MAIN_COUNT rows$(NC)"; \
+	else \
+		echo "$(YELLOW)    ⚠️ Main pivot view: 0 rows$(NC)"; \
+	fi
+	@echo "$(YELLOW)  → Testing category lookup...$(NC)"
+	@CAT_COUNT=$$($(SQL) -Q "SELECT COUNT(*) FROM gold.v_category_lookup_reference" -h -1 | tr -d ' \t\r\n' || echo "ERROR"); \
+	if [[ "$$CAT_COUNT" == "ERROR" ]]; then \
+		echo "$(RED)    ❌ Category lookup failed$(NC)"; \
+	elif [[ "$$CAT_COUNT" -gt "0" ]]; then \
+		echo "$(GREEN)    ✅ Category lookup: $$CAT_COUNT categories$(NC)"; \
+	else \
+		echo "$(YELLOW)    ⚠️ Category lookup: 0 categories$(NC)"; \
+	fi
+	@echo "$(YELLOW)  → Testing Nielsen coverage...$(NC)"
+	@$(SQL) -Q "SELECT * FROM gold.v_nielsen_coverage_summary" || echo "$(YELLOW)Coverage summary not available$(NC)"
+	@echo "$(GREEN)✅ Pivot view testing completed$(NC)"
