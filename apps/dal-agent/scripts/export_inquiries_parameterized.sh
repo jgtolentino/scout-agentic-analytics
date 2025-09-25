@@ -1,0 +1,429 @@
+#!/bin/bash
+
+# Parameterized Inquiry Export Script
+# Exports comprehensive inquiry analytics with date, region, and store filtering
+# Usage: ./export_inquiries_parameterized.sh [options]
+# Options:
+#   --date-from YYYY-MM-DD    Start date (default: 90 days ago)
+#   --date-to YYYY-MM-DD      End date (default: today)
+#   --region TEXT             Region filter (optional)
+#   --store-id TEXT           Store ID filter (optional)
+#   --category all|tobacco|laundry  Category focus (default: all)
+#   --output-dir PATH         Output directory (default: out/inquiries_filtered)
+
+set -euo pipefail
+
+# Default parameters
+DATE_FROM=$(date -d '90 days ago' '+%Y-%m-%d' 2>/dev/null || date -v-90d '+%Y-%m-%d')
+DATE_TO=$(date '+%Y-%m-%d')
+REGION=""
+STORE_ID=""
+CATEGORY="all"
+OUTPUT_DIR="out/inquiries_filtered"
+
+# Color codes
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --date-from)
+            DATE_FROM="$2"
+            shift 2
+            ;;
+        --date-to)
+            DATE_TO="$2"
+            shift 2
+            ;;
+        --region)
+            REGION="$2"
+            shift 2
+            ;;
+        --store-id)
+            STORE_ID="$2"
+            shift 2
+            ;;
+        --category)
+            CATEGORY="$2"
+            shift 2
+            ;;
+        --output-dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        --help)
+            echo "Usage: $0 [options]"
+            echo ""
+            echo "Options:"
+            echo "  --date-from YYYY-MM-DD    Start date (default: 90 days ago)"
+            echo "  --date-to YYYY-MM-DD      End date (default: today)"
+            echo "  --region TEXT             Region filter (optional)"
+            echo "  --store-id TEXT           Store ID filter (optional)"
+            echo "  --category all|tobacco|laundry  Category focus (default: all)"
+            echo "  --output-dir PATH         Output directory (default: out/inquiries_filtered)"
+            echo ""
+            echo "Examples:"
+            echo "  $0 --date-from 2024-09-01 --date-to 2024-09-30"
+            echo "  $0 --region 'Metro Manila' --category tobacco"
+            echo "  $0 --store-id 'STORE001' --date-from 2024-08-01"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Validate date format
+validate_date() {
+    local date_str="$1"
+    if ! date -d "$date_str" >/dev/null 2>&1 && ! date -j -f "%Y-%m-%d" "$date_str" >/dev/null 2>&1; then
+        echo -e "${RED}❌ Invalid date format: $date_str${NC}"
+        echo -e "${YELLOW}Expected format: YYYY-MM-DD${NC}"
+        exit 1
+    fi
+}
+
+validate_date "$DATE_FROM"
+validate_date "$DATE_TO"
+
+# Validate category
+if [[ ! "$CATEGORY" =~ ^(all|tobacco|laundry)$ ]]; then
+    echo -e "${RED}❌ Invalid category: $CATEGORY${NC}"
+    echo -e "${YELLOW}Valid options: all, tobacco, laundry${NC}"
+    exit 1
+fi
+
+# Build WHERE clause for filtering - deterministic and always valid
+build_where_clause() {
+    # Always valid predicate; safe if filters are empty
+    local w="1=1"
+
+    # Date range (sargable predicates)
+    w+=" AND txn_date >= '$DATE_FROM'"
+    w+=" AND txn_date <= '$DATE_TO'"
+
+    # Region filter
+    if [[ -n "$REGION" ]]; then
+        w+=" AND Region = '$REGION'"
+    fi
+
+    # Store ID filter
+    if [[ -n "$STORE_ID" ]]; then
+        w+=" AND store_id = '$STORE_ID'"
+    fi
+
+    # Category filter
+    case "$CATEGORY" in
+        "tobacco")
+            w+=" AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')"
+            ;;
+        "laundry")
+            w+=" AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')"
+            ;;
+    esac
+
+    printf '%s' "$w"
+}
+
+WHERE_CLAUSE=$(build_where_clause)
+
+echo -e "${YELLOW}🔍 Parameterized Inquiry Export Configuration:${NC}"
+echo -e "${BLUE}  Date Range: $DATE_FROM to $DATE_TO${NC}"
+echo -e "${BLUE}  Region: ${REGION:-'(all regions)'}${NC}"
+echo -e "${BLUE}  Store ID: ${STORE_ID:-'(all stores)'}${NC}"
+echo -e "${BLUE}  Category: $CATEGORY${NC}"
+echo -e "${BLUE}  Output: $OUTPUT_DIR${NC}"
+echo ""
+
+# Create output directory structure
+mkdir -p "$OUTPUT_DIR"/{overall,tobacco,laundry}
+
+# Define base SQL query with parameterized filtering
+BASE_QUERY="FROM dbo.v_transactions_flat_production WHERE $WHERE_CLAUSE"
+
+echo -e "${YELLOW}📊 Exporting inquiry analytics with filters...${NC}"
+
+# Safe SQL runner with error tracking
+fail=0
+sql() {
+    ./scripts/sql.sh -d "$DB" -Q "$1" -o "$2"
+    local rc=$?
+    if [[ $rc -ne 0 ]]; then
+        echo -e "${RED}❌ SQL failed: $2 (rc=$rc)${NC}"
+        fail=1
+    fi
+    return $rc
+}
+
+# Export overall category inquiries
+if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "overall" ]]; then
+    echo -e "${YELLOW}  → Overall category analytics...${NC}"
+
+    # Purchase profiles
+    sql "SET NOCOUNT ON;
+    SELECT
+        Category,
+        COUNT(DISTINCT canonical_tx_id) AS transaction_count,
+        COUNT(DISTINCT store_id) AS store_count,
+        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_transaction_value,
+        SUM(CASE WHEN CAST(total_items AS INT) = 1 THEN 1 ELSE 0 END) AS single_item_transactions,
+        COUNT(DISTINCT txn_date) AS active_days
+    $BASE_QUERY
+    AND Category IS NOT NULL
+    GROUP BY Category
+    ORDER BY transaction_count DESC;" \
+    "$OUTPUT_DIR/overall/purchase_profile_pdp.csv"
+
+    # Frequent terms analysis
+    sql "SET NOCOUNT ON;
+    WITH transcript_words AS (
+        SELECT
+            value AS word,
+            COUNT(*) AS frequency
+        $BASE_QUERY
+        AND audio_transcript IS NOT NULL
+        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(audio_transcript, ',', ' '), '.', ' '), ' ')
+        WHERE LEN(TRIM(value)) > 2
+        AND value NOT IN ('the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by')
+    )
+    SELECT TOP 50 word, frequency
+    FROM transcript_words
+    WHERE frequency >= 3
+    ORDER BY frequency DESC;" \
+    "$OUTPUT_DIR/overall/frequent_terms.csv"
+
+    # Regional distribution
+    sql "SET NOCOUNT ON;
+    SELECT
+        COALESCE(Region, '(Unknown)') AS region,
+        COUNT(DISTINCT canonical_tx_id) AS transactions,
+        COUNT(DISTINCT store_id) AS stores,
+        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value,
+        MIN(txn_date) AS first_transaction,
+        MAX(txn_date) AS last_transaction
+    $BASE_QUERY
+    GROUP BY Region
+    ORDER BY transactions DESC;" \
+    "$OUTPUT_DIR/overall/regional_distribution.csv"
+fi
+
+# Export tobacco-specific inquiries
+if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "tobacco" ]]; then
+    echo -e "${YELLOW}  → Tobacco category analytics...${NC}"
+
+    # Tobacco purchase profiles
+    sql "SET NOCOUNT ON;
+    WITH tobacco_filter AS (
+        SELECT *
+        $BASE_QUERY
+        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
+    )
+    SELECT
+        store_id,
+        COUNT(DISTINCT canonical_tx_id) AS tobacco_transactions,
+        COUNT(DISTINCT txn_date) AS active_days,
+        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_tobacco_value,
+        AVG(CAST(total_items AS INT)) AS avg_items_per_transaction
+    FROM tobacco_filter
+    GROUP BY store_id
+    HAVING COUNT(DISTINCT canonical_tx_id) >= 5
+    ORDER BY tobacco_transactions DESC;" \
+    "$OUTPUT_DIR/tobacco/purchase_profile_pdp.csv"
+
+    # Tobacco frequent terms
+    sql "SET NOCOUNT ON;
+    WITH tobacco_transcripts AS (
+        SELECT transcript_clean
+        $BASE_QUERY
+        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
+        AND transcript_clean IS NOT NULL
+    ),
+    tobacco_words AS (
+        SELECT
+            LOWER(TRIM(value)) AS word,
+            COUNT(*) AS frequency
+        FROM tobacco_transcripts
+        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(transcript_clean, ',', ' '), '.', ' '), ' ')
+        WHERE LEN(TRIM(value)) > 2
+        GROUP BY LOWER(TRIM(value))
+    )
+    SELECT TOP 70 word, frequency
+    FROM tobacco_words
+    WHERE frequency >= 2
+    ORDER BY frequency DESC;" \
+    "$OUTPUT_DIR/tobacco/frequent_terms.csv"
+
+    # Tobacco daypart analysis
+    sql "SET NOCOUNT ON;
+    WITH tobacco_dayparts AS (
+        SELECT
+            Daypart,
+            COUNT(DISTINCT canonical_tx_id) AS transactions,
+            AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value
+        $BASE_QUERY
+        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
+        AND Daypart IS NOT NULL
+        GROUP BY Daypart
+    )
+    SELECT
+        Daypart,
+        transactions,
+        CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
+        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS percentage
+    FROM tobacco_dayparts
+    ORDER BY transactions DESC;" \
+    "$OUTPUT_DIR/tobacco/sales_daypart_weektype.csv"
+fi
+
+# Export laundry-specific inquiries
+if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "laundry" ]]; then
+    echo -e "${YELLOW}  → Laundry category analytics...${NC}"
+
+    # Laundry purchase profiles
+    sql "SET NOCOUNT ON;
+    WITH laundry_filter AS (
+        SELECT *
+        $BASE_QUERY
+        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
+    )
+    SELECT
+        store_id,
+        COUNT(DISTINCT canonical_tx_id) AS laundry_transactions,
+        COUNT(DISTINCT txn_date) AS active_days,
+        AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_laundry_value,
+        COUNT(DISTINCT Category) AS category_variety
+    FROM laundry_filter
+    GROUP BY store_id
+    HAVING COUNT(DISTINCT canonical_tx_id) >= 3
+    ORDER BY laundry_transactions DESC;" \
+    "$OUTPUT_DIR/laundry/purchase_profile_pdp.csv"
+
+    # Laundry detergent types
+    sql "SET NOCOUNT ON;
+    WITH laundry_products AS (
+        SELECT
+            Category,
+            COUNT(DISTINCT canonical_tx_id) AS transactions,
+            AVG(CAST(total_amount AS DECIMAL(10,2))) AS avg_value,
+            COUNT(DISTINCT store_id) AS store_count
+        $BASE_QUERY
+        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
+        GROUP BY Category
+    )
+    SELECT
+        Category AS detergent_type,
+        transactions,
+        CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
+        store_count,
+        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS market_share_pct
+    FROM laundry_products
+    ORDER BY transactions DESC;" \
+    "$OUTPUT_DIR/laundry/detergent_type.csv"
+
+    # Laundry demographic analysis
+    sql "SET NOCOUNT ON;
+    WITH laundry_demo AS (
+        SELECT
+            CASE
+                WHEN Demographics LIKE '%Male%' THEN 'Male'
+                WHEN Demographics LIKE '%Female%' THEN 'Female'
+                ELSE 'Unknown'
+            END AS gender,
+            CASE
+                WHEN Demographics LIKE '%20%' OR Demographics LIKE '%25%' THEN '20-29'
+                WHEN Demographics LIKE '%30%' OR Demographics LIKE '%35%' THEN '30-39'
+                WHEN Demographics LIKE '%40%' OR Demographics LIKE '%45%' THEN '40-49'
+                WHEN Demographics LIKE '%50%' OR Demographics LIKE '%55%' THEN '50-59'
+                ELSE 'Unknown'
+            END AS age_group,
+            COUNT(DISTINCT canonical_tx_id) AS transactions
+        $BASE_QUERY
+        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
+        AND Demographics IS NOT NULL
+        GROUP BY
+            CASE
+                WHEN Demographics LIKE '%Male%' THEN 'Male'
+                WHEN Demographics LIKE '%Female%' THEN 'Female'
+                ELSE 'Unknown'
+            END,
+            CASE
+                WHEN Demographics LIKE '%20%' OR Demographics LIKE '%25%' THEN '20-29'
+                WHEN Demographics LIKE '%30%' OR Demographics LIKE '%35%' THEN '30-39'
+                WHEN Demographics LIKE '%40%' OR Demographics LIKE '%45%' THEN '40-49'
+                WHEN Demographics LIKE '%50%' OR Demographics LIKE '%55%' THEN '50-59'
+                ELSE 'Unknown'
+            END
+    )
+    SELECT
+        gender,
+        age_group,
+        transactions,
+        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS percentage
+    FROM laundry_demo
+    WHERE transactions >= 2
+    ORDER BY transactions DESC;" \
+    "$OUTPUT_DIR/laundry/demo_gender_age_brand.csv"
+fi
+
+# Generate summary report
+echo -e "${YELLOW}📋 Generating export summary...${NC}"
+
+cat > "$OUTPUT_DIR/export_summary.txt" << EOF
+Parameterized Inquiry Export Summary
+Generated: $(date)
+
+Configuration:
+- Date Range: $DATE_FROM to $DATE_TO
+- Region Filter: ${REGION:-'(all regions)'}
+- Store ID Filter: ${STORE_ID:-'(all stores)'}
+- Category Filter: $CATEGORY
+- WHERE Clause: $WHERE_CLAUSE
+
+Files Generated:
+EOF
+
+find "$OUTPUT_DIR" -name "*.csv" -exec ls -lh {} \; | awk '{print "- " $9 " (" $5 ")"}' >> "$OUTPUT_DIR/export_summary.txt"
+
+echo "" >> "$OUTPUT_DIR/export_summary.txt"
+echo "Query Performance Notes:" >> "$OUTPUT_DIR/export_summary.txt"
+echo "- Uses sargable predicates on txn_date for optimal index usage" >> "$OUTPUT_DIR/export_summary.txt"
+echo "- WHERE clause applied consistently across all queries" >> "$OUTPUT_DIR/export_summary.txt"
+echo "- Results filtered at database level for efficiency" >> "$OUTPUT_DIR/export_summary.txt"
+
+# Final statistics
+TOTAL_FILES=$(find "$OUTPUT_DIR" -name "*.csv" | wc -l)
+TOTAL_SIZE=$(du -sh "$OUTPUT_DIR" | cut -f1)
+
+echo -e "${GREEN}✅ Parameterized inquiry export completed${NC}"
+echo -e "${BLUE}📊 Generated $TOTAL_FILES CSV files ($TOTAL_SIZE total)${NC}"
+echo -e "${BLUE}📁 Output location: $OUTPUT_DIR${NC}"
+echo -e "${BLUE}📋 Summary report: $OUTPUT_DIR/export_summary.txt${NC}"
+echo ""
+
+# Display sample of generated files
+echo -e "${YELLOW}📄 Generated files:${NC}"
+find "$OUTPUT_DIR" -name "*.csv" | sort | head -10 | while read -r file; do
+    rows=$(wc -l < "$file" 2>/dev/null || echo "0")
+    size=$(ls -lh "$file" | awk '{print $5}')
+    echo -e "${BLUE}  • $(basename "$file") - $((rows-1)) rows ($size)${NC}"
+done
+
+if [[ $TOTAL_FILES -gt 10 ]]; then
+    echo -e "${BLUE}  ... and $((TOTAL_FILES-10)) more files${NC}"
+fi
+
+# Finalize exit status
+if [[ ${fail:-0} -ne 0 ]]; then
+    echo -e "${RED}❌ Inquiry export completed with errors.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}✅ Inquiry export completed successfully.${NC}"
+    exit 0
+fi
