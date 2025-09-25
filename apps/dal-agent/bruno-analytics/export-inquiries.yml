@@ -1,0 +1,49 @@
+---
+# Bruno Analytics - Export Inquiries
+# Comprehensive analytics for Overall/Tobacco/Laundry inquiries
+name: export-inquiries
+description: "Exports structured inquiry analytics from production mart"
+environment: production
+timeout: 600  # 10 minutes for comprehensive export
+
+steps:
+  - name: "Export Inquiry Analytics"
+    type: shell
+    run: |
+      set -euo pipefail
+      DB="SQL-TBWA-ProjectScout-Reporting-Prod"
+
+      echo "📋 Starting comprehensive inquiry analytics export..."
+      echo "🎯 Database: $DB"
+      echo "📊 Categories: Overall, Tobacco, Laundry/Detergent"
+      echo ""
+
+      # Execute the inquiry export
+      cd apps/dal-agent
+      make inquiries-export DB="$DB"
+
+      echo ""
+      echo "📁 Export summary:"
+      find out/inquiries -name "*.csv" -exec wc -l {} + | sort -nr | head -20
+
+      echo ""
+      echo "✅ Comprehensive inquiry analytics ready for analysis"
+
+validation:
+  - check: "test -d out/inquiries/overall"
+    description: "Overall analytics directory exists"
+  - check: "test -d out/inquiries/tobacco"
+    description: "Tobacco analytics directory exists"
+  - check: "test -d out/inquiries/laundry"
+    description: "Laundry analytics directory exists"
+  - check: "find out/inquiries -name '*.csv' | wc -l | grep -E '^1[0-9]'"
+    description: "At least 10 CSV files generated"
+
+artifacts:
+  - path: "out/inquiries/"
+    description: "Complete inquiry analytics export"
+    recursive: true
+
+notifications:
+  success: "✅ Inquiry analytics exported - {{file_count}} CSV files ready for analysis"
+  failure: "🚨 Inquiry export failed - check database connectivity and mart availability"
