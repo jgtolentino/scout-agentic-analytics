@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock persona-preflight
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock persona-preflight inquiries-export
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -612,3 +612,12 @@ persona-preflight: ## Validate persona schema objects exist before CI pipeline
 		exit 2; \
 	fi
 	@echo "$(GREEN)✅ Preflight checks passed - all schema objects present$(NC)"
+
+inquiries-export: ## Export Overall, Tobacco, Laundry inquiry CSVs from production mart
+	@echo "$(YELLOW)📋 Exporting comprehensive inquiry analytics...$(NC)"
+	@echo "$(BLUE)   Overall: store profiles, demographics, sales patterns$(NC)"
+	@echo "$(BLUE)   Tobacco: demographics, pecha de peligro, co-purchase, frequent terms$(NC)"
+	@echo "$(BLUE)   Laundry: demographics, detergent types, fabcon analysis$(NC)"
+	@DB="$(DB)" bash scripts/export_inquiries.sh
+	@echo "$(GREEN)✅ Inquiry analytics export completed$(NC)"
+	@echo "$(BLUE)📁 Results available in out/inquiries/ directory$(NC)"
