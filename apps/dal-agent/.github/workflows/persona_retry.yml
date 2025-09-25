@@ -108,3 +108,7 @@ jobs:
             echo "🔧 Check artifacts for diagnostic information"
             echo "💡 Consider running 'make doctor-db' for detailed troubleshooting"
           fi
+
+      - name: Annotate on failure
+        if: failure()
+        run: echo '::error::Persona CI failed (coverage gate) — check artifacts for detailed diagnostics and retry status.'
