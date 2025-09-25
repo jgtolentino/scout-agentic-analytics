@@ -662,3 +662,21 @@ inquiries-headers-validate: ## Validate CSV headers match expected schemas (fail
 	check out/inquiries_filtered/tobacco/copurchase_categories.csv "category,co_category,txn_cocount,confidence,lift" ; \
 	check out/inquiries_filtered/laundry/detergent_type.csv "detergent_type,with_fabcon,transactions,share_pct" ; \
 	exit $$fail
+
+.PHONY: inquiries-parquet inquiries-export-ncr-last30 inquiries-export-mm-last30 inquiries-export-all gzip-inquiries
+inquiries-parquet: ## Convert locked CSV exports to Parquet (Snappy)
+	@echo "$(YELLOW)🧱 Converting CSV → Parquet...$(NC)"
+	@python3 scripts/csv_to_parquet.py
+	@echo "$(GREEN)✅ Parquet files generated under out/inquiries_filtered/*/*.parquet$(NC)"
+
+inquiries-export-ncr-last30: ## NCR, last 30 days
+	@DB="$(DB)" DATE_FROM="$$(python3 -c 'from datetime import date,timedelta; print((date.today()-timedelta(days=30)).isoformat())')" DATE_TO="$$(python3 -c 'from datetime import date; print(date.today().isoformat())')" REGION="NCR" $(MAKE) inquiries-export
+
+inquiries-export-mm-last30: ## Metro Manila last 30 days (alias NCR)
+	@DB="$(DB)" DATE_FROM="$$(python3 -c 'from datetime import date,timedelta; print((date.today()-timedelta(days=30)).isoformat())')" DATE_TO="$$(python3 -c 'from datetime import date; print(date.today().isoformat())')" REGION="NCR" $(MAKE) inquiries-export
+
+inquiries-export-all: ## All data, no filters
+	@DB="$(DB)" $(MAKE) inquiries-export
+
+gzip-inquiries: ## gzip CSV exports under out/inquiries_filtered
+	@find out/inquiries_filtered -type f -name '*.csv' -print0 | xargs -0 -I{} gzip -f "{}"

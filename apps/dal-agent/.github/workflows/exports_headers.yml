@@ -1,0 +1,61 @@
+name: Exports Headers Gate
+on:
+  schedule:
+    - cron: "33 18 * * *"   # 18:33 UTC daily (11:33 PM PHT)
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/dal-agent/sql/**'
+      - 'apps/dal-agent/scripts/export_inquiries_parameterized.sh'
+      - 'apps/dal-agent/Makefile'
+jobs:
+  validate_exports:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/dal-agent
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup ODBC for SQL Server
+        run: |
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc unixodbc-dev
+
+      - name: Install Python (xlsx parity optional)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python deps (pandas + pyarrow)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pyarrow
+
+      - name: Export (NCR, last month)
+        env:
+          DB: ${{ secrets.SCOUT_PROD_DB_NAME }}
+          DATE_FROM: 2025-08-01
+          DATE_TO: 2025-09-01
+          REGION: NCR
+        run: |
+          make inquiries-export
+
+      - name: Validate headers (fail on drift)
+        run: make inquiries-headers-validate
+
+      - name: Convert CSV → Parquet
+        run: make inquiries-parquet
+
+      - name: Gzip CSV artifacts
+        run: |
+          find out/inquiries_filtered -type f -name '*.csv' -print0 | xargs -0 -I{} gzip -f "{}"
+
+      - name: Upload artifacts (CSV + Parquet)
+        uses: actions/upload-artifact@v4
+        with:
+          name: inquiries-${{ github.sha }}
+          path: |
+            apps/dal-agent/out/inquiries_filtered/**/*.csv.gz
+            apps/dal-agent/out/inquiries_filtered/**/*.parquet
+          retention-days: 14

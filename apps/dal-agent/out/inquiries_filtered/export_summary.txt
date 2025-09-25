@@ -1,5 +1,5 @@
 Parameterized Inquiry Export Summary
-Generated: Fri 26 Sep 2025 05:41:38 PST
+Generated: Fri 26 Sep 2025 05:51:54 PST
 
 Configuration:
 - Date Range: 2025-06-28 to 2025-09-26
@@ -10,16 +10,25 @@ Configuration:
 
 Files Generated:
 - out/inquiries_filtered/laundry/purchase_profile_pdp.csv (102B)
-- out/inquiries_filtered/laundry/detergent_type.csv (28B)
+- out/inquiries_filtered/laundry/detergent_type.csv (69B)
 - out/inquiries_filtered/laundry/demo_gender_age_brand.csv (28B)
-- out/inquiries_filtered/tobacco/purchase_profile_pdp.csv (102B)
+- out/inquiries_filtered/tobacco/purchase_profile_pdp.csv (35B)
 - out/inquiries_filtered/tobacco/frequent_terms.csv (596B)
+- out/inquiries_filtered/tobacco/copurchase_categories.csv (858B)
 - out/inquiries_filtered/tobacco/sales_daypart_weektype.csv (95B)
+- out/inquiries_filtered/tobacco/demo_gender_age_brand.csv (64B)
+- out/inquiries_filtered/tobacco/sales_by_day_daypart.csv (55B)
+- out/inquiries_filtered/tobacco/sticks_per_visit.csv (264B)
 - out/inquiries_filtered/overall/purchase_profile_pdp.csv (896B)
 - out/inquiries_filtered/overall/frequent_terms.csv (112B)
 - out/inquiries_filtered/overall/regional_distribution.csv (125B)
+- out/inquiries_filtered/overall/daypart_by_category.csv (2.7K)
+- out/inquiries_filtered/overall/store_profiles.csv (370B)
+- out/inquiries_filtered/overall/sales_by_week.csv (449B)
 
 Query Performance Notes:
 - Uses sargable predicates on txn_date for optimal index usage
 - WHERE clause applied consistently across all queries
 - Results filtered at database level for efficiency
+store_id,store_name,region,transactions,total_items,total_amount
+gender,age_band,brand,transactions,share_pct

@@ -448,6 +448,10 @@ if [[ $TOTAL_FILES -gt 10 ]]; then
     echo -e "${BLUE}  ... and $((TOTAL_FILES-10)) more files${NC}"
 fi
 
+# Gzip all CSVs (idempotent; overwrite)
+echo -e "${YELLOW}📦 Compressing CSV exports...${NC}"
+find out/inquiries_filtered -type f -name '*.csv' -print0 | xargs -0 -I{} gzip -f "{}"
+
 # Finalize exit status
 if [[ ${fail:-0} -ne 0 ]]; then
     echo -e "${RED}❌ Inquiry export completed with errors.${NC}"
