@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -347,3 +347,26 @@ daily-summary: check-connection ## Generate daily sales summary (fixed MODE() fu
 	@echo "$(YELLOW)📈 Generating daily sales summary...$(NC)"
 	@$(SQL) -Q "EXEC etl.sp_update_daily_sales_summary @target_date='$(shell date +%Y-%m-%d)';" || echo "$(YELLOW)⚠️ ops.data_quality_issues table may not exist yet$(NC)"
 	@echo "$(GREEN)✅ Daily summary generated$(NC)"
+
+# =============================================================================
+# LEGACY TO DBO V2.0 MIGRATION PIPELINE
+# =============================================================================
+
+migrate-build: check-connection ## Build staging views and migration procedures
+	@echo "$(YELLOW)🔧 Building migration infrastructure...$(NC)"
+	@$(SQL) -i sql/migrations/20250925_06_staging_view_builder.sql
+	@$(SQL) -i sql/migrations/20250925_07_migrate_existing_to_dbo.sql
+	@$(SQL) -i sql/migrations/20250925_08_migration_driver.sql
+	@echo "$(GREEN)✅ Migration infrastructure ready$(NC)"
+
+migrate-dryrun: migrate-build ## Dry run migration (counts + diagnostics only)
+	@echo "$(YELLOW)📊 Running migration dry run...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_build_staging_views;"
+	@$(SQL) -Q "EXEC etl.sp_migration_dryrun;"
+	@echo "$(GREEN)✅ Dry run completed$(NC)"
+
+migrate-exec: migrate-build ## Execute complete legacy → dbo v2.0 migration
+	@echo "$(YELLOW)🚀 Executing complete migration legacy → dbo v2.0...$(NC)"
+	@$(SQL) -Q "EXEC etl.sp_migration_execute;"
+	@$(MAKE) etl-load
+	@echo "$(GREEN)✅ Migration execution completed$(NC)"
