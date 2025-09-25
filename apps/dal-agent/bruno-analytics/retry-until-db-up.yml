@@ -1,0 +1,35 @@
+---
+# Bruno Analytics - Retry Until DB Up
+# Hands-off retry with exponential backoff until database comes online
+name: retry-until-db-up
+description: "Automated retry loop with backoff for database connectivity issues"
+environment: production
+timeout: 3600  # 1 hour max
+
+steps:
+  - name: "Retry Persona CI Until DB Up"
+    type: shell
+    run: |
+      set -euo pipefail
+      DB="SQL-TBWA-ProjectScout-Reporting-Prod"
+
+      echo "🔄 Starting automated retry until database is available..."
+      echo "📊 Target: 30% persona coverage gate"
+      echo "⏱️  Max runtime: 1 hour with exponential backoff"
+
+      # Use our existing retry script with proper environment
+      MIN_PCT=30 make persona-ci-retry DB="$DB" MIN_PCT="$MIN_PCT"
+
+      echo "✅ Database connectivity restored and persona CI completed"
+
+recovery:
+  strategy: "exponential_backoff"
+  max_attempts: 12
+  initial_delay: 30
+  max_delay: 300
+  backoff_multiplier: 2
+
+notifications:
+  success: "✅ Database connectivity restored - persona CI completed with {{coverage_pct}}% coverage"
+  failure: "🚨 Database still unavailable after 1 hour - manual intervention required"
+  retry: "⏳ Database unavailable - retrying in {{delay}}s (attempt {{attempt}}/{{max_attempts}})"

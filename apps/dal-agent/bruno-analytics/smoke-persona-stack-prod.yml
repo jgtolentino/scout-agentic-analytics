@@ -1,0 +1,43 @@
+---
+# Bruno Analytics - Smoke Test Persona Stack Production
+# Quick connectivity probe + persona CI (30% gate) + KPI snapshots
+name: smoke-persona-stack-prod
+description: "Validates persona conversation intelligence stack end-to-end"
+environment: production
+timeout: 300
+
+steps:
+  - name: "Smoke Test Persona Stack"
+    type: shell
+    run: |
+      set -euo pipefail
+      DB="SQL-TBWA-ProjectScout-Reporting-Prod"
+
+      echo "🔍 Testing connectivity + persona CI pipeline..."
+
+      # Quick connectivity probe (non-blocking)
+      echo "📡 Connection probe..."
+      make doctor-db DB="$DB" || echo "⚠️  Connection issues detected (continuing anyway)"
+
+      # Run persona CI with 30% coverage gate
+      echo "🎯 Running persona CI (30% coverage gate)..."
+      MIN_PCT=30 make persona-ci DB="$DB" MIN_PCT="$MIN_PCT"
+
+      # Snapshot current KPIs
+      echo "📊 Capturing persona coverage KPIs..."
+      ./scripts/sql.sh -d "$DB" -Q "SELECT * FROM gold.v_persona_coverage_summary;" | tee out/personas/coverage_snapshot.csv
+
+      echo "📋 Capturing persona examples..."
+      ./scripts/sql.sh -d "$DB" -Q "SELECT TOP 10 * FROM gold.v_persona_examples;" | tee out/personas/examples_snapshot.csv
+
+      echo "✅ Persona stack smoke test completed successfully"
+
+artifacts:
+  - path: "out/personas/coverage_snapshot.csv"
+    description: "Current persona coverage KPIs"
+  - path: "out/personas/examples_snapshot.csv"
+    description: "Sample persona assignments with confidence scores"
+
+notifications:
+  success: "✅ Persona stack validated - {{coverage_pct}}% coverage, {{avg_confidence}} avg confidence"
+  failure: "🚨 Persona stack validation failed - check connectivity and data quality"

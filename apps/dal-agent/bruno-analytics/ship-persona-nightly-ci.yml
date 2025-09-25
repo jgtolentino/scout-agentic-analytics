@@ -1,0 +1,171 @@
+---
+# Bruno Analytics - Ship Persona Nightly CI
+# Creates automated nightly persona coverage monitoring
+name: ship-persona-nightly-ci
+description: "Deploy nightly persona coverage workflow with diagnostics"
+environment: github
+timeout: 120
+
+steps:
+  - name: "Create Persona Nightly CI Workflow"
+    type: shell
+    run: |
+      set -euo pipefail
+
+      # Create feature branch for nightly CI
+      BRANCH="chore/persona-nightly-ci-$(date +%Y%m%d_%H%M%S)"
+      git checkout -b "$BRANCH"
+
+      echo "🌙 Creating nightly persona coverage workflow..."
+
+      # Ensure workflows directory exists
+      mkdir -p .github/workflows
+
+      # Create nightly workflow file
+      cat > .github/workflows/persona_nightly.yml <<'YAML'
+      name: Nightly Persona Coverage
+
+      on:
+        schedule:
+          - cron: "17 18 * * *"  # 6:17 PM UTC daily (avoid top of hour)
+        workflow_dispatch:
+
+      jobs:
+        persona-coverage:
+          runs-on: ubuntu-latest
+          timeout-minutes: 30
+
+          steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup environment
+              run: |
+                sudo apt-get update
+                sudo apt-get install -y mssql-tools unixodbc-dev
+                echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
+                source ~/.bashrc
+
+            - name: Run persona CI with coverage gate
+              env:
+                DB: ${{ secrets.SCOUT_PROD_DB_NAME }}
+                AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+                MIN_PCT: 30
+              run: |
+                cd apps/dal-agent
+                make persona-ci DB="$DB" MIN_PCT="$MIN_PCT"
+
+            - name: Capture coverage diagnostics
+              if: always()
+              env:
+                DB: ${{ secrets.SCOUT_PROD_DB_NAME }}
+                AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+              run: |
+                cd apps/dal-agent
+                mkdir -p out/personas/diagnostics
+
+                # Coverage summary
+                ./scripts/sql.sh -d "$DB" -Q "SELECT * FROM gold.v_persona_coverage_summary;" \
+                  > out/personas/diagnostics/coverage_summary.csv || true
+
+                # Distribution breakdown
+                ./scripts/sql.sh -d "$DB" -Q "SELECT * FROM gold.v_persona_distribution;" \
+                  > out/personas/diagnostics/persona_distribution.csv || true
+
+                # Top unassigned tokens
+                ./scripts/sql.sh -d "$DB" -Q "
+                  SELECT TOP 50
+                    token, COUNT(*) as frequency,
+                    STRING_AGG(canonical_tx_id, ',') as sample_tx_ids
+                  FROM (
+                    SELECT canonical_tx_id, value as token
+                    FROM dbo.v_transactions_flat_production t
+                    CROSS APPLY STRING_SPLIT(COALESCE(audio_transcript,''), ' ')
+                    WHERE canonical_tx_id NOT IN (
+                      SELECT canonical_tx_id FROM etl.persona_inference_cache
+                      WHERE inferred_role IS NOT NULL
+                    )
+                    AND LEN(TRIM(value)) > 2
+                  ) tokens
+                  GROUP BY token
+                  ORDER BY frequency DESC;" \
+                  > out/personas/diagnostics/unassigned_tokens.csv || true
+
+                # Confidence distribution
+                ./scripts/sql.sh -d "$DB" -Q "
+                  SELECT
+                    CASE
+                      WHEN confidence_score >= 0.90 THEN 'High (≥0.90)'
+                      WHEN confidence_score >= 0.80 THEN 'Medium (0.80-0.89)'
+                      WHEN confidence_score >= 0.70 THEN 'Low (0.70-0.79)'
+                      ELSE 'Very Low (<0.70)'
+                    END as confidence_tier,
+                    COUNT(*) as count,
+                    AVG(confidence_score) as avg_confidence
+                  FROM etl.persona_inference_cache
+                  WHERE inferred_role IS NOT NULL
+                  GROUP BY
+                    CASE
+                      WHEN confidence_score >= 0.90 THEN 'High (≥0.90)'
+                      WHEN confidence_score >= 0.80 THEN 'Medium (0.80-0.89)'
+                      WHEN confidence_score >= 0.70 THEN 'Low (0.70-0.79)'
+                      ELSE 'Very Low (<0.70)'
+                    END
+                  ORDER BY avg_confidence DESC;" \
+                  > out/personas/diagnostics/confidence_distribution.csv || true
+
+                echo "📊 Diagnostic files created in out/personas/diagnostics/"
+                ls -la out/personas/diagnostics/
+
+            - name: Upload persona diagnostics
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: persona-diagnostics-${{ github.run_number }}
+                path: apps/dal-agent/out/personas/diagnostics/*.csv
+                if-no-files-found: warn
+                retention-days: 30
+
+            - name: Notify on significant coverage changes
+              if: success()
+              run: |
+                echo "🎯 Nightly persona coverage check completed"
+                echo "📊 Artifacts uploaded for trend analysis"
+                # Future: Add Slack/email notifications for coverage drops >5%
+      YAML
+
+      # Stage and commit the workflow
+      git add .github/workflows/persona_nightly.yml
+      git commit -m "chore(ci): nightly persona coverage monitoring + diagnostics
+
+      ✅ Automated nightly workflow:
+      - 30% coverage gate validation
+      - Comprehensive diagnostics capture
+      - Unassigned token analysis for pattern discovery
+      - Confidence distribution monitoring
+      - 30-day artifact retention for trend analysis
+
+      📊 Diagnostic outputs:
+      - coverage_summary.csv - Current KPIs
+      - persona_distribution.csv - Role breakdown
+      - unassigned_tokens.csv - Top 50 unmapped tokens
+      - confidence_distribution.csv - Quality tiers
+
+      🕕 Schedule: 18:17 UTC daily (off-peak hours)
+      🔄 Manual trigger: workflow_dispatch enabled"
+
+      # Push the branch
+      git push -u origin "$BRANCH"
+
+      echo "✅ Persona nightly CI workflow shipped on branch: $BRANCH"
+      echo "🔍 Review and merge to enable nightly monitoring"
+
+validation:
+  - check: "git branch --contains HEAD | grep persona-nightly-ci"
+    description: "Verify branch creation"
+  - check: "test -f .github/workflows/persona_nightly.yml"
+    description: "Verify workflow file exists"
+
+notifications:
+  success: "✅ Nightly persona CI workflow ready for review - enables automated coverage monitoring"
+  failure: "🚨 Failed to create nightly workflow - check git permissions and workflow syntax"
