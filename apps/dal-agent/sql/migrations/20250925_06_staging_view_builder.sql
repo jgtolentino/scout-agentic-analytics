@@ -43,7 +43,14 @@ BEGIN
 
   SELECT TOP 1 @tx_src     = QUOTENAME(s.name)+'.'+QUOTENAME(t.name)
   FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
-  WHERE t.name IN ('transactions','Transactions','fact_transactions','sales_transactions','scout_transactions','transaction','tx','txns') ORDER BY t.name;
+  WHERE t.name IN ('transactions','Transactions','fact_transactions','sales_transactions','scout_transactions','transaction','tx','txns','bronze_transactions','PayloadTransactions','scout_dashboard_transactions')
+  ORDER BY
+    CASE
+      WHEN t.name = 'scout_dashboard_transactions' THEN 1
+      WHEN t.name = 'transactions' THEN 2
+      WHEN t.name = 'bronze_transactions' THEN 3
+      ELSE 4
+    END;
 
   SELECT TOP 1 @items_src  = QUOTENAME(s.name)+'.'+QUOTENAME(t.name)
   FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
@@ -158,6 +165,8 @@ BEGIN
       ' + CASE WHEN COL_LENGTH(@tx_src,'Canonical_Tx_Id') IS NOT NULL THEN 'Canonical_Tx_Id'
                WHEN COL_LENGTH(@tx_src,'canonical_tx_id') IS NOT NULL THEN 'canonical_tx_id'
                WHEN COL_LENGTH(@tx_src,'sessionId') IS NOT NULL THEN 'sessionId'
+               WHEN COL_LENGTH(@tx_src,'id') IS NOT NULL THEN 'id'
+               WHEN COL_LENGTH(@tx_src,'source_canonical_tx_id') IS NOT NULL THEN 'source_canonical_tx_id'
                ELSE 'NULL' END + N' AS canonical_tx_id,
       ' + CASE WHEN COL_LENGTH(@tx_src,'TransactionTS') IS NOT NULL THEN 'TransactionTS'
                WHEN COL_LENGTH(@tx_src,'txn_ts') IS NOT NULL THEN 'txn_ts'
@@ -170,9 +179,11 @@ BEGIN
                ELSE 'NULL' END + N' AS store_id,
       ' + CASE WHEN COL_LENGTH(@tx_src,'TotalAmount') IS NOT NULL THEN 'TotalAmount'
                WHEN COL_LENGTH(@tx_src,'total_amount') IS NOT NULL THEN 'total_amount'
+               WHEN COL_LENGTH(@tx_src,'peso_value') IS NOT NULL THEN 'peso_value'
                ELSE 'NULL' END + N' AS total_amount,
       ' + CASE WHEN COL_LENGTH(@tx_src,'TotalItems') IS NOT NULL THEN 'TotalItems'
                WHEN COL_LENGTH(@tx_src,'total_items') IS NOT NULL THEN 'total_items'
+               WHEN COL_LENGTH(@tx_src,'basket_size') IS NOT NULL THEN 'basket_size'
                ELSE 'NULL' END + N' AS total_items
     FROM ' + @tx_src + N' WITH (NOLOCK);';
     EXEC sp_executesql @sql;
