@@ -43,7 +43,7 @@ BEGIN
 
   SELECT TOP 1 @tx_src     = QUOTENAME(s.name)+'.'+QUOTENAME(t.name)
   FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
-  WHERE t.name IN ('transactions','Transactions','fact_transactions','sales_transactions','scout_transactions') ORDER BY t.name;
+  WHERE t.name IN ('transactions','Transactions','fact_transactions','sales_transactions','scout_transactions','transaction','tx','txns') ORDER BY t.name;
 
   SELECT TOP 1 @items_src  = QUOTENAME(s.name)+'.'+QUOTENAME(t.name)
   FROM sys.tables t JOIN sys.schemas s ON s.schema_id=t.schema_id
@@ -162,6 +162,8 @@ BEGIN
       ' + CASE WHEN COL_LENGTH(@tx_src,'TransactionTS') IS NOT NULL THEN 'TransactionTS'
                WHEN COL_LENGTH(@tx_src,'txn_ts') IS NOT NULL THEN 'txn_ts'
                WHEN COL_LENGTH(@tx_src,'transaction_datetime') IS NOT NULL THEN 'transaction_datetime'
+               WHEN COL_LENGTH(@tx_src,'timestamp') IS NOT NULL THEN 'timestamp'
+               WHEN COL_LENGTH(@tx_src,'created_at') IS NOT NULL THEN 'created_at'
                ELSE 'NULL' END + N' AS txn_ts,
       ' + CASE WHEN COL_LENGTH(@tx_src,'StoreID') IS NOT NULL THEN 'CAST(StoreID AS int)'
                WHEN COL_LENGTH(@tx_src,'store_id') IS NOT NULL THEN 'CAST(store_id AS int)'

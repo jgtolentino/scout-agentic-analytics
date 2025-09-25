@@ -28,20 +28,35 @@ BEGIN
 END
 GO
 
-/* BRANDS */
+/* BRANDS - AUTO UPSERT FROM PRODUCTS */
 CREATE OR ALTER PROCEDURE etl.sp_migrate_brands
 AS
 BEGIN
   SET NOCOUNT ON;
-  IF OBJECT_ID('analytics.v_stg_brands','V') IS NULL RETURN;
 
-  INSERT INTO dbo.Brands (brand_name, parent_company, category)
-  SELECT DISTINCT NULLIF(LTRIM(RTRIM(brand_name)),''),
-                  NULLIF(LTRIM(RTRIM(parent_company)),''),
-                  NULLIF(LTRIM(RTRIM(category)),'')
-  FROM analytics.v_stg_brands b
-  WHERE NULLIF(LTRIM(RTRIM(brand_name)),'') IS NOT NULL
-    AND NOT EXISTS (SELECT 1 FROM dbo.Brands d WHERE d.brand_name = b.brand_name);
+  -- First, upsert from existing brand staging if available
+  IF OBJECT_ID('analytics.v_stg_brands','V') IS NOT NULL
+  BEGIN
+    INSERT INTO dbo.Brands (brand_name, parent_company, category)
+    SELECT DISTINCT NULLIF(LTRIM(RTRIM(brand_name)),''),
+                    NULLIF(LTRIM(RTRIM(parent_company)),''),
+                    NULLIF(LTRIM(RTRIM(category)),'')
+    FROM analytics.v_stg_brands b
+    WHERE NULLIF(LTRIM(RTRIM(brand_name)),'') IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM dbo.Brands d WHERE d.brand_name = b.brand_name);
+  END
+
+  -- Auto-upsert brands from products if no brand staging exists
+  IF OBJECT_ID('analytics.v_stg_products','V') IS NOT NULL
+  BEGIN
+    INSERT INTO dbo.Brands (brand_name, parent_company, category)
+    SELECT DISTINCT NULLIF(LTRIM(RTRIM(brand_name)),''),
+                    NULL, -- no parent company from products
+                    NULLIF(LTRIM(RTRIM(category)),'')
+    FROM analytics.v_stg_products p
+    WHERE NULLIF(LTRIM(RTRIM(brand_name)),'') IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM dbo.Brands d WHERE d.brand_name = p.brand_name);
+  END
 END
 GO
 
