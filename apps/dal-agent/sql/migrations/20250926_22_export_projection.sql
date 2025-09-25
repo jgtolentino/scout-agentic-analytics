@@ -5,35 +5,33 @@ GO
 CREATE OR ALTER VIEW gold.v_export_projection AS
 SELECT
   /* IDs & timing */
-  f.Transaction_ID                                   AS transaction_id,
-  CAST(f.Txn_Timestamp AS datetime2(3))              AS transaction_date,
+  f.transaction_id                                   AS transaction_id,
+  f.transaction_date                                 AS transaction_date,
 
   /* Store / geo */
-  f.Store_ID                                         AS store_id,
-  f.Store_Name                                       AS store_name,
-  LOWER(COALESCE(f.Location_Region, f.Region))       AS region,
+  f.store_id                                         AS store_id,
+  f.store_name                                       AS store_name,
+  '(unknown)'                                        AS region,  -- placeholder for future region field
 
   /* Merch / taxonomy */
-  f.Category                                         AS category,
-  f.Brand                                            AS brand,
-  f.Product_Name                                     AS product_name,
+  f.category                                         AS category,
+  f.brand                                            AS brand,
+  f.product_name                                     AS product_name,
 
   /* Basket & payment */
-  COALESCE(f.Basket_Size, f.total_items)             AS basket_size,
-  COALESCE(f.Transaction_Value, f.total_amount)      AS transaction_value,
-  COALESCE(f.PaymentMethod, f.payment_method)        AS payment_method,
+  f.total_items                                      AS basket_size,
+  f.total_amount                                     AS transaction_value,
+  f.payment_method                                   AS payment_method,
 
   /* Time features */
-  f.Daypart                                          AS daypart,
-  f.WeekType                                         AS week_type,
+  f.daypart                                          AS daypart,
+  f.weekday_weekend                                  AS week_type,
 
   /* Conversation */
-  COALESCE(f.transcript_clean, f.Audio_Transcript)   AS audio_transcript,
+  f.audio_transcript                                 AS audio_transcript,
 
-  /* Demographics (fallback chain) */
-  COALESCE(f.Demographics,
-           f.Demographics_Age_Gender_Role,
-           f.Demographics_Age_Gender)                AS demographics,
+  /* Demographics (placeholder for future field) */
+  '(unknown)'                                        AS demographics,
 
   /* Pass-through keys often used in joins */
   f.canonical_tx_id                                  AS canonical_tx_id
