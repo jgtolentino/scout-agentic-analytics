@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -153,6 +153,13 @@ brand-map-load: ## load CSV → staging → upsert BCM via 012 loader
 brand-map-report: ## quick coverage check
 	@./scripts/sql.sh -Q "SET NOCOUNT ON; SELECT mapped = COUNT(*) FROM dbo.BrandCategoryMapping WHERE CategoryCode IS NOT NULL;"
 	@./scripts/sql.sh -Q "SET NOCOUNT ON; SELECT unmapped = COUNT(*) FROM dbo.BrandCategoryMapping WHERE CategoryCode IS NULL;"
+
+brand-map-template: ## generate data/brand-map-live.csv (observed brands, blanks for unmapped)
+	@./scripts/gen_brand_map_live.sh
+
+assert-113: ## fail if canonical brand count != 113
+	@./scripts/sql.sh -Q "SET NOCOUNT ON; SELECT cnt = COUNT(DISTINCT BrandNameNorm) FROM dbo.BrandCategoryMapping;" -s "," -W -h -1 | awk -F',' '{print $$1}' | { read n; test "$$n" -eq 113 || { echo "❌ Canonical brand count = $$n (expected 113)"; exit 2; }; }
+	@echo "✅ Canonical brands = 113"
 
 doctor: check-connection ## comprehensive health check
 	@echo "$(YELLOW)🏥 Running comprehensive health check...$(NC)"
