@@ -12,8 +12,8 @@ CONN_STR="$("$ROOT/scripts/conn_default.sh")"
 # Parse connection string into individual parameters
 if [[ "$CONN_STR" == *" -d "* ]]; then
   # Format: server -d database -U user -P password
-  eval "sqlcmd -S $CONN_STR \"\$@\""
+  eval "sqlcmd -W -w 32767 -s"," -h -1 -S $CONN_STR \"\$@\""
 else
   # Fallback to direct server parameter
-  exec sqlcmd -S "$CONN_STR" "$@"
+  exec sqlcmd -W -w 32767 -s"," -h -1 -S "$CONN_STR" "$@"
 fi
