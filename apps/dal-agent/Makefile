@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock persona-preflight
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock persona-preflight mart-validate inquiries-export inquiry-export
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -14,6 +14,8 @@ NC := \033[0m # No Color
 
 # Security: Connection credentials fetched from keychain
 CONN_STR := $(shell security find-generic-password -s "SQL-TBWA-ProjectScout-Reporting-Prod" -w 2>/dev/null || echo "")
+# Validation configuration
+EXPECTED_ROWS ?= 12192
 
 help: ## Show this help message
 	@echo "$(GREEN)Scout Analytics Infrastructure$(NC)"
@@ -612,3 +614,25 @@ persona-preflight: ## Validate persona schema objects exist before CI pipeline
 		exit 2; \
 	fi
 	@echo "$(GREEN)✅ Preflight checks passed - all schema objects present$(NC)"
+
+mart-validate: ## Validate mart row counts, types, and crosstab parity (writes out/validation/mart_types_counts.txt)
+	@echo "$(YELLOW)🔎 Validating mart (rows, types, crosstab parity)...$(NC)"
+	@mkdir -p out/validation
+	@EXPECTED_ROWS=$(EXPECTED_ROWS) ./scripts/sql.sh -d "$(DB)" -i sql/validation/validate_mart_types_and_counts.sql -o out/validation/mart_types_counts.txt
+	@echo "$(GREEN)✅ Validation complete$(NC)"
+	@echo "$(BLUE)📄 Report: out/validation/mart_types_counts.txt$(NC)"
+
+inquiries-export: ## Export Overall, Tobacco, Laundry inquiry CSVs (parameterized)
+	@echo "$(YELLOW)🔍 Exporting parameterized inquiry analytics...$(NC)"
+	@DB="$(DB)" DATE_FROM="$(DATE_FROM)" DATE_TO="$(DATE_TO)" REGION="$(REGION)" STORE_ID="$(STORE_ID)" \
+	  bash scripts/export_inquiries_parameterized.sh ; \
+	rc=$$?; \
+	if [ $$rc -ne 0 ]; then \
+	  echo "$(RED)❌ Export failed (rc=$$rc)$(NC)"; exit $$rc; \
+	else \
+	  echo "$(GREEN)✅ Inquiry analytics export completed$(NC)"; \
+	  echo "$(BLUE)📁 Results under: out/inquiries_filtered/$(NC)"; \
+	fi
+
+inquiry-export: ## Alias for inquiries-export
+	@$(MAKE) inquiries-export DB="$(DB)" DATE_FROM="$(DATE_FROM)" DATE_TO="$(DATE_TO)" REGION="$(REGION)" STORE_ID="$(STORE_ID)"
