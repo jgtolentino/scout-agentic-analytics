@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Check if we're in mock mode
+if [[ "${MOCK:-}" == "1" ]]; then
+    exec "$(dirname "${BASH_SOURCE[0]}")/sql_mock_router.sh" "$@"
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 CONN_STR="$("$ROOT/scripts/conn_default.sh")"
 

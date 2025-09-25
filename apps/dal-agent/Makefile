@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -575,3 +575,29 @@ persona-ci: persona-parse persona-infer persona-validate ## Complete persona CI 
 	@echo "$(YELLOW)🚨 Running persona coverage CI gate...$(NC)"
 	@MIN_PCT=${MIN_PCT} MIN_CONFIDENCE=${MIN_CONFIDENCE} MIN_PERSONAS=${MIN_PERSONAS} bash scripts/persona_ci_gate.sh
 	@echo "$(GREEN)✅ Persona CI pipeline completed successfully$(NC)"
+
+# ========================================================================
+# Database Operability & Reliability
+# ========================================================================
+
+doctor-db: ## Diagnose database connectivity issues with actionable solutions
+	@echo "$(YELLOW)🩺 Running database connectivity diagnostics...$(NC)"
+	@DB="${DB}" ./scripts/conn_doctor.sh
+
+persona-ci-retry: ## Retry persona-ci with exponential backoff until database recovers
+	@echo "$(YELLOW)🔄 Starting persona-ci with intelligent retry logic...$(NC)"
+	@echo "$(BLUE)   This will retry until database is available (max ~1 hour)$(NC)"
+	@DB="${DB}" MIN_PCT="${MIN_PCT}" MIN_CONFIDENCE="${MIN_CONFIDENCE}" MIN_PERSONAS="${MIN_PERSONAS}" ./scripts/retry_persona_ci.sh
+
+persona-mock: ## Local dry-run: test persona pipeline without database (MOCK=1)
+	@echo "$(YELLOW)🔬 Running persona pipeline in mock mode (local testing)...$(NC)"
+	@mkdir -p out/personas
+	@echo "$(BLUE)   Testing coverage summary...$(NC)"
+	@MOCK=1 ./scripts/sql.sh -Q "SELECT * FROM gold.v_persona_coverage_summary;" -o out/personas/mock_coverage.csv
+	@echo "$(BLUE)   Testing persona examples...$(NC)"
+	@MOCK=1 ./scripts/sql.sh -Q "SELECT * FROM gold.v_persona_examples;" -o out/personas/mock_examples.csv
+	@echo "$(BLUE)   Testing role distribution...$(NC)"
+	@MOCK=1 ./scripts/sql.sh -Q "SELECT * FROM gold.v_persona_role_distribution;" -o out/personas/mock_distribution.csv
+	@echo "$(GREEN)✅ Mock persona pipeline completed successfully$(NC)"
+	@echo "$(BLUE)📁 Mock files generated:$(NC)"
+	@ls -lah out/personas/mock_*.csv | awk '{printf "  📄 %s (%s)\n", $$9, $$5}'

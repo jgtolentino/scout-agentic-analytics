@@ -1,0 +1,110 @@
+name: Persona CI Retry (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      min_coverage:
+        description: 'Minimum coverage percentage threshold'
+        required: false
+        default: '30'
+        type: string
+      min_confidence:
+        description: 'Minimum average confidence threshold'
+        required: false
+        default: '0.70'
+        type: string
+      min_personas:
+        description: 'Minimum unique personas required'
+        required: false
+        default: '5'
+        type: string
+      max_tries:
+        description: 'Maximum retry attempts'
+        required: false
+        default: '12'
+        type: string
+
+jobs:
+  persona-retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90  # Allow up to 1.5 hours for retries
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y bc curl
+          python -m pip install --upgrade pip
+
+      - name: Install SQL Server tools
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
+          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bash_profile
+          source ~/.bash_profile
+
+      - name: Setup database connection
+        env:
+          AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+          DB_NAME: ${{ secrets.SCOUT_PROD_DB_NAME || 'SQL-TBWA-ProjectScout-Reporting-Prod' }}
+        run: |
+          # Store connection string securely for scripts
+          echo "$AZURE_SQL_CONN_STR" > /tmp/.conn_str
+          chmod 600 /tmp/.conn_str
+
+      - name: Run persona CI with retry logic
+        env:
+          DB: ${{ secrets.SCOUT_PROD_DB_NAME || 'SQL-TBWA-ProjectScout-Reporting-Prod' }}
+          MIN_PCT: ${{ github.event.inputs.min_coverage || '30' }}
+          MIN_CONFIDENCE: ${{ github.event.inputs.min_confidence || '0.70' }}
+          MIN_PERSONAS: ${{ github.event.inputs.min_personas || '5' }}
+          MAX_TRIES: ${{ github.event.inputs.max_tries || '12' }}
+        working-directory: apps/dal-agent
+        run: |
+          echo "🚀 Starting persona CI retry with parameters:"
+          echo "  Database: $DB"
+          echo "  Min Coverage: ${MIN_PCT}%"
+          echo "  Min Confidence: $MIN_CONFIDENCE"
+          echo "  Min Personas: $MIN_PERSONAS"
+          echo "  Max Attempts: $MAX_TRIES"
+          echo ""
+
+          # Run with retry logic
+          ./scripts/retry_persona_ci.sh
+
+      - name: Upload results on success
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persona-ci-results
+          path: |
+            apps/dal-agent/out/personas/*.csv
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persona-ci-diagnostics
+          path: |
+            apps/dal-agent/out/personas/*.csv
+
+      - name: Cleanup sensitive data
+        if: always()
+        run: |
+          rm -f /tmp/.conn_str
+
+      - name: Summary
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "success" ]]; then
+            echo "✅ Persona CI completed successfully!"
+            echo "📊 Check artifacts for detailed results"
+          else
+            echo "❌ Persona CI failed after retries"
+            echo "🔧 Check artifacts for diagnostic information"
+            echo "💡 Consider running 'make doctor-db' for detailed troubleshooting"
+          fi
