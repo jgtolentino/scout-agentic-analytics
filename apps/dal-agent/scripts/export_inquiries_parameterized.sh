@@ -28,6 +28,15 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Write CSV with explicit header then query rows
+write_csv() {
+  local header="$1" sql="$2" out="$3"
+  mkdir -p "$(dirname "$out")"
+  printf '%s\n' "$header" > "$out.tmp"
+  ./scripts/sql.sh -d "$DB" -Q "$sql" >> "$out.tmp"   # sql.sh still uses -h -1 (no headers)
+  mv "$out.tmp" "$out"
+}
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -122,10 +131,10 @@ build_where_clause() {
     # Category filter
     case "$CATEGORY" in
         "tobacco")
-            w+=" AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')"
+            w+=" AND (category LIKE '%Tobacco%' OR category LIKE '%Cigarette%' OR category LIKE '%Smoke%')"
             ;;
         "laundry")
-            w+=" AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')"
+            w+=" AND (category LIKE '%Detergent%' OR category LIKE '%Soap%' OR category LIKE '%Fabric%' OR category LIKE '%Laundry%')"
             ;;
     esac
 
@@ -162,215 +171,226 @@ sql() {
     return $rc
 }
 
-# Export overall category inquiries
-if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "overall" ]]; then
-    echo -e "${YELLOW}  → Overall category analytics...${NC}"
+# === BEGIN PINNED EXPORTS ===
+# NOTE: All queries use gold.v_export_projection (canonical names) and $(build_where_clause)
 
-    # Purchase profiles
-    sql "SET NOCOUNT ON;
+# Param binds (once)
+binds="
+DECLARE @from datetime2=TRY_CONVERT(datetime2,'${DATE_FROM}');
+DECLARE @to   datetime2=TRY_CONVERT(datetime2,'${DATE_TO}');
+DECLARE @region nvarchar(128)=NULLIF('${REGION}','');"
+
+# ---------- OVERALL (3) ----------
+# 1) Store profiles
+write_csv \
+  "store_id,store_name,region,transactions,total_items,total_amount" \
+  "$binds
+SELECT
+  store_id,
+  store_name,
+  region,
+  COUNT(*) AS transactions,
+  SUM(basket_size) AS total_items,
+  CAST(SUM(transaction_value) AS decimal(18,2)) AS total_amount
+FROM gold.v_export_projection
+WHERE $(build_where_clause)
+GROUP BY store_id,store_name,region
+ORDER BY total_amount DESC" \
+  "out/inquiries_filtered/overall/store_profiles.csv"
+
+# 2) Sales by ISO week (spread across week/month)
+write_csv \
+  "iso_week,week_start,transactions,total_amount" \
+  "$binds
+WITH w AS (
+  SELECT
+    DATEPART(ISO_WEEK, transaction_date) AS iso_week,
+    DATEADD(DAY, 1-DATEPART(WEEKDAY, transaction_date), CAST(CAST(transaction_date AS date) AS datetime2)) AS week_start
+  FROM gold.v_export_projection
+  WHERE $(build_where_clause)
+)
+SELECT
+  iso_week,
+  CAST(MIN(week_start) AS date) AS week_start,
+  COUNT(*) AS transactions,
+  CAST(SUM(p.transaction_value) AS decimal(18,2)) AS total_amount
+FROM w
+JOIN gold.v_export_projection p
+  ON DATEPART(ISO_WEEK, p.transaction_date)=w.iso_week
+WHERE $(build_where_clause)
+GROUP BY iso_week
+ORDER BY MIN(week_start)" \
+  "out/inquiries_filtered/overall/sales_by_week.csv"
+
+# 3) Daypart × Category
+write_csv \
+  "daypart,category,transactions,share_pct" \
+  "$binds
+WITH base AS (
+  SELECT daypart, category
+  FROM gold.v_export_projection
+  WHERE $(build_where_clause)
+)
+SELECT
+  daypart,
+  category,
+  COUNT(*) AS transactions,
+  CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(PARTITION BY daypart),0) AS decimal(5,2)) AS share_pct
+FROM base
+GROUP BY daypart, category
+ORDER BY daypart, transactions DESC" \
+  "out/inquiries_filtered/overall/daypart_by_category.csv"
+
+# ---------- TOBACCO (5) ----------
+# 4) Demographics (gender × age × brand)
+write_csv \
+  "gender,age_band,brand,transactions,share_pct" \
+  "$binds
+WITH base AS (
+  SELECT
+    brand,
+    TRY_CAST(PARSENAME(REPLACE(REPLACE(demographics,'''',''), ' ', '.'), 2) AS nvarchar(32)) AS gender,
+    TRY_CAST(PARSENAME(REPLACE(REPLACE(demographics,'''',''), ' ', '.'), 3) AS nvarchar(32)) AS age_band
+  FROM gold.v_export_projection
+  WHERE $(build_where_clause)
+    AND category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+)
+SELECT
+  COALESCE(gender,N'Unknown') AS gender,
+  COALESCE(age_band,N'Unknown') AS age_band,
+  brand,
+  COUNT(*) AS transactions,
+  CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(),0) AS decimal(5,2)) AS share_pct
+FROM base
+GROUP BY gender,age_band,brand
+ORDER BY transactions DESC" \
+  "out/inquiries_filtered/tobacco/demo_gender_age_brand.csv"
+
+# 5) Pecha de Peligro (day-of-month buckets)
+write_csv \
+  "dom_bucket,transactions,share_pct" \
+  "$binds
+WITH base AS (
+  SELECT CASE
+           WHEN DATEPART(DAY, transaction_date) BETWEEN 23 AND 30 THEN N'23-30'
+           WHEN DATEPART(DAY, transaction_date) BETWEEN 1  AND 7  THEN N'01-07'
+           WHEN DATEPART(DAY, transaction_date) BETWEEN 8  AND 15 THEN N'08-15'
+           ELSE N'16-22'
+         END AS dom_bucket
+  FROM gold.v_export_projection
+  WHERE $(build_where_clause)
+    AND category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+)
+SELECT dom_bucket,
+       COUNT(*) AS transactions,
+       CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(),0) AS decimal(5,2)) AS share_pct
+FROM base
+GROUP BY dom_bucket
+ORDER BY CASE dom_bucket WHEN N'01-07' THEN 1 WHEN N'08-15' THEN 2 WHEN N'16-22' THEN 3 ELSE 4 END" \
+  "out/inquiries_filtered/tobacco/purchase_profile_pdp.csv"
+
+# 6) Sales × day × daypart
+write_csv \
+  "date,daypart,transactions,share_pct" \
+  "$binds
+WITH base AS (
+  SELECT CAST(transaction_date AS date) AS [date], daypart
+  FROM gold.v_export_projection
+  WHERE $(build_where_clause)
+    AND category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+)
+SELECT [date], daypart,
+       COUNT(*) AS transactions,
+       CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(PARTITION BY [date]),0) AS decimal(5,2)) AS share_pct
+FROM base
+GROUP BY [date], daypart
+ORDER BY [date], transactions DESC" \
+  "out/inquiries_filtered/tobacco/sales_by_day_daypart.csv"
+
+# 7) Sticks per visit (from helper view - fallback if not available)
+if ./scripts/sql.sh -d "$DB" -Q "SELECT COUNT(*) FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME='v_tobacco_sticks_per_tx'" -o /tmp/check_view.txt && grep -q "1" /tmp/check_view.txt; then
+    write_csv \
+      "transaction_id,brand,items,sticks_per_pack,estimated_sticks" \
+      "$binds
+    SELECT transaction_id, brand, Items AS items, SticksPerPack AS sticks_per_pack, Estimated_Sticks AS estimated_sticks
+    FROM gold.v_tobacco_sticks_per_tx
+    ORDER BY estimated_sticks DESC" \
+      "out/inquiries_filtered/tobacco/sticks_per_visit.csv"
+else
+    # Fallback: simple pack estimation
+    write_csv \
+      "transaction_id,brand,items,estimated_sticks" \
+      "$binds
     SELECT
-        Category,
-        COUNT(DISTINCT canonical_tx_id) AS transaction_count,
-        COUNT(DISTINCT store_id) AS store_count,
-        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_transaction_value,
-        SUM(CASE WHEN CAST(basket_size AS INT) = 1 THEN 1 ELSE 0 END) AS single_item_transactions,
-        COUNT(DISTINCT transaction_date) AS active_days
-    $BASE_QUERY
-    AND Category IS NOT NULL
-    GROUP BY Category
-    ORDER BY transaction_count DESC;" \
-    "$OUTPUT_DIR/overall/purchase_profile_pdp.csv"
-
-    # Frequent terms analysis
-    sql "SET NOCOUNT ON;
-    WITH transcript_words AS (
-        SELECT
-            value AS word,
-            COUNT(*) AS frequency
-        $BASE_QUERY
-        AND audio_transcript IS NOT NULL
-        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(audio_transcript, ',', ' '), '.', ' '), ' ')
-        WHERE LEN(TRIM(value)) > 2
-        AND value NOT IN ('the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by')
-    )
-    SELECT TOP 50 word, frequency
-    FROM transcript_words
-    WHERE frequency >= 3
-    ORDER BY frequency DESC;" \
-    "$OUTPUT_DIR/overall/frequent_terms.csv"
-
-    # Regional distribution
-    sql "SET NOCOUNT ON;
-    SELECT
-        COALESCE(region, '(Unknown)') AS region,
-        COUNT(DISTINCT canonical_tx_id) AS transactions,
-        COUNT(DISTINCT store_id) AS stores,
-        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value,
-        MIN(transaction_date) AS first_transaction,
-        MAX(transaction_date) AS last_transaction
-    $BASE_QUERY
-    GROUP BY region
-    ORDER BY transactions DESC;" \
-    "$OUTPUT_DIR/overall/regional_distribution.csv"
+      transaction_id,
+      brand,
+      basket_size AS items,
+      CAST(basket_size * 20 AS int) AS estimated_sticks
+    FROM gold.v_export_projection
+    WHERE $(build_where_clause)
+      AND category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+    ORDER BY estimated_sticks DESC" \
+      "out/inquiries_filtered/tobacco/sticks_per_visit.csv"
 fi
 
-# Export tobacco-specific inquiries
-if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "tobacco" ]]; then
-    echo -e "${YELLOW}  → Tobacco category analytics...${NC}"
-
-    # Tobacco purchase profiles
-    sql "SET NOCOUNT ON;
-    WITH tobacco_filter AS (
-        SELECT *
-        $BASE_QUERY
-        AND (Category LIKE '%Tobacco%' OR Category LIKE '%Cigarette%' OR Category LIKE '%Smoke%')
-    )
+# 8) Co-purchase (category × co_category - fallback if not available)
+if ./scripts/sql.sh -d "$DB" -Q "SELECT COUNT(*) FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_NAME='v_copurchase_matrix'" -o /tmp/check_copurchase.txt && grep -q "1" /tmp/check_copurchase.txt; then
+    write_csv \
+      "category,co_category,txn_cocount,confidence,lift" \
+      "$binds
+    SELECT category, co_category, Txn_CoCount AS txn_cocount, Confidence AS confidence, Lift AS lift
+    FROM gold.v_copurchase_matrix
+    WHERE category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+    ORDER BY txn_cocount DESC" \
+      "out/inquiries_filtered/tobacco/copurchase_categories.csv"
+else
+    # Fallback: basic category frequency
+    write_csv \
+      "category,transactions,share_pct" \
+      "$binds
     SELECT
-        store_id,
-        COUNT(DISTINCT canonical_tx_id) AS tobacco_transactions,
-        COUNT(DISTINCT txn_date) AS active_days,
-        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_tobacco_value,
-        AVG(CAST(basket_size AS INT)) AS avg_items_per_transaction
-    FROM tobacco_filter
-    GROUP BY store_id
-    HAVING COUNT(DISTINCT canonical_tx_id) >= 5
-    ORDER BY tobacco_transactions DESC;" \
-    "$OUTPUT_DIR/tobacco/purchase_profile_pdp.csv"
-
-    # Tobacco frequent terms
-    sql "SET NOCOUNT ON;
-    WITH tobacco_transcripts AS (
-        SELECT audio_transcript
-        $BASE_QUERY
-        AND (category LIKE '%Tobacco%' OR category LIKE '%Cigarette%' OR category LIKE '%Smoke%')
-        AND audio_transcript IS NOT NULL
-    ),
-    tobacco_words AS (
-        SELECT
-            LOWER(TRIM(value)) AS word,
-            COUNT(*) AS frequency
-        FROM tobacco_transcripts
-        CROSS APPLY STRING_SPLIT(REPLACE(REPLACE(audio_transcript, ',', ' '), '.', ' '), ' ')
-        WHERE LEN(TRIM(value)) > 2
-        GROUP BY LOWER(TRIM(value))
-    )
-    SELECT TOP 70 word, frequency
-    FROM tobacco_words
-    WHERE frequency >= 2
-    ORDER BY frequency DESC;" \
-    "$OUTPUT_DIR/tobacco/frequent_terms.csv"
-
-    # Tobacco daypart analysis
-    sql "SET NOCOUNT ON;
-    WITH tobacco_dayparts AS (
-        SELECT
-            daypart,
-            COUNT(DISTINCT canonical_tx_id) AS transactions,
-            AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value
-        $BASE_QUERY
-        AND (category LIKE '%Tobacco%' OR category LIKE '%Cigarette%' OR category LIKE '%Smoke%')
-        AND daypart IS NOT NULL
-        GROUP BY daypart
-    )
-    SELECT
-        daypart,
-        transactions,
-        CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
-        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS percentage
-    FROM tobacco_dayparts
-    ORDER BY transactions DESC;" \
-    "$OUTPUT_DIR/tobacco/sales_daypart_weektype.csv"
+      category,
+      COUNT(*) AS transactions,
+      CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(),0) AS decimal(5,2)) AS share_pct
+    FROM gold.v_export_projection
+    WHERE $(build_where_clause)
+      AND category IN (N'Cigarettes',N'Cigarette',N'Yosi',N'Tobacco')
+    GROUP BY category
+    ORDER BY transactions DESC" \
+      "out/inquiries_filtered/tobacco/copurchase_categories.csv"
 fi
 
-# Export laundry-specific inquiries
-if [[ "$CATEGORY" == "all" ]] || [[ "$CATEGORY" == "laundry" ]]; then
-    echo -e "${YELLOW}  → Laundry category analytics...${NC}"
-
-    # Laundry purchase profiles
-    sql "SET NOCOUNT ON;
-    WITH laundry_filter AS (
-        SELECT *
-        $BASE_QUERY
-        AND (Category LIKE '%Detergent%' OR Category LIKE '%Soap%' OR Category LIKE '%Fabric%' OR Category LIKE '%Laundry%')
-    )
-    SELECT
-        store_id,
-        COUNT(DISTINCT canonical_tx_id) AS laundry_transactions,
-        COUNT(DISTINCT txn_date) AS active_days,
-        AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_laundry_value,
-        COUNT(DISTINCT category) AS category_variety
-    FROM laundry_filter
-    GROUP BY store_id
-    HAVING COUNT(DISTINCT canonical_tx_id) >= 3
-    ORDER BY laundry_transactions DESC;" \
-    "$OUTPUT_DIR/laundry/purchase_profile_pdp.csv"
-
-    # Laundry detergent types
-    sql "SET NOCOUNT ON;
-    WITH laundry_products AS (
-        SELECT
-            category,
-            COUNT(DISTINCT canonical_tx_id) AS transactions,
-            AVG(CAST(transaction_value AS DECIMAL(10,2))) AS avg_value,
-            COUNT(DISTINCT store_id) AS store_count
-        $BASE_QUERY
-        AND (category LIKE '%Detergent%' OR category LIKE '%Soap%' OR category LIKE '%Fabric%' OR category LIKE '%Laundry%')
-        GROUP BY category
-    )
-    SELECT
-        category AS detergent_type,
-        transactions,
-        CAST(avg_value AS DECIMAL(10,2)) AS avg_transaction_value,
-        store_count,
-        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS market_share_pct
-    FROM laundry_products
-    ORDER BY transactions DESC;" \
-    "$OUTPUT_DIR/laundry/detergent_type.csv"
-
-    # Laundry demographic analysis
-    sql "SET NOCOUNT ON;
-    WITH laundry_demo AS (
-        SELECT
-            CASE
-                WHEN demographics LIKE '%Male%' THEN 'Male'
-                WHEN demographics LIKE '%Female%' THEN 'Female'
-                ELSE 'Unknown'
-            END AS gender,
-            CASE
-                WHEN demographics LIKE '%20%' OR demographics LIKE '%25%' THEN '20-29'
-                WHEN demographics LIKE '%30%' OR demographics LIKE '%35%' THEN '30-39'
-                WHEN demographics LIKE '%40%' OR demographics LIKE '%45%' THEN '40-49'
-                WHEN demographics LIKE '%50%' OR demographics LIKE '%55%' THEN '50-59'
-                ELSE 'Unknown'
-            END AS age_group,
-            COUNT(DISTINCT canonical_tx_id) AS transactions
-        $BASE_QUERY
-        AND (category LIKE '%Detergent%' OR category LIKE '%Soap%' OR category LIKE '%Fabric%' OR category LIKE '%Laundry%')
-        AND demographics IS NOT NULL
-        GROUP BY
-            CASE
-                WHEN demographics LIKE '%Male%' THEN 'Male'
-                WHEN demographics LIKE '%Female%' THEN 'Female'
-                ELSE 'Unknown'
-            END,
-            CASE
-                WHEN demographics LIKE '%20%' OR demographics LIKE '%25%' THEN '20-29'
-                WHEN demographics LIKE '%30%' OR demographics LIKE '%35%' THEN '30-39'
-                WHEN demographics LIKE '%40%' OR demographics LIKE '%45%' THEN '40-49'
-                WHEN demographics LIKE '%50%' OR demographics LIKE '%55%' THEN '50-59'
-                ELSE 'Unknown'
-            END
-    )
-    SELECT
-        gender,
-        age_group,
-        transactions,
-        CAST(100.0 * transactions / SUM(transactions) OVER() AS DECIMAL(5,2)) AS percentage
-    FROM laundry_demo
-    WHERE transactions >= 2
-    ORDER BY transactions DESC;" \
-    "$OUTPUT_DIR/laundry/demo_gender_age_brand.csv"
-fi
+# ---------- LAUNDRY (1) ----------
+# 9) Detergent type and fabcon pairing
+write_csv \
+  "detergent_type,with_fabcon,transactions,share_pct" \
+  "$binds
+WITH base AS (
+  SELECT
+    CASE
+      WHEN category IN (N'Detergent Bar',N'Laundry Bar') THEN N'bar'
+      WHEN category IN (N'Detergent Powder',N'Powder Detergent') THEN N'powder'
+      WHEN category IN (N'Detergent Liquid',N'Liquid Detergent') THEN N'liquid'
+      ELSE N'unknown'
+    END AS detergent_type,
+    CASE WHEN EXISTS (
+      SELECT 1 FROM gold.v_export_projection i2
+      WHERE i2.canonical_tx_id = i.canonical_tx_id
+        AND i2.category IN (N'Fabric Conditioner',N'Fabcon')
+    ) THEN 1 ELSE 0 END AS with_fabcon
+  FROM gold.v_export_projection i
+  WHERE $(build_where_clause)
+    AND category IN (N'Detergent Bar',N'Laundry Bar',N'Detergent Powder',N'Powder Detergent',N'Detergent Liquid',N'Liquid Detergent')
+)
+SELECT detergent_type,
+       with_fabcon,
+       COUNT(*) AS transactions,
+       CAST(100.0*COUNT(*)/NULLIF(SUM(COUNT(*)) OVER(PARTITION BY detergent_type),0) AS decimal(5,2)) AS share_pct
+FROM base
+GROUP BY detergent_type, with_fabcon
+ORDER BY detergent_type, transactions DESC" \
+  "out/inquiries_filtered/laundry/detergent_type.csv"
+# === END PINNED EXPORTS ===
 
 # Generate summary report
 echo -e "${YELLOW}📋 Generating export summary...${NC}"
@@ -397,6 +417,15 @@ echo "- Uses sargable predicates on txn_date for optimal index usage" >> "$OUTPU
 echo "- WHERE clause applied consistently across all queries" >> "$OUTPUT_DIR/export_summary.txt"
 echo "- Results filtered at database level for efficiency" >> "$OUTPUT_DIR/export_summary.txt"
 
+## HEADER CHECK ##
+# Grep headers of a couple of key files to catch schema drift quickly
+if [ -f "out/inquiries_filtered/overall/store_profiles.csv" ]; then
+  head -1 out/inquiries_filtered/overall/store_profiles.csv >> out/inquiries_filtered/export_summary.txt || true
+fi
+if [ -f "out/inquiries_filtered/tobacco/demo_gender_age_brand.csv" ]; then
+  head -1 out/inquiries_filtered/tobacco/demo_gender_age_brand.csv >> out/inquiries_filtered/export_summary.txt || true
+fi
+
 # Final statistics
 TOTAL_FILES=$(find "$OUTPUT_DIR" -name "*.csv" | wc -l)
 TOTAL_SIZE=$(du -sh "$OUTPUT_DIR" | cut -f1)
@@ -417,15 +446,6 @@ done
 
 if [[ $TOTAL_FILES -gt 10 ]]; then
     echo -e "${BLUE}  ... and $((TOTAL_FILES-10)) more files${NC}"
-fi
-
-## HEADER CHECK ##
-# Grep headers of a couple of key files to catch schema drift quickly
-if [ -f "out/inquiries_filtered/overall/store_profiles.csv" ]; then
-  head -1 out/inquiries_filtered/overall/store_profiles.csv >> out/inquiries_filtered/export_summary.txt || true
-fi
-if [ -f "out/inquiries_filtered/tobacco/demo_gender_age_brand.csv" ]; then
-  head -1 out/inquiries_filtered/tobacco/demo_gender_age_brand.csv >> out/inquiries_filtered/export_summary.txt || true
 fi
 
 # Finalize exit status
