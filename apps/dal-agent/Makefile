@@ -4,7 +4,7 @@
 # Environment Configuration
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock
+.PHONY: help deploy analytics flat-export catalog-export crosstabs validate clean migrate doc-sync guard doctor brand-map-load brand-map-report brand-map-template assert-113 sku-load sku-report sku-template sku-validate analytics-gender-x-daypart analytics-basketsize-x-category flat-validate-count flat-export-sample analytics-enhanced flat-bulletproof flat-csv-safe crosstabs-bulletproof flat-bcp schema-extract schema-reconstruct one-click-schema schema-apply validators etl-load daily-summary migrate-build migrate-dryrun migrate-exec taxonomy-apply taxonomy-autoclassify taxonomy-coverage migrate-fixed nielsen-1100-deploy nielsen-1100-generate nielsen-1100-automap nielsen-1100-coverage nielsen-1100-report nielsen-1100-validate pivots-views pivots-export pivots-test survey-export persona-export persona-parse persona-infer persona-validate persona-ci doctor-db persona-ci-retry persona-mock persona-preflight
 
 # Color codes for output
 GREEN := \033[0;32m
@@ -601,3 +601,14 @@ persona-mock: ## Local dry-run: test persona pipeline without database (MOCK=1)
 	@echo "$(GREEN)✅ Mock persona pipeline completed successfully$(NC)"
 	@echo "$(BLUE)📁 Mock files generated:$(NC)"
 	@ls -lah out/personas/mock_*.csv | awk '{printf "  📄 %s (%s)\n", $$9, $$5}'
+
+persona-preflight: ## Validate persona schema objects exist before CI pipeline
+	@echo "$(YELLOW)🔍 Running persona schema preflight checks...$(NC)"
+	@mkdir -p out/personas
+	@./scripts/sql.sh -d "$(DB)" -i scripts/persona_preflight.sql -o out/personas/_preflight.csv
+	@if grep -q "^MISS" out/personas/_preflight.csv; then \
+		echo "$(RED)❌ Preflight failed - missing schema objects:$(NC)"; \
+		cat out/personas/_preflight.csv | grep "^MISS" | sed 's/^/  $(RED)- $(NC)/'; \
+		exit 2; \
+	fi
+	@echo "$(GREEN)✅ Preflight checks passed - all schema objects present$(NC)"
