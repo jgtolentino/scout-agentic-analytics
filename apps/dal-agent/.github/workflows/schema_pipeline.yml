@@ -1,0 +1,27 @@
+name: Schema Pipeline (Nightly)
+on:
+  schedule: [{ cron: "33 18 * * *" }]
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup mssql-tools
+        run: |
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install -y mssql-tools unixodbc-dev
+          echo '/opt/mssql-tools/bin' >> $GITHUB_PATH
+      - name: Apply schema
+        run: make schema-apply DB="${{ secrets.AZURE_SQL_DB }}"
+      - name: Validators
+        run: make validators DB="${{ secrets.AZURE_SQL_DB }}"
+      - name: ETL Load
+        run: make etl-load DB="${{ secrets.AZURE_SQL_DB }}"
+      - name: Daily Summary
+        run: make daily-summary DB="${{ secrets.AZURE_SQL_DB }}"
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: out/validation_report.txt

@@ -1,0 +1,238 @@
+# ========================================================================
+# Scout Analytics Platform - Flat Export Bruno Workflow
+# Purpose: Secure execution of flat export view creation and validation
+# Version: 1.0
+# ========================================================================
+
+name: "Scout Flat Export Workflow"
+description: "Create and validate flat export view with secure credential handling"
+version: "1.0"
+
+# Environment requirements
+environment:
+  required_variables:
+    - AZURE_SQL_CONN_STR  # Azure SQL connection string from vault
+  optional_variables:
+    - EXPORT_LIMIT        # Optional row limit for testing
+
+# Output directory setup
+setup:
+  - name: "Create output directory"
+    command: "mkdir -p out"
+    description: "Ensure output directory exists"
+
+# Sequential execution steps (stop on any failure)
+steps:
+  # Step 1: Preflight validation
+  - name: "preflight_validation"
+    description: "Validate required database objects exist"
+    command: >
+      sqlcmd
+      -S "{{AZURE_SQL_CONN_STR}}"
+      -i sql/validation/preflight_assert.sql
+      -o out/preflight_results.log
+    success_criteria:
+      - exit_code: 0
+      - output_contains: "✅ Preflight PASSED"
+    failure_action: "stop"
+    timeout: 30
+
+  # Step 2: Create/update flat export view
+  - name: "create_flat_export_view"
+    description: "Create or update dbo.v_flat_export_sheet"
+    command: >
+      sqlcmd
+      -S "{{AZURE_SQL_CONN_STR}}"
+      -i sql/migrations/2025-09-25_v_flat_export_sheet.sql
+      -o out/migration_results.log
+    success_criteria:
+      - exit_code: 0
+      - output_contains: "migration completed successfully"
+    failure_action: "stop"
+    timeout: 60
+
+  # Step 3: Coverage and column contract validation
+  - name: "coverage_validation"
+    description: "Validate zero row drop and column contract"
+    command: >
+      sqlcmd
+      -S "{{AZURE_SQL_CONN_STR}}"
+      -i sql/validation/coverage_checks.sql
+      -s ","
+      -W
+      -h -1
+      -o out/coverage_checks.csv
+    success_criteria:
+      - exit_code: 0
+      - output_contains: "All validation checks completed successfully"
+    failure_action: "stop"
+    timeout: 90
+
+  # Step 4: Export codebook metadata
+  - name: "export_codebook"
+    description: "Export machine-readable codebook"
+    command: >
+      sqlcmd
+      -S "{{AZURE_SQL_CONN_STR}}"
+      -i sql/validation/codebook_flat_export.sql
+      -s ","
+      -W
+      -h -1
+      -o out/codebook_flat_export.csv
+    success_criteria:
+      - exit_code: 0
+    failure_action: "continue"  # Non-critical step
+    timeout: 30
+
+  # Step 5: Extract flat dataframe
+  - name: "extract_dataframe"
+    description: "Extract complete flat dataframe to CSV"
+    command: >
+      python scripts/extract_flat_dataframe.py
+      --conn "{{AZURE_SQL_CONN_STR}}"
+      --out out/flat_dataframe.csv
+      {{#if EXPORT_LIMIT}}--limit {{EXPORT_LIMIT}}{{/if}}
+      --verbose
+    success_criteria:
+      - exit_code: 0
+      - file_exists: "out/flat_dataframe.csv"
+      - output_contains: "EXTRACTION SUCCESSFUL"
+    failure_action: "stop"
+    timeout: 300  # 5 minutes for large datasets
+
+  # Step 6: Generate summary report
+  - name: "generate_summary"
+    description: "Generate execution summary"
+    command: >
+      echo "Scout Flat Export Workflow Summary" > out/execution_summary.txt &&
+      echo "Execution Date: $(date)" >> out/execution_summary.txt &&
+      echo "Database: SQL-TBWA-ProjectScout-Reporting-Prod" >> out/execution_summary.txt &&
+      echo "View: dbo.v_flat_export_sheet" >> out/execution_summary.txt &&
+      echo "Columns: 12 (fixed order)" >> out/execution_summary.txt &&
+      echo "" >> out/execution_summary.txt &&
+      echo "Generated Files:" >> out/execution_summary.txt &&
+      ls -la out/ >> out/execution_summary.txt &&
+      echo "" >> out/execution_summary.txt &&
+      echo "Dataframe Stats:" >> out/execution_summary.txt &&
+      wc -l out/flat_dataframe.csv >> out/execution_summary.txt 2>/dev/null || echo "CSV stats unavailable" >> out/execution_summary.txt
+    success_criteria:
+      - exit_code: 0
+    failure_action: "continue"
+    timeout: 10
+
+# Post-execution actions
+cleanup:
+  - name: "Archive logs"
+    command: "tar -czf out/scout_flat_export_$(date +%Y%m%d_%H%M%S).tar.gz out/*.log out/*.txt"
+    description: "Archive execution logs"
+    on_failure: "continue"
+
+  - name: "Display summary"
+    command: "cat out/execution_summary.txt"
+    description: "Display execution summary"
+    on_failure: "continue"
+
+# Validation rules
+validation:
+  required_files:
+    - "out/flat_dataframe.csv"
+    - "out/coverage_checks.csv"
+    - "out/preflight_results.log"
+    - "out/migration_results.log"
+
+  file_checks:
+    - file: "out/flat_dataframe.csv"
+      min_size: 1000  # Minimum 1KB
+      headers_required: true
+      expected_columns: 12
+
+# Security constraints
+security:
+  # No credentials in this file
+  credential_sources:
+    - "Bruno vault variables only"
+
+  # Connection string validation
+  connection_validation:
+    - "Must contain Server= parameter"
+    - "Must contain Database= parameter"
+    - "Must use encrypted connection"
+
+  # Output data handling
+  data_classification: "CONFIDENTIAL"
+  export_restrictions:
+    - "CSV files contain business-sensitive data"
+    - "Restrict access to authorized personnel only"
+    - "Do not commit exported data to version control"
+
+# Performance expectations
+performance:
+  expected_duration: "2-5 minutes"
+  resource_usage: "moderate"
+  concurrent_executions: 1  # Do not run multiple exports simultaneously
+
+# Error handling
+error_handling:
+  retry_policy:
+    max_retries: 1
+    retry_delay: 30
+    retryable_errors:
+      - "connection timeout"
+      - "deadlock"
+      - "temporary network error"
+
+  notification:
+    on_success:
+      - "Log success to execution_summary.txt"
+    on_failure:
+      - "Capture error details in logs"
+      - "Generate failure report"
+
+# Documentation
+documentation:
+  usage: |
+    To run this workflow:
+
+    1. Ensure AZURE_SQL_CONN_STR is set in Bruno vault
+    2. Execute: bruno run bruno/flat_export.yml
+    3. Check out/ directory for results
+
+    Optional environment variables:
+    - EXPORT_LIMIT: Limit rows for testing (e.g., 1000)
+
+    Output files:
+    - out/flat_dataframe.csv: Main export file (12 columns)
+    - out/coverage_checks.csv: Validation results
+    - out/codebook_flat_export.csv: Column specifications
+    - out/*.log: Execution logs
+
+  troubleshooting: |
+    Common issues:
+
+    1. Connection failures:
+       - Verify AZURE_SQL_CONN_STR is correctly set
+       - Check network connectivity to Azure SQL
+
+    2. Validation failures:
+       - Review preflight_results.log for missing objects
+       - Check coverage_checks.csv for schema issues
+
+    3. Python extraction failures:
+       - Ensure pandas and pyodbc are installed
+       - Verify Python script has database access
+
+    4. Performance issues:
+       - Consider using EXPORT_LIMIT for testing
+       - Check database performance during execution
+
+# Workflow metadata
+metadata:
+  author: "Scout Analytics Platform"
+  created: "2025-09-25"
+  version: "1.0"
+  tags: ["data-export", "analytics", "validation", "production"]
+  dependencies:
+    - "Azure SQL Database connectivity"
+    - "Python 3.7+ with pandas, pyodbc"
+    - "sqlcmd tool"
+    - "Bruno workflow engine"

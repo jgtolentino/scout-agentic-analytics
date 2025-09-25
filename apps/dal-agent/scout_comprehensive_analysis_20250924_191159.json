@@ -1,0 +1,136 @@
+{
+  "devices": {
+    "scoutpi-0002": {
+      "total_files": 1488,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "102"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 299761,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0003": {
+      "total_files": 1484,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "103"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 294958,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0004": {
+      "total_files": 207,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "104"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 308839,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0006": {
+      "total_files": 5919,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "108"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 306070,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0009": {
+      "total_files": 2645,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "109"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 307760,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0010": {
+      "total_files": 1312,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "110"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 305713,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    },
+    "scoutpi-0012": {
+      "total_files": 234,
+      "analyzed_files": 100,
+      "transactions": 100,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "112"
+      ],
+      "categories": [],
+      "error_files": 100,
+      "file_size_total": 306972,
+      "unique_brands": 0,
+      "unique_stores": 1,
+      "unique_categories": 0
+    }
+  },
+  "schema_patterns": {
+    "fields": {
+      "root.storeId": 700
+    },
+    "types": {}
+  },
+  "item_catalog": [],
+  "brand_catalog": [],
+  "transaction_patterns": [],
+  "summary_stats": {
+    "total_files_analyzed": 700,
+    "total_transactions": 700,
+    "total_items": 0,
+    "total_errors": 700,
+    "error_rate": 100.0,
+    "devices_analyzed": 7,
+    "unique_brands": 0,
+    "unique_stores": 0,
+    "avg_items_per_transaction": 0.0
+  }
+}

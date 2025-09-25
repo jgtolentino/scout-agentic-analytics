@@ -81,7 +81,7 @@ SELECT unmapped_brands = COUNT(*)
 FROM dbo.BrandCategoryMapping
 WHERE CategoryCode IS NULL;
 
-SELECT sample_unmapped_brand = TOP(1) BrandName
+SELECT TOP(1) sample_unmapped_brand = BrandName
 FROM dbo.BrandCategoryMapping
 WHERE CategoryCode IS NULL
 ORDER BY BrandName;

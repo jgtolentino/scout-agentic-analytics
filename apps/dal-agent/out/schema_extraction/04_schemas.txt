@@ -1,0 +1,16 @@
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.
+Msg 207, Level 16, State 1, Server sqltbwaprojectscoutserver, Line 135
+Invalid column name 'object_category'.

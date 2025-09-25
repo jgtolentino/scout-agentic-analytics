@@ -1,0 +1,62 @@
+name: "Keychain-backed conn: try primary, fallback to secondary (no secrets leaked)"
+steps:
+  - run: |
+      set -euo pipefail
+
+      # --- CONFIG: Keychain item names (generic password entries) ---
+      # Store the FULL Azure SQL connection string as the password value for each item.
+      # Example value: "Server=tcp:sqltbwaprojectscoutserver.database.windows.net,1433;Database=SQL-TBWA-ProjectScout-Reporting-Prod;Authentication=Active Directory Password;User ID=report_user@tenant;Password=•••;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+      KC_SERVICE_PRIMARY="ScoutDB-AzureSQL-Primary"
+      KC_SERVICE_SECONDARY="ScoutDB-AzureSQL-Secondary"
+
+      # Helper to read a secret from macOS Keychain (generic password)
+      keychain_read() {
+        local svc="$1"
+        security find-generic-password -s "$svc" -w 2>/dev/null
+      }
+
+      # Try a connection string by running a trivial query; return 0 on success
+      try_conn() {
+        local conn="$1"
+        # -b makes sqlcmd exit on error; -Q runs the query and exits
+        sqlcmd -S "$conn" -b -Q "SELECT 1" >/dev/null 2>&1
+      }
+
+      # Fetch primary & secondary from Keychain
+      PRIMARY_CONN="$(keychain_read "$KC_SERVICE_PRIMARY" || true)"
+      SECONDARY_CONN="$(keychain_read "$KC_SERVICE_SECONDARY" || true)"
+
+      if [[ -z "${PRIMARY_CONN}" && -z "${SECONDARY_CONN}" ]]; then
+        echo "❌ No connection strings found in Keychain for $KC_SERVICE_PRIMARY or $KC_SERVICE_SECONDARY"
+        exit 1
+      fi
+
+      # Try primary then fallback to secondary
+      SELECTED_CONN=""
+      if [[ -n "$PRIMARY_CONN" ]]; then
+        if try_conn "$PRIMARY_CONN"; then
+          SELECTED_CONN="$PRIMARY_CONN"
+          SELECTED_LABEL="primary"
+        fi
+      fi
+      if [[ -z "$SELECTED_CONN" && -n "$SECONDARY_CONN" ]]; then
+        if try_conn "$SECONDARY_CONN"; then
+          SELECTED_CONN="$SECONDARY_CONN"
+          SELECTED_LABEL="secondary"
+        fi
+      fi
+
+      if [[ -z "$SELECTED_CONN" ]]; then
+        echo "❌ Both primary and secondary connection attempts failed."
+        echo "   - Verify Keychain items and network/SQL firewall."
+        exit 2
+      fi
+
+      # Export for downstream steps (only in this Bruno session)
+      export AZURE_SQL_CONN_STR="$SELECTED_CONN"
+
+      # Identity probe (non-sensitive): who did we connect as?
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT ORIGINAL_LOGIN() AS original_login, SUSER_SNAME() AS suser, DB_NAME() AS dbname;" -s "," -W -h -1 > out/db_identity.csv
+
+      echo "✅ Using $SELECTED_LABEL connection. Wrote out/db_identity.csv with login/db info."
+    shell: bash

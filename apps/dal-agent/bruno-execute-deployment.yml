@@ -1,0 +1,17 @@
+name: "Execute Scout Analytics Complete Deployment"
+steps:
+  # Include keychain connection for environment setup
+  - include: bruno-keychain-conn.yml
+
+  # Run the complete deployment workflow
+  - run: |
+      set -e
+      echo "🚀 Executing complete Scout Analytics deployment..."
+      echo "📅 Started: $(date)"
+
+      # Execute the full deployment workflow
+      bruno run bruno-complete-deployment.yml
+
+      echo "📅 Completed: $(date)"
+      echo "🎉 Deployment execution finished!"
+    shell: bash

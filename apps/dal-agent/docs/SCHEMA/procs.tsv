@@ -1,0 +1,334 @@
+cdc	sp_batchinsert_125243501	create
+	procedure [cdc].[sp_batchinsert_125243501]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 varchar(60), @c8_1 int, @c9_1 bit, @c10_1 datetime, @
+cdc	sp_batchinsert_1856725667	create
+	procedure [cdc].[sp_batchinsert_1856725667]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 varchar(60), @c7_1 int, @c8_1 int, @c9_1 datetime, @c10_1 nvarc
+cdc	sp_batchinsert_1984726123	create
+	procedure [cdc].[sp_batchinsert_1984726123]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 nvarchar(255), @c7_1 int, @c8_1 nvarchar(50), @c9_1 nvarchar(10
+cdc	sp_batchinsert_2080726465	create
+	procedure [cdc].[sp_batchinsert_2080726465]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 nvarchar(200), @c8_1 nvarchar(100), @c9_1 nvarchar(4
+cdc	sp_batchinsert_221243843	create
+	procedure [cdc].[sp_batchinsert_221243843]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 datetime, @c8_1 float, @c9_1 int, @c10_1 nvarchar(500
+cdc	sp_batchinsert_29243159	create
+	procedure [cdc].[sp_batchinsert_29243159]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 nvarchar(200), @c8_1 nvarchar(200), @c9_1 nvarchar(100
+cdc	sp_batchinsert_317244185	create
+	procedure [cdc].[sp_batchinsert_317244185]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 int, @c8_1 int, @c9_1 int, @c10_1 float, @c11_1 float
+cdc	sp_batchinsert_413244527	create
+	procedure [cdc].[sp_batchinsert_413244527]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 nvarchar(500), @c8_1 nvarchar(500), @c9_1 bit, @c10_1
+cdc	sp_batchinsert_509244869	create
+	procedure [cdc].[sp_batchinsert_509244869]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 nvarchar(500), @c8_1 int, @c9_1 nvarchar(500), @c10_1
+cdc	sp_batchinsert_605245211	create
+	procedure [cdc].[sp_batchinsert_605245211]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 nvarchar(500), @c8_1 nvarchar(500), @c9_1 nvarchar(50
+cdc	sp_batchinsert_701245553	create
+	procedure [cdc].[sp_batchinsert_701245553]
+	(
+	 @rowcount int,
+	  @__$start_lsn_1 binary(10), @__$seqval_1 binary(10), @__$operation_1 int, @__$update_mask_1 varbinary(128), @c6_1 int, @c7_1 int, @c8_1 nvarchar(500), @c9_1 int, @c10_1 nvarchar(
+cdc	sp_batchinsert_lsn_time_mapping	
+	--
+	-- Name: [cdc].[sp_batchinsert_lsn_time_mapping]
+	--
+	-- Description:
+	--	Stored procedure used internally to batch populate cdc.lsn_time_mapping table
+	--
+	-- Parameters: 
+	--   @rowcount                     int -- the number of rows to be i
+cdc	sp_ins_dummy_lsn_time_mapping 	
+	--
+	-- Name: [cdc].[sp_ins_dummy_lsn_time_mapping]
+	--
+	-- Description: append a dummy entry. A dummy entry has 0x0 for the column tran_id
+	--
+	-- Parameters: 
+	--	@lastflushed_lsn		binary(10)			
+	--
+	-- Returns:	0	success
+	--			1   failure 
+	
+cdc	sp_ins_instance_enabling_lsn_time_mapping 	
+	--
+	-- Name: [cdc].[sp_ins_instance_enabling_lsn_time_mapping]
+	--
+	-- Description:query change_tables for the specified capture instance and insert its start_lsn and create_date 
+	--          into lsn_time_mapping
+	--
+	-- Parameters: 
+	--	@chang
+cdc	sp_ins_lsn_time_mapping	
+	--
+	-- Name: [cdc].[sp_ins_lsn_time_mapping]
+	--
+	-- Description:
+	--	Stored procedure used internally to populate cdc.lsn_time_mapping table
+	--
+	-- Parameters: 
+	--	@start_lsn				binary(10)			-- Commit lsn associated with change table entry
+	-
+cdc	sp_insdel_125243501	create
+	procedure [cdc].[sp_insdel_125243501]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 varchar(60), @c8 int, @c9 bit, @c10 datetime, @c11 varchar(100),
+		@__$command_id
+cdc	sp_insdel_1856725667	create
+	procedure [cdc].[sp_insdel_1856725667]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 varchar(60), @c7 int, @c8 int, @c9 datetime, @c10 nvarchar(100), @c11 nvarchar(255), @c12 
+cdc	sp_insdel_1984726123	create
+	procedure [cdc].[sp_insdel_1984726123]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 nvarchar(255), @c7 int, @c8 nvarchar(50), @c9 nvarchar(100), @c10 datetime,
+		@__$command
+cdc	sp_insdel_2080726465	create
+	procedure [cdc].[sp_insdel_2080726465]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 nvarchar(200), @c8 nvarchar(100), @c9 nvarchar(400), @c10 nvarchar(400), @c11 nva
+cdc	sp_insdel_221243843	create
+	procedure [cdc].[sp_insdel_221243843]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 datetime, @c8 float, @c9 int, @c10 nvarchar(500), @c11 nvarchar(500), @c12 int, @c
+cdc	sp_insdel_29243159	create
+	procedure [cdc].[sp_insdel_29243159]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 nvarchar(200), @c8 nvarchar(200), @c9 nvarchar(100), @c10 float, @c11 float, @c12 n
+cdc	sp_insdel_317244185	create
+	procedure [cdc].[sp_insdel_317244185]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 int, @c8 int, @c9 int, @c10 float, @c11 float, @c12 datetime,
+		@__$command_id in
+cdc	sp_insdel_413244527	create
+	procedure [cdc].[sp_insdel_413244527]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 nvarchar(500), @c8 nvarchar(500), @c9 bit, @c10 datetime,
+		@__$command_id int = 
+cdc	sp_insdel_509244869	create
+	procedure [cdc].[sp_insdel_509244869]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 nvarchar(500), @c8 int, @c9 nvarchar(500), @c10 datetime,
+		@__$command_id int = 
+cdc	sp_insdel_605245211	create
+	procedure [cdc].[sp_insdel_605245211]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 nvarchar(500), @c8 nvarchar(500), @c9 nvarchar(500), @c10 nvarchar(500), @c11 nvar
+cdc	sp_insdel_701245553	create
+	procedure [cdc].[sp_insdel_701245553]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$operation int,
+		@__$update_mask varbinary(128) , @c6 int, @c7 int, @c8 nvarchar(500), @c9 int, @c10 nvarchar(500), @c11 nvarchar(500), @c12 nvar
+cdc	sp_upd_125243501	create
+	procedure [cdc].[sp_upd_125243501]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old varchar(60), @c8_old int, @c9_old bit, @c10_old datetime, @c11_old varchar(100), @c6_new int, @c7_n
+cdc	sp_upd_1856725667	create
+	procedure [cdc].[sp_upd_1856725667]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old varchar(60), @c7_old int, @c8_old int, @c9_old datetime, @c10_old nvarchar(100), @c11_old nvarchar(255), @c12_o
+cdc	sp_upd_1984726123	create
+	procedure [cdc].[sp_upd_1984726123]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old nvarchar(255), @c7_old int, @c8_old nvarchar(50), @c9_old nvarchar(100), @c10_old datetime, @c6_new nvarchar(25
+cdc	sp_upd_2080726465	create
+	procedure [cdc].[sp_upd_2080726465]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old nvarchar(200), @c8_old nvarchar(100), @c9_old nvarchar(400), @c10_old nvarchar(400), @c11_old nvar
+cdc	sp_upd_221243843	create
+	procedure [cdc].[sp_upd_221243843]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old datetime, @c8_old float, @c9_old int, @c10_old nvarchar(500), @c11_old nvarchar(500), @c12_old int,
+cdc	sp_upd_29243159	create
+	procedure [cdc].[sp_upd_29243159]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old nvarchar(200), @c8_old nvarchar(200), @c9_old nvarchar(100), @c10_old float, @c11_old float, @c12_ol
+cdc	sp_upd_317244185	create
+	procedure [cdc].[sp_upd_317244185]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old int, @c8_old int, @c9_old int, @c10_old float, @c11_old float, @c12_old datetime, @c6_new int, @c7_
+cdc	sp_upd_413244527	create
+	procedure [cdc].[sp_upd_413244527]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old nvarchar(500), @c8_old nvarchar(500), @c9_old bit, @c10_old datetime, @c6_new int, @c7_new nvarchar
+cdc	sp_upd_509244869	create
+	procedure [cdc].[sp_upd_509244869]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old nvarchar(500), @c8_old int, @c9_old nvarchar(500), @c10_old datetime, @c6_new int, @c7_new nvarchar
+cdc	sp_upd_605245211	create
+	procedure [cdc].[sp_upd_605245211]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old nvarchar(500), @c8_old nvarchar(500), @c9_old nvarchar(500), @c10_old nvarchar(500), @c11_old nvarc
+cdc	sp_upd_701245553	create
+	procedure [cdc].[sp_upd_701245553]
+	(	@__$start_lsn binary(10),
+		@__$seqval binary(10),
+		@__$update_mask varbinary(128) , @c6_old int, @c7_old int, @c8_old nvarchar(500), @c9_old int, @c10_old nvarchar(500), @c11_old nvarchar(500), @c12_old n
+dbo	PopulateSessionMatches	CREATE PROCEDURE dbo.PopulateSessionMatches
+AS
+BEGIN
+    INSERT INTO dbo.SessionMatches (InteractionID,TranscriptID,DetectionID,MatchConfidence,TimeOffsetMs)
+    SELECT
+      si.InteractionID,
+      bt.TranscriptID,
+      bvd.DetectionID,
+      0.9,
+      
+dbo	sp_AddBrandMapping	
+CREATE PROCEDURE dbo.sp_AddBrandMapping
+    @BrandName NVARCHAR(100),
+    @CategoryCode NVARCHAR(30),
+    @IsMandatory BIT = 1,
+    @Source NVARCHAR(50) = 'Manual Addition'
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @CategoryId INT;
+
+    -- Get category ID
+dbo	sp_adsbot_validation_summary	-- === Stored Procedures ===
+
+-- AdsBot validation summary procedure
+CREATE   PROCEDURE sp_adsbot_validation_summary
+    @campaign_id NVARCHAR(100) = NULL,
+    @start_date DATETIMEOFFSET = NULL,
+    @end_date DATETIMEOFFSET = NULL
+AS
+BEGIN
+    SET NOCOUNT 
+dbo	sp_create_v_transactions_flat_authoritative	CREATE PROCEDURE dbo.sp_create_v_transactions_flat_authoritative
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  -- Base table we summarize from
+  DECLARE @t sysname = 'dbo.PayloadTransactions';
+  IF OBJECT_ID(@t,'U') IS NULL
+    THROW 50000, 'Required table dbo.PayloadTran
+dbo	sp_create_v_transactions_flat_min	CREATE PROCEDURE dbo.sp_create_v_transactions_flat_min
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  IF OBJECT_ID('dbo.PayloadTransactions','U') IS NULL
+    THROW 50000, 'dbo.PayloadTransactions not found', 1;
+
+  IF OBJECT_ID('dbo.SalesInteractions','U') IS NULL
+    THROW
+dbo	sp_refresh_analytics_views	
+-- Refresh views metadata
+CREATE   PROCEDURE dbo.sp_refresh_analytics_views
+AS
+BEGIN
+  SET NOCOUNT ON;
+  EXEC sys.sp_refreshview N'dbo.v_transactions_flat_production';
+  EXEC sys.sp_refreshview N'dbo.v_transactions_crosstab_production';
+  EXEC sys.sp_refr
+dbo	sp_scout_health_check	
+-- Health check procedure
+CREATE   PROCEDURE dbo.sp_scout_health_check
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  SELECT 'payload' AS src,
+         COUNT(*) AS rows_total,
+         SUM(CASE WHEN ISJSON(payload_json)=0 THEN 1 ELSE 0 END) AS bad_json
+  FROM dbo.PayloadT
+dbo	sp_upsert_device_store	
+-- =========================================================================
+-- 5) Operational Stored Procedures
+-- =========================================================================
+
+-- Device-store mapping upsert
+CREATE   PROCEDURE dbo.sp_upsert_
+dbo	sp_validate_v24	/* v24 contract validator
+   - Verifies column ORDER, NAMES, and TYPES of dbo.v_transactions_flat_v24
+   - Parity: row count equals dbo.v_transactions_flat
+   - Null ratios reported (warn threshold 0.10)
+   - TimeOfDay format check: exactly 4 chars, ends w
+dbo	sp_ValidateCanonicalTaxonomy	
+-- Update the stored procedure with correct column names
+CREATE   PROCEDURE sp_ValidateCanonicalTaxonomy
+AS
+BEGIN
+    DECLARE @total_transactions INT;
+    DECLARE @mapped_transactions INT;
+    DECLARE @unmapped_transactions INT;
+    DECLARE @quality_rate 
+dbo	VerifyScoutMigration	CREATE PROCEDURE dbo.VerifyScoutMigration
+AS
+BEGIN
+    DECLARE @errors INT = 0;
+    IF NOT EXISTS(SELECT 1 FROM sys.tables WHERE name='SessionMatches')        SET @errors+=1;
+    IF COL_LENGTH('dbo.SalesInteractions','TransactionDuration') IS NULL        S
+gold	sp_extract_scout_dashboard_data	
+-- Main extraction procedure
+CREATE   PROCEDURE [gold].[sp_extract_scout_dashboard_data]
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Clear existing data
+    TRUNCATE TABLE gold.scout_dashboard_transactions;
+
+    -- Extract data with comprehensive mapping
+    INS
+
+(49 rows affected)

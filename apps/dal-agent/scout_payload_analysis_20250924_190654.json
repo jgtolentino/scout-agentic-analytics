@@ -1,0 +1,132 @@
+{
+  "summary": {
+    "total_files": 350,
+    "total_transactions": 350,
+    "total_items": 0,
+    "error_files": 350,
+    "devices_analyzed": 7
+  },
+  "device_summary": {
+    "scoutpi-0002": {
+      "total_files": 1488,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "102"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 154175,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0003": {
+      "total_files": 1484,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "103"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 145481,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0004": {
+      "total_files": 207,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "104"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 155650,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0006": {
+      "total_files": 5919,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "108"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 158315,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0009": {
+      "total_files": 2645,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "109"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 145841,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0010": {
+      "total_files": 1312,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "110"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 153192,
+      "unique_brands": 0,
+      "unique_stores": 1
+    },
+    "scoutpi-0012": {
+      "total_files": 234,
+      "transactions": 50,
+      "items": 0,
+      "brands": [],
+      "stores": [
+        "112"
+      ],
+      "date_range": {
+        "min": null,
+        "max": null
+      },
+      "file_size_total": 158072,
+      "unique_brands": 0,
+      "unique_stores": 1
+    }
+  },
+  "schema_analysis": {
+    "field_types": {}
+  },
+  "item_details": [],
+  "brand_analysis": {
+    "detected": {}
+  },
+  "transaction_patterns": [],
+  "file_analysis": []
+}

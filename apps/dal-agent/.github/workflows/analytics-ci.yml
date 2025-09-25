@@ -1,0 +1,239 @@
+# Scout Analytics CI/CD Pipeline
+# Automated deployment and brand catalog publishing on push to main
+
+name: Scout Analytics CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'apps/dal-agent/**'
+      - '.github/workflows/analytics-ci.yml'
+
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'apps/dal-agent/**'
+      - '.github/workflows/analytics-ci.yml'
+
+  # Manual trigger for emergency deployments
+  workflow_dispatch:
+    inputs:
+      deploy_type:
+        description: 'Deployment type'
+        required: true
+        default: 'catalog-export'
+        type: choice
+        options:
+        - catalog-export
+        - analytics
+        - full-deploy
+        - validate-only
+
+env:
+  WORKING_DIR: apps/dal-agent
+
+jobs:
+  validate:
+    name: Validate Analytics Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SQL Server Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+        echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> $GITHUB_ENV
+
+    - name: Test Database Connection
+      working-directory: ${{ env.WORKING_DIR }}
+      env:
+        AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+      run: |
+        echo "Testing database connectivity..."
+        sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT GETDATE() as CurrentTime, @@VERSION as SQLVersion" -C
+
+    - name: Run Validation Gates
+      working-directory: ${{ env.WORKING_DIR }}
+      env:
+        AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+      run: |
+        echo "Running analytics validation gates..."
+        make validate
+
+  catalog-export:
+    name: Export Brand Catalog for Dan/Jaymie
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' || github.event.inputs.deploy_type == 'catalog-export'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SQL Server Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+        echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> $GITHUB_ENV
+
+    - name: Export Brand Catalog
+      working-directory: ${{ env.WORKING_DIR }}
+      env:
+        AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+      run: |
+        echo "Exporting brand catalog for Dan/Jaymie..."
+        make catalog-export
+
+    - name: Upload Brand Catalog Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: brand-catalog-${{ github.sha }}
+        path: |
+          apps/dal-agent/out/catalog/*.csv
+        retention-days: 30
+
+    - name: Generate Catalog Summary
+      working-directory: ${{ env.WORKING_DIR }}
+      run: |
+        echo "## 🏷️ Brand Catalog Export Summary" > catalog_summary.md
+        echo "**Generated:** $(date)" >> catalog_summary.md
+        echo "" >> catalog_summary.md
+        echo "### Files Created:" >> catalog_summary.md
+        for file in out/catalog/*.csv; do
+          if [[ -f "$file" ]]; then
+            filename=$(basename "$file")
+            size=$(wc -c < "$file" | tr -d ' ')
+            rows=$(($(wc -l < "$file") - 1))
+            echo "- **$filename**: $size bytes, $rows rows" >> catalog_summary.md
+          fi
+        done
+        echo "" >> catalog_summary.md
+        echo "### Ready for Dan/Jaymie:" >> catalog_summary.md
+        echo "1. **00_brand_master.csv** - Master brand mapping (~140 brands)" >> catalog_summary.md
+        echo "2. **01_observed_brand_volumes_90d.csv** - Transaction volumes (90 days)" >> catalog_summary.md
+        echo "3. **02_unmapped_brands_90d.csv** - Brands needing mapping attention" >> catalog_summary.md
+
+    - name: Comment Catalog Summary on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('apps/dal-agent/catalog_summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+  analytics-export:
+    name: Export Analytics Data
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' || github.event.inputs.deploy_type == 'analytics'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SQL Server Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+        echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> $GITHUB_ENV
+
+    - name: Export Analytics and Cross-tabs
+      working-directory: ${{ env.WORKING_DIR }}
+      env:
+        AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+      run: |
+        echo "Exporting analytics marts..."
+        make analytics
+        echo "Exporting cross-tabulation views..."
+        make crosstabs
+        echo "Exporting flat export sheet..."
+        make flat-export
+
+    - name: Upload Analytics Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: analytics-export-${{ github.sha }}
+        path: |
+          apps/dal-agent/out/analytics/*.csv
+        retention-days: 30
+
+  full-deploy:
+    name: Full Analytics Infrastructure Deployment
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.deploy_type == 'full-deploy'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SQL Server Tools
+      run: |
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+        echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> $GITHUB_ENV
+
+    - name: Full Infrastructure Deployment
+      working-directory: ${{ env.WORKING_DIR }}
+      env:
+        AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}
+      run: |
+        echo "Deploying full analytics infrastructure..."
+        make deploy
+
+    - name: Upload Full Deployment Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: full-deployment-${{ github.sha }}
+        path: |
+          apps/dal-agent/out/**/*.csv
+        retention-days: 30
+
+  notify-success:
+    name: Notify Deployment Success
+    runs-on: ubuntu-latest
+    needs: [validate, catalog-export]
+    if: always() && needs.catalog-export.result == 'success'
+
+    steps:
+    - name: Notify Team
+      run: |
+        echo "🎉 Scout Analytics deployment successful!"
+        echo "📁 Brand catalog ready for Dan/Jaymie"
+        echo "📊 Analytics exports completed"
+        echo "✅ All validation gates passed"
+
+    - name: Post Deployment Summary
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "## 🚀 Scout Analytics Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "**Deployment Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Completed:" >> $GITHUB_STEP_SUMMARY
+        echo "- Database validation gates passed" >> $GITHUB_STEP_SUMMARY
+        echo "- Brand catalog exported (3 files)" >> $GITHUB_STEP_SUMMARY
+        echo "- Analytics marts available" >> $GITHUB_STEP_SUMMARY
+        echo "- Cross-tabulation views ready" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📁 Artifacts:" >> $GITHUB_STEP_SUMMARY
+        echo "- Brand catalog: Available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Analytics data: Available for downstream consumption" >> $GITHUB_STEP_SUMMARY

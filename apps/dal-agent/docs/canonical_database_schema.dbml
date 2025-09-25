@@ -1,0 +1,437 @@
+// Scout Analytics Platform - Canonical Database Schema
+// Updated: 2025-09-25
+// Version: 7.1 Production Schema with Proper Schema Organization
+
+Project scout_analytics {
+  database_type: 'Azure SQL Database'
+  Note: '''
+    # Scout Analytics Platform - Production Database Schema
+
+    ## Schema Organization
+    - **dbo**: Core business tables and legacy objects
+    - **bronze**: Raw data ingestion (ETL Layer 1)
+    - **gold**: Clean, analytics-ready data (ETL Layer 3)
+    - **ref**: Reference data and lookup tables
+    - **scout**: Clean transactional data (primary analytics source)
+    - **staging**: Data import and processing staging areas
+    - **ces**: Campaign Effectiveness System
+    - **poc**: Proof of concept and testing tables
+    - **ops**: Operational monitoring and logs
+    - **cdc**: Change Data Capture system tables
+
+    ## Key Analytics Views
+    - **dbo.v_flat_export_sheet**: Primary flat export (12,192 transactions)
+    - **dbo.v_flat_export_csvsafe**: CSV-safe export view
+    - **gold.v_transactions_flat**: Gold layer analytics
+    - **dbo.v_nielsen_complete_analytics**: Nielsen taxonomy integration
+  '''
+}
+
+// =============================================================================
+// BRONZE SCHEMA - Raw Data Ingestion
+// =============================================================================
+
+Table bronze.transactions {
+  id integer [pk, increment]
+  transaction_id varchar(255)
+  raw_payload text
+  ingested_at datetime2
+  source_file varchar(500)
+  processing_status varchar(50) [default: 'pending']
+
+  Note: 'Raw transaction data from various sources'
+}
+
+Table bronze.bronze_transactions {
+  bronze_id integer [pk, increment]
+  original_transaction_id varchar(255)
+  payload_json nvarchar(max)
+  created_at datetime2 [default: `getdate()`]
+  source_system varchar(100)
+  file_path varchar(1000)
+
+  Note: 'Bronze layer - raw transaction ingestion'
+}
+
+Table bronze.dim_stores_ncr {
+  store_id varchar(50) [pk]
+  store_name varchar(200)
+  region varchar(100)
+  province varchar(100)
+  city varchar(100)
+  address nvarchar(500)
+  latitude decimal(10,8)
+  longitude decimal(11,8)
+  store_type varchar(50)
+  operational_status varchar(20)
+
+  Note: 'NCR store dimension data'
+}
+
+// =============================================================================
+// SCOUT SCHEMA - Clean Transactional Data
+// =============================================================================
+
+Table scout.transactions {
+  transaction_id varchar(64) [pk]
+  store_id varchar(50)
+  customer_id varchar(64)
+  transaction_datetime datetime2
+  total_amount decimal(10,2)
+  item_count integer
+  payment_method varchar(50)
+  cashier_id varchar(50)
+  receipt_number varchar(100)
+  created_at datetime2 [default: `getdate()`]
+  updated_at datetime2
+
+  Note: 'Clean transaction headers - primary analytics source'
+}
+
+Table scout.transaction_items {
+  item_id integer [pk, increment]
+  transaction_id varchar(64)
+  product_id varchar(50)
+  sku_code varchar(100)
+  quantity integer
+  unit_price decimal(8,2)
+  total_price decimal(10,2)
+  discount_amount decimal(8,2)
+  brand_name varchar(200)
+  category varchar(200)
+
+  Note: 'Clean transaction line items'
+}
+
+Table scout.customers {
+  customer_id varchar(64) [pk]
+  age_group varchar(20)
+  gender varchar(10)
+  location varchar(100)
+  loyalty_tier varchar(20)
+  registration_date datetime2
+  last_transaction datetime2
+  total_spent decimal(12,2)
+  transaction_count integer
+
+  Note: 'Customer dimension with analytics attributes'
+}
+
+Table scout.stores {
+  store_id varchar(50) [pk]
+  store_code varchar(20)
+  store_name varchar(200)
+  region varchar(100)
+  province varchar(100)
+  city varchar(100)
+  barangay varchar(100)
+  full_address nvarchar(500)
+  latitude decimal(10,8)
+  longitude decimal(11,8)
+  store_format varchar(50)
+  opening_date date
+  status varchar(20)
+
+  Note: 'Store master data with geographic hierarchy'
+}
+
+Table scout.brands {
+  brand_id integer [pk, increment]
+  brand_name varchar(200) [unique]
+  brand_code varchar(50)
+  manufacturer varchar(200)
+  category varchar(200)
+  sub_category varchar(200)
+  nielsen_category_code varchar(10)
+  is_private_label boolean [default: false]
+  created_at datetime2 [default: `getdate()`]
+
+  Note: 'Brand master with Nielsen taxonomy'
+}
+
+Table scout.products {
+  product_id varchar(50) [pk]
+  sku_code varchar(100)
+  product_name varchar(300)
+  brand_id integer
+  category varchar(200)
+  sub_category varchar(200)
+  unit_of_measure varchar(20)
+  pack_size varchar(50)
+  retail_price decimal(8,2)
+  cost_price decimal(8,2)
+  status varchar(20)
+
+  Note: 'Product master with brand linkage'
+}
+
+// =============================================================================
+// GOLD SCHEMA - Analytics-Ready Data
+// =============================================================================
+
+Table gold.scout_dashboard_transactions {
+  id integer [pk, increment]
+  canonical_tx_id varchar(64) [unique]
+  store_location varchar(200)
+  transaction_value decimal(10,2)
+  basket_size integer
+  primary_category varchar(200)
+  primary_brand varchar(200)
+  customer_age_group varchar(20)
+  customer_gender varchar(10)
+  daypart varchar(20)
+  weekday_name varchar(20)
+  is_weekend boolean
+  payment_method varchar(50)
+  transaction_datetime datetime2
+  created_at datetime2 [default: `getdate()`]
+
+  Note: 'Gold layer - analytics dashboard ready transactions (12,192 canonical)'
+}
+
+Table gold.tbwa_client_brands {
+  brand_id integer [pk, increment]
+  brand_name varchar(200) [unique]
+  client_name varchar(100)
+  category varchar(200)
+  nielsen_code varchar(10)
+  is_flagship boolean [default: false]
+  market_share decimal(5,2)
+  created_at datetime2 [default: `getdate()`]
+
+  Note: 'TBWA client brand portfolio'
+}
+
+// =============================================================================
+// REFERENCE SCHEMA - Lookup and Master Data
+// =============================================================================
+
+Table ref.NielsenCategories {
+  CategoryCode varchar(10) [pk]
+  CategoryName varchar(200)
+  DepartmentCode varchar(5)
+  ParentCategoryCode varchar(10)
+  Level integer
+  SortOrder integer
+  IsActive boolean [default: true]
+
+  Note: 'Nielsen product category taxonomy'
+}
+
+Table ref.NielsenDepartments {
+  DepartmentCode varchar(5) [pk]
+  DepartmentName varchar(100)
+  SortOrder integer
+  IsActive boolean [default: true]
+
+  Note: 'Nielsen department hierarchy'
+}
+
+Table ref.SkuDimensions {
+  sku_id integer [pk, increment]
+  sku_code varchar(100) [unique]
+  sku_name varchar(300)
+  brand_name varchar(200)
+  category_code varchar(10)
+  pack_size varchar(50)
+  unit_price decimal(8,2)
+  nielsen_category varchar(200)
+  created_at datetime2 [default: `getdate()`]
+
+  Note: 'SKU master with Nielsen categories'
+}
+
+Table ref.persona_rules {
+  rule_id integer [pk, increment]
+  age_min integer
+  age_max integer
+  gender varchar(10)
+  emotional_state varchar(50)
+  persona_name varchar(100)
+  persona_description text
+  priority integer
+  is_active boolean [default: true]
+
+  Note: 'Customer persona inference rules'
+}
+
+// =============================================================================
+// DBO SCHEMA - Core Business and Legacy Tables
+// =============================================================================
+
+Table dbo.SalesInteractions {
+  InteractionID varchar(64) [pk]
+  canonical_tx_id varchar(64) [unique]
+  StoreID varchar(50)
+  TransactionDateTime datetime2
+  Age integer
+  Gender varchar(10)
+  EmotionalState varchar(50)
+  TransactionValue decimal(10,2)
+  BasketSize integer
+  PaymentMethod varchar(50)
+  Location varchar(200)
+  IsSubstitution boolean
+  CreatedAt datetime2 [default: `getdate()`]
+
+  Note: 'Primary sales interactions table (legacy schema)'
+}
+
+Table dbo.PayloadTransactions {
+  PayloadID integer [pk, increment]
+  TransactionPayload nvarchar(max)
+  ProcessingStatus varchar(50)
+  ErrorMessage nvarchar(1000)
+  SourceFile varchar(500)
+  ProcessedAt datetime2
+  CreatedAt datetime2 [default: `getdate()`]
+
+  Note: 'Raw JSON transaction payloads'
+}
+
+Table dbo.BrandCategoryMapping {
+  MappingID integer [pk, increment]
+  BrandNameNorm varchar(200)
+  CategoryCode varchar(10)
+  CategoryName varchar(200)
+  Confidence decimal(5,4)
+  MappingSource varchar(50)
+  CreatedAt datetime2 [default: `getdate()`]
+
+  Note: 'Brand to Nielsen category mappings (113 canonical brands)'
+}
+
+Table dbo.Stores {
+  StoreID varchar(50) [pk]
+  StoreName varchar(200)
+  StoreCode varchar(20)
+  Region varchar(100)
+  Province varchar(100)
+  City varchar(100)
+  Barangay varchar(100)
+  Address nvarchar(500)
+  Latitude decimal(10,8)
+  Longitude decimal(11,8)
+  StoreType varchar(50)
+  Status varchar(20)
+  OpeningDate date
+
+  Note: 'Store master data (legacy schema)'
+}
+
+// =============================================================================
+// CES SCHEMA - Campaign Effectiveness System
+// =============================================================================
+
+Table ces.tbwa_campaigns {
+  campaign_id integer [pk, increment]
+  campaign_name varchar(300)
+  client_name varchar(100)
+  brand_name varchar(200)
+  campaign_type varchar(100)
+  start_date date
+  end_date date
+  budget decimal(15,2)
+  media_channels text
+  target_demographics text
+  kpi_metrics text
+  status varchar(50)
+  created_at datetime2 [default: `getdate()`]
+
+  Note: 'TBWA campaign master data'
+}
+
+Table ces.tbwa_creative_analysis {
+  analysis_id integer [pk, increment]
+  campaign_id integer
+  creative_asset_id varchar(100)
+  effectiveness_score decimal(5,2)
+  engagement_metrics text
+  brand_lift decimal(5,2)
+  conversion_rate decimal(5,4)
+  analyzed_at datetime2
+
+  Note: 'Creative effectiveness analysis'
+}
+
+// =============================================================================
+// KEY ANALYTICS VIEWS
+// =============================================================================
+
+View dbo.v_flat_export_sheet {
+  Note: '''
+    Primary flat export view for analytics
+    - 12,192 canonical transactions
+    - All key dimensions flattened
+    - Used by dashboards and exports
+    - Fixed join multiplication issue
+  '''
+}
+
+View dbo.v_flat_export_csvsafe {
+  Note: '''
+    CSV-safe version of flat export
+    - Strips CR/LF characters from text fields
+    - Handles NULL values properly
+    - Eliminates JSON parsing errors
+    - Same 12,192 row count as original
+  '''
+}
+
+View gold.v_transactions_flat {
+  Note: '''
+    Gold layer flat transaction view
+    - Clean, analytics-ready format
+    - Proper data types
+    - Quality validated
+  '''
+}
+
+View dbo.v_nielsen_complete_analytics {
+  Note: '''
+    Nielsen taxonomy integrated analytics
+    - Maps all 113 brands to Nielsen hierarchy
+    - 6-level category structure
+    - Reduces "Unspecified" from 48.3% to <10%
+  '''
+}
+
+// =============================================================================
+// RELATIONSHIPS
+// =============================================================================
+
+// Scout Schema Relationships
+Ref: scout.transactions.store_id > scout.stores.store_id
+Ref: scout.transactions.customer_id > scout.customers.customer_id
+Ref: scout.transaction_items.transaction_id > scout.transactions.transaction_id
+Ref: scout.transaction_items.product_id > scout.products.product_id
+Ref: scout.products.brand_id > scout.brands.brand_id
+
+// Reference Data Relationships
+Ref: ref.NielsenCategories.DepartmentCode > ref.NielsenDepartments.DepartmentCode
+Ref: ref.SkuDimensions.category_code > ref.NielsenCategories.CategoryCode
+Ref: dbo.BrandCategoryMapping.CategoryCode > ref.NielsenCategories.CategoryCode
+
+// Gold Layer Relationships
+Ref: gold.scout_dashboard_transactions.canonical_tx_id > scout.transactions.transaction_id
+
+// Legacy DBO Relationships
+Ref: dbo.SalesInteractions.StoreID > dbo.Stores.StoreID
+Ref: dbo.SalesInteractions.canonical_tx_id > scout.transactions.transaction_id
+
+// CES Relationships
+Ref: ces.tbwa_creative_analysis.campaign_id > ces.tbwa_campaigns.campaign_id
+
+// =============================================================================
+// INDEXES AND CONSTRAINTS
+// =============================================================================
+
+// Performance Indexes
+Note scout.transactions.transaction_datetime: 'Clustered index for time-based queries'
+Note scout.transaction_items.transaction_id: 'Foreign key index for joins'
+Note gold.scout_dashboard_transactions.canonical_tx_id: 'Unique constraint for data integrity'
+
+// Data Quality Constraints
+Note scout.transactions.total_amount: 'CHECK constraint: total_amount > 0'
+Note scout.transaction_items.quantity: 'CHECK constraint: quantity > 0'
+Note gold.scout_dashboard_transactions.basket_size: 'CHECK constraint: basket_size > 0'

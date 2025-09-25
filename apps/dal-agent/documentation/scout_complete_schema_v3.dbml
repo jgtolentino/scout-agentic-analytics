@@ -1,0 +1,1066 @@
+// ========================================================================
+// Scout Analytics Platform - Complete Database Schema v3.0
+// Database: SQL-TBWA-ProjectScout-Reporting-Prod
+// Updated: September 2025
+//
+// Medallion Architecture: Bronze → Silver → Gold → Platinum
+// Nielsen/Kantar FMCG Taxonomy Integration
+// Real-time ETL Pipeline with Deduplication
+// ========================================================================
+
+Project scout_analytics_platform {
+  database_type: 'Azure SQL Database'
+  note: '''
+    Scout Analytics Platform - Complete FMCG Retail Intelligence
+
+    **Architecture Layers:**
+    - Bronze: Raw data ingestion (PayloadTransactions)
+    - Silver: Cleaned and deduplicated (TransactionItems, SalesInteractions)
+    - Gold: Business intelligence views (v_transactions_flat_production)
+    - Platinum: Analytics aggregations (v_nielsen_complete_analytics)
+
+    **Key Features:**
+    - Nielsen/Kantar FMCG taxonomy alignment
+    - Real-time substitution pattern detection
+    - Market basket analysis with association rules
+    - Cross-tabulation analytics for brand/category insights
+    - Geographic analysis with store hierarchy
+    - Demographics and customer behavior tracking
+  '''
+}
+
+// ========================================================================
+// CORE SCHEMAS
+// ========================================================================
+
+// Default schema for all tables/views/procedures
+Schema dbo {
+  note: 'Main data objects - tables, views, stored procedures'
+}
+
+// Reference data and taxonomies
+Schema ref {
+  note: 'Reference data, taxonomies, and lookup tables'
+}
+
+// Gold layer analytics and aggregations
+Schema gold {
+  note: 'Gold layer - business intelligence aggregations'
+}
+
+// Audit and monitoring tables
+Schema audit {
+  note: 'Audit trails, processing logs, and monitoring data'
+}
+
+// ========================================================================
+// BRONZE LAYER - RAW DATA INGESTION
+// ========================================================================
+
+Table dbo.PayloadTransactions {
+  transaction_id varchar(50) [pk]
+  interaction_id varchar(50)
+  canonical_tx_id varchar(64) [note: 'Unique transaction identifier across systems']
+
+  // Raw JSON payload from source systems
+  payload_json nvarchar(max) [note: 'Complete transaction data as JSON']
+  payload_hash varchar(64) [note: 'SHA-256 hash for deduplication']
+
+  // Extracted core fields
+  txn_ts datetime2 [note: 'Transaction timestamp']
+  total_amount decimal(12,2)
+  total_items int
+  payment_method varchar(50)
+  store_id varchar(50)
+
+  // Processing metadata
+  source_system varchar(100) [note: 'Origin system identifier']
+  ingestion_timestamp datetime2 [default: 'GETDATE()']
+  processing_status varchar(20) [default: 'pending', note: 'pending|processing|completed|error']
+  etl_batch_id varchar(100)
+
+  // Quality flags
+  is_duplicate bit [default: 0]
+  validation_errors nvarchar(1000)
+  quality_score decimal(3,2)
+
+  Indexes {
+    canonical_tx_id [unique]
+    payload_hash
+    (ingestion_timestamp, processing_status)
+    (store_id, txn_ts)
+    etl_batch_id
+  }
+}
+
+Table dbo.SalesInteractions {
+  interaction_id varchar(50) [pk]
+  canonical_tx_id varchar(64)
+  session_id varchar(100)
+
+  // Customer demographics
+  age_bracket varchar(20) [note: '18-24, 25-34, 35-44, 45-54, 55+']
+  gender varchar(10) [note: 'Male, Female, Other']
+  customer_type varchar(50) [note: 'Regular, First-time, Loyal, VIP']
+
+  // Interaction context
+  interaction_type varchar(50) [note: 'purchase, inquiry, substitution, complaint']
+  channel varchar(30) [note: 'in-store, online, mobile, phone']
+
+  // Behavioral data
+  emotions varchar(100) [note: 'Happy, Neutral, Satisfied, Frustrated']
+  session_duration_minutes int
+  interaction_timestamp datetime2
+
+  // Store context
+  store_id varchar(50)
+  staff_id varchar(50)
+
+  // Substitution tracking
+  substitution_event varchar(10) [note: 'true, false, or empty']
+  substitution_reason varchar(100)
+  suggestion_accepted varchar(10) [note: 'Yes, No, or empty']
+
+  Indexes {
+    canonical_tx_id
+    (age_bracket, gender)
+    (interaction_timestamp, store_id)
+    substitution_event
+  }
+}
+
+// ========================================================================
+// SILVER LAYER - CLEANED TRANSACTION DATA
+// ========================================================================
+
+Table dbo.TransactionItems {
+  item_id bigint [pk, increment]
+  transaction_id varchar(50)
+  canonical_tx_id varchar(64)
+
+  // Product identification
+  product_name varchar(200)
+  sku_name varchar(200)
+  barcode varchar(50)
+
+  // Brand detection (enhanced with ML)
+  brand_detected varchar(100) [note: 'ML-enhanced brand detection']
+  brand_confidence decimal(3,2)
+
+  // Category classification
+  category_detected varchar(100) [note: 'Auto-detected product category']
+  nielsen_category varchar(100) [note: 'Nielsen FMCG taxonomy category']
+  nielsen_department varchar(100) [note: 'Nielsen department classification']
+
+  // Product details
+  pack_size varchar(50) [note: 'Package size (e.g., 500ml, 1kg)']
+  unit_price decimal(10,2)
+  quantity int [default: 1]
+  total_price decimal(10,2)
+
+  // Quality and confidence
+  extraction_confidence decimal(3,2)
+  data_quality_score decimal(3,2)
+
+  // Processing metadata
+  extracted_timestamp datetime2 [default: 'GETDATE()']
+  processing_batch_id varchar(100)
+
+  Indexes {
+    canonical_tx_id
+    transaction_id
+    (brand_detected, category_detected)
+    (nielsen_category, nielsen_department)
+    barcode
+    extracted_timestamp
+  }
+}
+
+Table dbo.Transactions {
+  transaction_id varchar(50) [pk]
+  canonical_tx_id varchar(64) [unique]
+  interaction_id varchar(50)
+
+  // Transaction metadata
+  txn_ts datetime2
+  store_id varchar(50)
+  total_amount decimal(12,2)
+  total_items int
+  payment_method varchar(50)
+
+  // Enhanced fields
+  daypart varchar(20) [note: 'Morning, Afternoon, Evening, Night']
+  weekday_weekend varchar(20) [note: 'Weekday, Weekend']
+
+  // Processing status
+  processing_status varchar(20) [default: 'active']
+  created_timestamp datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    canonical_tx_id [unique]
+    (store_id, txn_ts)
+    processing_status
+  }
+}
+
+// ========================================================================
+// BUSINESS INTELLIGENCE TABLES
+// ========================================================================
+
+Table dbo.BrandSubstitutions {
+  substitution_id bigint [pk, increment]
+  interaction_id varchar(50)
+  transaction_id varchar(50)
+  canonical_tx_id varchar(64)
+
+  // Original request
+  original_brand varchar(100)
+  original_product varchar(200)
+  original_sku varchar(100)
+
+  // Substitution made
+  substituted_brand varchar(100)
+  substituted_product varchar(200)
+  substituted_sku varchar(100)
+
+  // Analysis fields
+  substitution_reason varchar(100) [note: 'out_of_stock, price, customer_preference, promotion']
+  suggestion_accepted bit [default: 0]
+  customer_requested bit [default: 0]
+
+  // Financial impact
+  original_price decimal(10,2)
+  substituted_price decimal(10,2)
+  price_difference decimal(10,2) [note: 'Computed: substituted_price - original_price']
+
+  // Detection metadata
+  confidence_score decimal(3,2)
+  detection_timestamp datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    (original_brand, substituted_brand)
+    suggestion_accepted
+    transaction_id
+    detection_timestamp
+  }
+}
+
+Table dbo.TransactionBaskets {
+  basket_id bigint [pk, increment]
+  transaction_id varchar(50) [unique]
+  canonical_tx_id varchar(64)
+  interaction_id varchar(50)
+
+  // Basket composition
+  total_items int
+  unique_products int
+  unique_brands int
+  unique_categories int
+
+  // Basket value
+  total_basket_value decimal(12,2)
+  avg_item_price decimal(10,2)
+  max_item_price decimal(10,2)
+
+  // Product mix (JSON format)
+  product_list nvarchar(max) [note: 'JSON array of products with quantities']
+  brand_list nvarchar(max) [note: 'JSON array of brands in basket']
+  category_list nvarchar(max) [note: 'JSON array of categories']
+
+  // Category flags for quick analysis
+  has_tobacco bit [default: 0]
+  has_laundry bit [default: 0]
+  has_beverages bit [default: 0]
+  has_snacks bit [default: 0]
+
+  // Timing
+  basket_timestamp datetime2
+
+  Indexes {
+    transaction_id [unique]
+    total_basket_value
+    total_items
+    (has_tobacco, has_laundry, has_beverages)
+  }
+}
+
+Table dbo.ProductAssociations {
+  association_id bigint [pk, increment]
+
+  // Product pair
+  product_a varchar(200)
+  product_b varchar(200)
+  brand_a varchar(100)
+  brand_b varchar(100)
+  category_a varchar(100)
+  category_b varchar(100)
+
+  // Association metrics (Apriori algorithm)
+  support_count int [note: 'Number of transactions with both products']
+  support_percentage decimal(5,2) [note: 'Percentage of total transactions']
+  confidence decimal(5,2) [note: 'P(B|A) - probability of B given A']
+  lift decimal(5,2) [note: 'Lift = confidence / P(B)']
+  conviction decimal(5,2) [note: 'Conviction = (1-P(B))/(1-confidence)']
+
+  // Business metrics
+  co_occurrence_frequency int
+  avg_basket_value decimal(10,2)
+  total_revenue_impact decimal(12,2)
+
+  // Analysis metadata
+  analysis_date datetime2 [default: 'GETDATE()']
+  min_support_threshold decimal(3,2)
+  min_confidence_threshold decimal(3,2)
+
+  Indexes {
+    (product_a, product_b)
+    (brand_a, brand_b)
+    (category_a, category_b)
+    support_percentage
+    confidence
+    lift
+  }
+}
+
+Table dbo.TransactionCompletionStatus {
+  completion_id bigint [pk, increment]
+  canonical_tx_id varchar(64) [unique]
+  transaction_id varchar(50)
+
+  // Completion tracking
+  is_completed bit [default: 0]
+  completion_stage varchar(50) [note: 'initiated, items_selected, payment_attempted, completed, abandoned']
+  completion_timestamp datetime2
+
+  // Analysis fields
+  items_requested int
+  items_fulfilled int
+  fulfillment_rate decimal(5,2)
+  abandonment_reason varchar(100)
+
+  // Financial impact
+  intended_total decimal(12,2)
+  actual_total decimal(12,2)
+  revenue_loss decimal(12,2)
+
+  Indexes {
+    canonical_tx_id [unique]
+    is_completed
+    completion_stage
+    fulfillment_rate
+  }
+}
+
+// ========================================================================
+// GEOGRAPHIC HIERARCHY
+// ========================================================================
+
+Table dbo.Region {
+  RegionID int [pk]
+  RegionName varchar(100)
+  RegionCode varchar(10)
+  Country varchar(50) [default: 'Philippines']
+
+  Indexes {
+    RegionCode [unique]
+  }
+}
+
+Table dbo.Province {
+  ProvinceID int [pk]
+  ProvinceName varchar(100)
+  ProvinceCode varchar(10)
+  RegionID int [ref: > dbo.Region.RegionID]
+
+  Indexes {
+    ProvinceCode [unique]
+    RegionID
+  }
+}
+
+Table dbo.Municipality {
+  MunicipalityID int [pk]
+  MunicipalityName varchar(100)
+  MunicipalityCode varchar(10)
+  ProvinceID int [ref: > dbo.Province.ProvinceID]
+
+  Indexes {
+    MunicipalityCode [unique]
+    ProvinceID
+  }
+}
+
+Table dbo.MunicipalityPolygon {
+  PolygonID int [pk, increment]
+  MunicipalityID int [ref: > dbo.Municipality.MunicipalityID]
+  PolygonData nvarchar(max) [note: 'GeoJSON polygon data for mapping']
+
+  Indexes {
+    MunicipalityID
+  }
+}
+
+Table dbo.Barangay {
+  BarangayID int [pk]
+  BarangayName varchar(100)
+  BarangayCode varchar(15)
+  MunicipalityID int [ref: > dbo.Municipality.MunicipalityID]
+
+  Indexes {
+    BarangayCode [unique]
+    MunicipalityID
+  }
+}
+
+Table dbo.Stores {
+  StoreID varchar(50) [pk]
+  StoreName varchar(200)
+  StoreType varchar(50) [note: 'Supermarket, Convenience, Hypermarket, etc.']
+
+  // Geographic location
+  RegionID int [ref: > dbo.Region.RegionID]
+  ProvinceID int [ref: > dbo.Province.ProvinceID]
+  MunicipalityID int [ref: > dbo.Municipality.MunicipalityID]
+  BarangayID int [ref: > dbo.Barangay.BarangayID]
+
+  // Address details
+  Address varchar(500)
+  PostalCode varchar(10)
+  Latitude decimal(10,8)
+  Longitude decimal(11,8)
+
+  // Store metadata
+  IsActive bit [default: 1]
+  OpeningDate datetime2
+  StoreSize varchar(20) [note: 'Small, Medium, Large, Extra Large']
+
+  Indexes {
+    (RegionID, ProvinceID)
+    MunicipalityID
+    IsActive
+    StoreType
+  }
+}
+
+// ========================================================================
+// NIELSEN/KANTAR TAXONOMY TABLES
+// ========================================================================
+
+Table dbo.BrandCategoryMapping {
+  mapping_id bigint [pk, increment]
+  brand_name varchar(100)
+
+  // Nielsen taxonomy
+  nielsen_category varchar(100)
+  nielsen_department varchar(100)
+  nielsen_sub_category varchar(100)
+
+  // Kantar taxonomy (optional)
+  kantar_category varchar(100)
+  kantar_segment varchar(100)
+
+  // Mapping metadata
+  confidence_score decimal(3,2) [default: 1.0]
+  mapping_source varchar(50) [note: 'manual, automated, ml_predicted']
+  created_date datetime2 [default: 'GETDATE()']
+  updated_date datetime2
+  is_active bit [default: 1]
+
+  // Validation fields
+  validated_by varchar(100)
+  validation_date datetime2
+  validation_notes nvarchar(500)
+
+  Indexes {
+    brand_name
+    (nielsen_category, nielsen_department)
+    mapping_source
+    is_active
+    created_date
+  }
+}
+
+Table ref.nielsen_departments {
+  department_id int [pk, increment]
+  department_name varchar(100) [unique]
+  department_code varchar(20)
+
+  // Hierarchy
+  parent_department_id int [ref: > ref.nielsen_departments.department_id]
+  hierarchy_level int [default: 1]
+
+  // Metadata
+  description nvarchar(500)
+  is_active bit [default: 1]
+  sort_order int
+
+  Indexes {
+    department_name [unique]
+    department_code
+    parent_department_id
+    is_active
+  }
+}
+
+Table ref.nielsen_categories {
+  category_id int [pk, increment]
+  category_name varchar(100) [unique]
+  category_code varchar(20)
+  department_id int [ref: > ref.nielsen_departments.department_id]
+
+  // Category attributes
+  sub_category varchar(100)
+  category_type varchar(50) [note: 'FMCG, Non-FMCG, Service']
+
+  // Metadata
+  description nvarchar(500)
+  is_active bit [default: 1]
+  sort_order int
+
+  Indexes {
+    category_name [unique]
+    category_code
+    department_id
+    category_type
+    is_active
+  }
+}
+
+Table ref.nielsen_brand_map {
+  brand_mapping_id bigint [pk, increment]
+  original_brand_name varchar(100)
+  standardized_brand_name varchar(100)
+
+  // Nielsen alignment
+  nielsen_category varchar(100)
+  nielsen_department varchar(100)
+  category_id int [ref: > ref.nielsen_categories.category_id]
+  department_id int [ref: > ref.nielsen_departments.department_id]
+
+  // Mapping confidence and source
+  confidence_score decimal(3,2) [default: 1.0]
+  mapping_method varchar(50) [note: 'exact_match, fuzzy_match, manual, ml_prediction']
+
+  // Audit fields
+  created_by varchar(100)
+  created_date datetime2 [default: 'GETDATE()']
+  last_updated datetime2
+  is_verified bit [default: 0]
+
+  Indexes {
+    original_brand_name
+    standardized_brand_name
+    (nielsen_category, nielsen_department)
+    confidence_score
+    mapping_method
+    is_verified
+  }
+}
+
+// ========================================================================
+// ANALYTICS AND CATEGORY TABLES
+// ========================================================================
+
+Table dbo.TobaccoAnalytics {
+  tobacco_id bigint [pk, increment]
+  canonical_tx_id varchar(64)
+  transaction_id varchar(50)
+
+  // Tobacco product details
+  brand_name varchar(100)
+  product_type varchar(50) [note: 'Cigarettes, Vape, E-cigarette, Tobacco']
+  pack_size varchar(20)
+  flavor_variant varchar(100)
+
+  // Purchase analysis
+  purchase_frequency varchar(20) [note: 'Daily, Weekly, Monthly, Occasional']
+  brand_loyalty_score decimal(3,2)
+  price_sensitivity varchar(20) [note: 'High, Medium, Low']
+
+  // Cross-sell opportunities
+  associated_categories nvarchar(500) [note: 'JSON array of frequently bought together categories']
+  basket_penetration_rate decimal(5,2)
+
+  // Regulatory compliance
+  age_verification_required bit [default: 1]
+  regulatory_warnings nvarchar(1000)
+
+  Indexes {
+    canonical_tx_id
+    brand_name
+    product_type
+    purchase_frequency
+  }
+}
+
+Table dbo.BeverageAnalytics {
+  beverage_id bigint [pk, increment]
+  canonical_tx_id varchar(64)
+  transaction_id varchar(50)
+
+  // Beverage categorization
+  beverage_type varchar(50) [note: 'Soft Drink, Energy Drink, Juice, Water, Alcohol']
+  brand_name varchar(100)
+  flavor varchar(100)
+  container_type varchar(30) [note: 'Bottle, Can, Tetra Pack, Cup']
+  volume_ml int
+
+  // Consumer preferences
+  sugar_content varchar(20) [note: 'Regular, Zero Sugar, Low Sugar']
+  caffeine_content varchar(20) [note: 'High, Medium, Low, None']
+  temperature_preference varchar(20) [note: 'Cold, Room Temperature, Hot']
+
+  // Market analysis
+  seasonal_trend varchar(20) [note: 'Summer Peak, Year Round, Winter Peak']
+  occasion_type varchar(50) [note: 'Meal, Snack, Exercise, Work']
+
+  Indexes {
+    canonical_tx_id
+    beverage_type
+    brand_name
+    volume_ml
+  }
+}
+
+Table dbo.LaundryAnalytics {
+  laundry_id bigint [pk, increment]
+  canonical_tx_id varchar(64)
+  transaction_id varchar(50)
+
+  // Product classification
+  product_type varchar(50) [note: 'Detergent Powder, Liquid Detergent, Fabric Softener, Bleach']
+  brand_name varchar(100)
+  package_size varchar(20)
+  scent varchar(50)
+
+  // Product attributes
+  formulation varchar(30) [note: 'Concentrated, Regular, Ultra-concentrated']
+  target_fabric varchar(50) [note: 'All Fabric, Delicate, White, Colors']
+  eco_friendly bit [default: 0]
+
+  // Usage analysis
+  household_size_indicator varchar(20) [note: 'Single, Small Family, Large Family']
+  purchase_cycle_days int [note: 'Estimated days between purchases']
+
+  Indexes {
+    canonical_tx_id
+    product_type
+    brand_name
+    formulation
+  }
+}
+
+Table dbo.CategoryDataQuality {
+  quality_id bigint [pk, increment]
+  category_name varchar(100)
+
+  // Data completeness metrics
+  total_transactions int
+  complete_brand_detection int
+  complete_category_classification int
+  complete_price_data int
+
+  // Quality scores
+  brand_detection_rate decimal(5,2)
+  category_classification_rate decimal(5,2)
+  price_data_completeness decimal(5,2)
+  overall_quality_score decimal(5,2)
+
+  // Improvement recommendations
+  primary_quality_issue varchar(200)
+  recommended_action nvarchar(500)
+  priority_level varchar(20) [note: 'High, Medium, Low']
+
+  // Analysis metadata
+  analysis_date datetime2 [default: 'GETDATE()']
+  data_period_start datetime2
+  data_period_end datetime2
+
+  Indexes {
+    category_name
+    overall_quality_score
+    analysis_date
+    priority_level
+  }
+}
+
+// ========================================================================
+// AUDIT AND MONITORING TABLES
+// ========================================================================
+
+Table audit.ETLProcessingLog {
+  log_id bigint [pk, increment]
+  process_name varchar(200)
+  batch_id varchar(100)
+
+  // Process execution
+  start_time datetime2 [default: 'GETDATE()']
+  end_time datetime2
+  status varchar(20) [note: 'running, completed, failed, warning']
+
+  // Processing metrics
+  records_processed int
+  records_successful int
+  records_failed int
+  processing_duration_seconds int
+
+  // Error handling
+  error_message nvarchar(max)
+  error_details nvarchar(max)
+  retry_count int [default: 0]
+
+  // Resource usage
+  cpu_time_seconds decimal(10,3)
+  memory_used_mb decimal(10,2)
+
+  Indexes {
+    process_name
+    batch_id
+    (start_time, status)
+    status
+  }
+}
+
+Table audit.VisionAnalysisAudit {
+  audit_id bigint [pk, increment]
+  transaction_id varchar(50)
+  canonical_tx_id varchar(64)
+
+  // Vision analysis metadata
+  analysis_type varchar(50) [note: 'brand_detection, category_classification, ocr_extraction']
+  confidence_score decimal(3,2)
+  processing_time_ms int
+
+  // Results
+  detected_items nvarchar(max) [note: 'JSON array of detected items']
+  raw_ocr_text nvarchar(max)
+  processed_results nvarchar(max)
+
+  // Quality metrics
+  accuracy_score decimal(3,2)
+  false_positive_likelihood decimal(3,2)
+
+  // Processing details
+  model_version varchar(50)
+  analysis_timestamp datetime2 [default: 'GETDATE()']
+  processing_server varchar(100)
+
+  Indexes {
+    canonical_tx_id
+    analysis_type
+    confidence_score
+    analysis_timestamp
+  }
+}
+
+// ========================================================================
+// GOLD LAYER - BUSINESS INTELLIGENCE VIEWS
+// ========================================================================
+
+// Note: Views are documented separately in the view definitions
+// Key views include:
+// - dbo.v_transactions_flat_production (main transaction view)
+// - dbo.v_nielsen_complete_analytics (Nielsen taxonomy aligned view)
+// - dbo.v_insight_base (customer insights and behavior)
+// - dbo.v_xtab_time_brand_category_abs (cross-tabulation analytics)
+// - dbo.v_data_quality_monitor (data quality dashboard)
+// - dbo.v_pipeline_realtime_monitor (ETL pipeline monitoring)
+// - dbo.v_flat_export_sheet (flat export for analytics tools)
+
+// ========================================================================
+// PHILIPPINE SARI-SARI STORE DIMENSIONS (Phase 1 Implementation)
+// ========================================================================
+
+Table ref.manufacturer_directory {
+  manufacturer_id int [pk, increment]
+  manufacturer_name nvarchar(100) [not null]
+  manufacturer_code nvarchar(20) [unique, not null, note: 'Standardized manufacturer code']
+  manufacturer_type nvarchar(50) [not null, note: 'Local|Multinational|Regional']
+  country_origin nvarchar(50) [null]
+  is_active bit [default: 1]
+  created_date datetime2 [default: 'GETDATE()']
+  updated_date datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    manufacturer_code [name: 'IX_manufacturer_directory_code']
+    manufacturer_name [name: 'IX_manufacturer_directory_name']
+    is_active [name: 'IX_manufacturer_directory_active']
+  }
+
+  note: 'Central registry of all manufacturers with standardized naming and classification'
+}
+
+Table ref.sari_sari_product_dimensions {
+  product_id int [pk, increment]
+  product_name nvarchar(200) [not null]
+  brand_name nvarchar(100) [not null]
+  category_name nvarchar(100) [not null]
+  subcategory_name nvarchar(100) [null]
+  manufacturer_id int [not null, ref: > ref.manufacturer_directory.manufacturer_id]
+
+  // Product specifications
+  package_size nvarchar(50) [null, note: 'e.g., 25g, 1 piece, sachet']
+  package_type nvarchar(50) [null, note: 'sachet|piece|pack|bottle']
+  unit_weight_grams decimal(10,2) [null]
+  is_sachet_economy bit [default: 0, note: 'Optimized for tingi (small purchase) culture']
+  pieces_per_pack int [null]
+
+  // Pricing information
+  suggested_retail_price decimal(10,2) [null]
+  typical_sari_sari_price decimal(10,2) [null]
+  bulk_wholesale_price decimal(10,2) [null]
+  price_currency nvarchar(10) [default: 'PHP']
+
+  // Product attributes
+  flavor_variant nvarchar(100) [null]
+  is_premium_tier bit [default: 0]
+  target_age_group nvarchar(50) [null, note: 'Kids|Teen|Adult|All Ages']
+  consumption_occasion nvarchar(100) [null, note: 'Snack|Meal|Breakfast|etc']
+
+  // Nielsen/Kantar alignment
+  nielsen_category_code nvarchar(20) [null]
+  kantar_brand_code nvarchar(20) [null]
+
+  // Metadata
+  source_id nvarchar(50) [not null, default: 'SARI_SARI_CATALOG_2025']
+  is_active bit [default: 1]
+  created_date datetime2 [default: 'GETDATE()']
+  updated_date datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    brand_name [name: 'IX_product_brand']
+    category_name [name: 'IX_product_category']
+    manufacturer_id [name: 'IX_product_manufacturer']
+    is_sachet_economy [name: 'IX_product_sachet']
+    is_active [name: 'IX_product_active']
+    source_id [name: 'IX_product_source']
+  }
+
+  note: 'Core product catalog with Philippine-specific attributes and sachet economy optimization'
+}
+
+Table ref.regional_price_variations {
+  price_variation_id int [pk, increment]
+  product_id int [not null, ref: > ref.sari_sari_product_dimensions.product_id]
+  region_name nvarchar(100) [not null, note: 'NCR|Luzon|Visayas|Mindanao|etc']
+  province_name nvarchar(100) [null]
+  city_municipality nvarchar(100) [null]
+
+  // Pricing data
+  local_retail_price decimal(10,2) [not null]
+  wholesale_price decimal(10,2) [null]
+  price_variance_percentage decimal(5,2) [null, note: 'vs national average']
+  price_source nvarchar(100) [null, note: 'Market Survey|Retailer Report|etc']
+
+  // Market conditions
+  availability_score decimal(3,2) [null, note: '0.0-1.0 scale']
+  market_penetration decimal(5,2) [null, note: 'percentage']
+  competition_intensity nvarchar(50) [null, note: 'Low|Medium|High']
+
+  // Metadata
+  price_date date [not null, default: 'GETDATE()']
+  source_id nvarchar(50) [not null, default: 'REGIONAL_PRICE_SURVEY_2025']
+  is_active bit [default: 1]
+  created_date datetime2 [default: 'GETDATE()']
+  updated_date datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    product_id [name: 'IX_price_product']
+    region_name [name: 'IX_price_region']
+    price_date [name: 'IX_price_date']
+    is_active [name: 'IX_price_active']
+    source_id [name: 'IX_price_source']
+  }
+
+  note: 'Regional pricing variations across Philippines with market conditions and logistics factors'
+}
+
+// Enhanced TransactionItems table with source_id tracking
+Table dbo.TransactionItems {
+  transaction_item_id varchar(100) [pk]
+  transaction_id varchar(50) [not null]
+  canonical_tx_id varchar(64)
+
+  // Product identification
+  item_key varchar(200)
+  product_code varchar(100)
+  product_name varchar(500)
+  brand_detected varchar(200)
+  category_detected varchar(200)
+  subcategory_detected varchar(200)
+
+  // Quantity and pricing
+  quantity decimal(10,2)
+  unit_price decimal(10,2)
+  total_price decimal(10,2)
+  discount_amount decimal(10,2)
+
+  // Product attributes
+  package_size varchar(100)
+  unit_of_measure varchar(50)
+
+  // Analytics flags
+  is_substitution bit [default: 0]
+  is_cross_sell bit [default: 0]
+  is_upsell bit [default: 0]
+
+  // Source tracking (ADDED for Philippine integration)
+  source_id nvarchar(50) [null, note: 'Source system identifier for audit tracking']
+
+  // Metadata
+  created_date datetime2 [default: 'GETDATE()']
+  updated_date datetime2 [default: 'GETDATE()']
+
+  Indexes {
+    transaction_id [name: 'IX_TransactionItems_transaction_id']
+    canonical_tx_id [name: 'IX_TransactionItems_canonical_tx_id']
+    brand_detected [name: 'IX_TransactionItems_brand']
+    category_detected [name: 'IX_TransactionItems_category']
+    source_id [name: 'IX_TransactionItems_source_id']
+    (transaction_id, item_key) [name: 'IX_TransactionItems_transaction_item']
+  }
+
+  note: 'Enhanced with source_id tracking for Philippine dimension integration and audit trails'
+}
+
+// Analytics views for Philippine dimensions
+Table ref.v_product_analytics {
+  product_id int [pk]
+  product_name nvarchar(200)
+  brand_name nvarchar(100)
+  category_name nvarchar(100)
+  manufacturer_name nvarchar(100)
+  manufacturer_type nvarchar(50)
+  country_origin nvarchar(50)
+  is_sachet_economy bit
+  suggested_retail_price decimal(10,2)
+  typical_sari_sari_price decimal(10,2)
+  retail_markup_percentage decimal(5,2)
+  economy_segment nvarchar(50)
+
+  note: 'Product analytics view with manufacturer information and economic segmentation'
+}
+
+Table ref.v_regional_pricing_analytics {
+  product_id int [pk]
+  product_name nvarchar(200)
+  brand_name nvarchar(100)
+  category_name nvarchar(100)
+  region_name nvarchar(100)
+  local_retail_price decimal(10,2)
+  price_variance_percentage decimal(5,2)
+  availability_score decimal(3,2)
+  market_positioning nvarchar(50)
+  availability_tier nvarchar(50)
+
+  note: 'Regional pricing analytics with market positioning and availability assessment'
+}
+
+// ========================================================================
+// RELATIONSHIPS
+// ========================================================================
+
+Ref: dbo.PayloadTransactions.canonical_tx_id - dbo.Transactions.canonical_tx_id
+Ref: dbo.Transactions.transaction_id < dbo.TransactionItems.transaction_id
+Ref: dbo.Transactions.canonical_tx_id - dbo.SalesInteractions.canonical_tx_id
+Ref: dbo.Transactions.store_id > dbo.Stores.StoreID
+
+Ref: dbo.TransactionBaskets.transaction_id - dbo.Transactions.transaction_id
+Ref: dbo.BrandSubstitutions.transaction_id > dbo.Transactions.transaction_id
+Ref: dbo.TransactionCompletionStatus.canonical_tx_id - dbo.Transactions.canonical_tx_id
+
+// Geographic hierarchy
+Ref: dbo.Stores.RegionID > dbo.Region.RegionID
+Ref: dbo.Stores.ProvinceID > dbo.Province.ProvinceID
+Ref: dbo.Stores.MunicipalityID > dbo.Municipality.MunicipalityID
+Ref: dbo.Stores.BarangayID > dbo.Barangay.BarangayID
+
+// Nielsen taxonomy relationships
+Ref: ref.nielsen_categories.department_id > ref.nielsen_departments.department_id
+Ref: ref.nielsen_brand_map.category_id > ref.nielsen_categories.category_id
+Ref: ref.nielsen_brand_map.department_id > ref.nielsen_departments.department_id
+
+// Category analytics
+Ref: dbo.TobaccoAnalytics.canonical_tx_id > dbo.Transactions.canonical_tx_id
+Ref: dbo.BeverageAnalytics.canonical_tx_id > dbo.Transactions.canonical_tx_id
+Ref: dbo.LaundryAnalytics.canonical_tx_id > dbo.Transactions.canonical_tx_id
+
+// Audit relationships
+Ref: audit.VisionAnalysisAudit.canonical_tx_id > dbo.Transactions.canonical_tx_id
+
+// Philippine dimension relationships (ADDED)
+Ref: ref.sari_sari_product_dimensions.manufacturer_id > ref.manufacturer_directory.manufacturer_id
+Ref: ref.regional_price_variations.product_id > ref.sari_sari_product_dimensions.product_id
+
+// ========================================================================
+// TABLE GROUPS FOR VISUALIZATION
+// ========================================================================
+
+TableGroup bronze_layer {
+  dbo.PayloadTransactions
+  dbo.SalesInteractions
+
+  note: "Bronze Layer - Raw data ingestion from source systems"
+}
+
+TableGroup silver_layer {
+  dbo.Transactions
+  dbo.TransactionItems
+
+  note: "Silver Layer - Cleaned and structured transaction data"
+}
+
+TableGroup business_intelligence {
+  dbo.BrandSubstitutions
+  dbo.TransactionBaskets
+  dbo.ProductAssociations
+  dbo.TransactionCompletionStatus
+
+  note: "Business Intelligence - Advanced analytics tables"
+}
+
+TableGroup geography {
+  dbo.Region
+  dbo.Province
+  dbo.Municipality
+  dbo.Barangay
+  dbo.Stores
+  dbo.MunicipalityPolygon
+
+  note: "Geographic Hierarchy - Philippines location data"
+}
+
+TableGroup nielsen_taxonomy {
+  dbo.BrandCategoryMapping
+  ref.nielsen_departments
+  ref.nielsen_categories
+  ref.nielsen_brand_map
+
+  note: "Nielsen/Kantar FMCG Taxonomy - Brand and category classification"
+}
+
+TableGroup category_analytics {
+  dbo.TobaccoAnalytics
+  dbo.BeverageAnalytics
+  dbo.LaundryAnalytics
+  dbo.CategoryDataQuality
+
+  note: "Category-Specific Analytics - Deep-dive analysis by product category"
+}
+
+TableGroup audit_monitoring {
+  audit.ETLProcessingLog
+  audit.VisionAnalysisAudit
+
+  note: "Audit & Monitoring - Process tracking and quality assurance"
+}
+
+TableGroup philippine_dimensions {
+  ref.manufacturer_directory
+  ref.sari_sari_product_dimensions
+  ref.regional_price_variations
+  ref.v_product_analytics
+  ref.v_regional_pricing_analytics
+
+  note: "Philippine Sari-Sari Store Dimensions - FMCG product catalog, manufacturer registry, and regional pricing variations optimized for Philippine retail market and sachet economy"
+}

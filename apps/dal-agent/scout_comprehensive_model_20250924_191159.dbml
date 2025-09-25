@@ -1,0 +1,545 @@
+// Scout Analytics Platform - Comprehensive Data Model
+// Generated from 700 payload files
+// Covers 700 transactions with 0 items
+
+Project scout_comprehensive_analytics {
+  database_type: 'Azure SQL'
+  Note: '''
+    Comprehensive Scout retail analytics data model
+    Generated from real payload transaction analysis
+    Supports granular item-level transaction tracking
+    Includes AI brand detection and multi-modal analysis
+  '''
+}
+
+// === CORE TRANSACTION INFRASTRUCTURE ===
+
+Table transactions {
+  transaction_id varchar(50) [pk, note: 'UUID transaction identifier']
+  canonical_tx_id varchar(50) [unique, note: 'Normalized transaction ID']
+  session_id varchar(100) [note: 'Session identifier for grouping']
+  device_id varchar(50) [ref: > devices.device_id, note: 'IoT device reference (e.g., SCOUTPI-0002)']
+  store_id varchar(50) [ref: > stores.store_id, note: 'Store location identifier']
+  transaction_timestamp datetime [note: 'Transaction occurrence time']
+  ingestion_timestamp datetime [default: `now()`, note: 'Data ingestion time']
+
+  // Customer attributes (AI-detected)
+  customer_age int [note: 'AI-detected customer age']
+  customer_gender varchar(20) [note: 'AI-detected customer gender']
+  customer_emotion varchar(50) [note: 'AI-detected emotional state']
+
+  // Transaction totals
+  total_amount decimal(12,2) [note: 'Total transaction amount']
+  total_units int [note: 'Total units purchased']
+  total_items int [note: 'Total distinct items']
+
+  // Transaction metadata
+  payment_method varchar(20) [note: 'Payment method used']
+  transaction_duration_seconds int [note: 'Transaction duration']
+
+  // AI processing flags
+  has_audio_transcript boolean [default: false, note: 'Audio transcription available']
+  has_vision_detection boolean [default: false, note: 'Vision analysis available']
+  has_brand_detection boolean [default: false, note: 'Brand detection performed']
+
+  // Raw data reference
+  source_file_path varchar(1000) [note: 'Original JSON file path']
+  source_file_size int [note: 'Original file size in bytes']
+  processing_status varchar(20) [default: 'processed', note: 'Processing status']
+
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+
+  indexes {
+    (device_id, transaction_timestamp) [name: 'idx_device_timestamp']
+    (store_id, transaction_timestamp) [name: 'idx_store_timestamp']
+    transaction_timestamp [name: 'idx_timestamp']
+    processing_status [name: 'idx_processing_status']
+  }
+
+  Note: 'Core transaction records with AI-enhanced metadata'
+}
+
+// === GRANULAR ITEM-LEVEL TRACKING ===
+
+Table transaction_items {
+  item_id bigint [pk, increment, note: 'Auto-increment item identifier']
+  transaction_id varchar(50) [ref: > transactions.transaction_id, note: 'Parent transaction']
+  item_sequence_number int [note: 'Item order within transaction']
+
+  // Product identification
+  product_name varchar(300) [note: 'Product name as detected/transcribed']
+  brand_name varchar(150) [note: 'Brand name']
+  category varchar(100) [note: 'Product category']
+  subcategory varchar(100) [note: 'Product subcategory']
+  sku varchar(100) [note: 'Stock keeping unit']
+  barcode varchar(50) [note: 'Product barcode/UPC']
+
+  // Pricing and quantity
+  unit_price decimal(10,2) [note: 'Price per unit']
+  quantity decimal(8,2) [note: 'Quantity purchased (supports fractional)']
+  total_price decimal(12,2) [note: 'Total line item price']
+  currency_code varchar(3) [default: 'PHP', note: 'Currency code']
+
+  // Product attributes
+  package_size varchar(100) [note: 'Package size (e.g., "250ml", "1kg")']
+  weight_grams decimal(10,2) [note: 'Product weight in grams']
+  volume_ml decimal(10,2) [note: 'Product volume in milliliters']
+  unit_of_measure varchar(20) [note: 'Unit of measure (pieces, kg, liters, etc.)']
+
+  // Transaction behavior
+  is_substitution boolean [default: false, note: 'Item is a substitution']
+  original_product_requested varchar(300) [note: 'Original product if substituted']
+  substitution_reason varchar(200) [note: 'Reason for substitution']
+  suggestion_source varchar(50) [note: 'Source of suggestion (ai|staff|customer)']
+  suggestion_accepted boolean [note: 'Whether AI suggestion was accepted']
+
+  // Detection metadata
+  detection_confidence decimal(3,2) [note: 'AI detection confidence (0.00-1.00)']
+  detection_method varchar(50) [note: 'How item was detected (vision|audio|manual)']
+
+  created_at datetime [default: `now()`]
+
+  indexes {
+    transaction_id [name: 'idx_items_transaction']
+    brand_name [name: 'idx_items_brand']
+    category [name: 'idx_items_category']
+    (transaction_id, item_sequence_number) [name: 'idx_items_sequence']
+  }
+
+  Note: 'Granular item-level transaction details with AI detection metadata'
+}
+
+// === AI BRAND DETECTION SYSTEM ===
+
+Table brand_detections {
+  detection_id bigint [pk, increment]
+  transaction_id varchar(50) [ref: > transactions.transaction_id]
+
+  // Brand information
+  brand_name varchar(150) [note: 'Detected brand name']
+  confidence_score decimal(4,3) [note: 'Detection confidence (0.000-1.000)']
+
+  // Detection methodology
+  detection_type varchar(30) [note: 'detected|explicit|implicit']
+  detection_method varchar(30) [note: 'vision|audio|text|barcode|manual']
+  detection_timestamp datetime [note: 'When detection occurred']
+
+  // Context information
+  context_text text [note: 'Contextual text where brand was detected']
+  category varchar(100) [note: 'Product category if detected']
+  subcategory varchar(100) [note: 'Product subcategory if detected']
+
+  // Audio-specific fields
+  audio_segment_start decimal(6,2) [note: 'Audio segment start time in seconds']
+  audio_segment_end decimal(6,2) [note: 'Audio segment end time in seconds']
+  transcription_text text [note: 'Transcribed text containing brand mention']
+
+  // Vision-specific fields
+  bounding_box_coordinates json [note: 'Vision detection bounding box']
+  image_confidence decimal(4,3) [note: 'Image recognition confidence']
+  ocr_extracted_text varchar(500) [note: 'OCR text extraction']
+
+  created_at datetime [default: `now()`]
+
+  indexes {
+    transaction_id [name: 'idx_brand_detection_txn']
+    brand_name [name: 'idx_brand_detection_brand']
+    detection_type [name: 'idx_brand_detection_type']
+    confidence_score [name: 'idx_brand_detection_confidence']
+  }
+
+  Note: 'AI-powered brand detection with multi-modal analysis'
+}
+
+// === AUDIO & SPEECH ANALYSIS ===
+
+Table audio_transcriptions {
+  transcription_id bigint [pk, increment]
+  transaction_id varchar(50) [ref: > transactions.transaction_id]
+
+  // Transcription content
+  full_transcript text [note: 'Complete audio transcription']
+  language_detected varchar(10) [note: 'Detected language (e.g., tl-PH, en-US)']
+  transcription_confidence decimal(4,3) [note: 'Overall transcription confidence']
+
+  // Audio metadata
+  audio_duration_seconds decimal(6,2) [note: 'Total audio duration']
+  word_count int [note: 'Number of words transcribed']
+
+  // Sentiment analysis
+  sentiment_score decimal(4,3) [note: 'Sentiment score (-1.000 to 1.000)']
+  sentiment_label varchar(20) [note: 'positive|negative|neutral|mixed']
+  emotion_detected varchar(50) [note: 'Primary emotion detected']
+
+  // Content analysis
+  key_phrases json [note: 'Extracted key phrases with relevance scores']
+  brand_mentions json [note: 'Brand mentions with timestamps and confidence']
+  product_mentions json [note: 'Product mentions extracted from speech']
+
+  // Quality metrics
+  noise_level varchar(10) [note: 'low|medium|high']
+  speech_clarity varchar(10) [note: 'clear|moderate|poor']
+
+  created_at datetime [default: `now()`]
+
+  indexes {
+    transaction_id [name: 'idx_transcription_txn']
+    language_detected [name: 'idx_transcription_language']
+    sentiment_label [name: 'idx_transcription_sentiment']
+  }
+
+  Note: 'Audio transcription and natural language analysis'
+}
+
+// === COMPUTER VISION ANALYSIS ===
+
+Table vision_detections {
+  detection_id bigint [pk, increment]
+  transaction_id varchar(50) [ref: > transactions.transaction_id]
+
+  // Object detection
+  object_type varchar(100) [note: 'Type of object detected']
+  object_name varchar(200) [note: 'Specific object name']
+  detection_confidence decimal(4,3) [note: 'Object detection confidence']
+
+  // Spatial information
+  bounding_box json [note: 'Object location coordinates']
+  object_size_pixels int [note: 'Object size in pixels']
+  relative_position varchar(50) [note: 'Position relative to frame (center, left, right, etc.)']
+
+  // Brand/Text detection
+  brand_detected varchar(150) [note: 'Brand name detected on object']
+  text_extracted text [note: 'OCR text extraction from object']
+  ocr_confidence decimal(4,3) [note: 'OCR confidence score']
+
+  // Object attributes
+  color_primary varchar(50) [note: 'Primary color detected']
+  shape varchar(50) [note: 'Object shape classification']
+  object_attributes json [note: 'Additional object properties (size, condition, etc.)']
+
+  // Image metadata
+  image_timestamp datetime [note: 'When image was captured']
+  image_quality varchar(10) [note: 'low|medium|high']
+  lighting_conditions varchar(20) [note: 'Lighting assessment']
+
+  created_at datetime [default: `now()`]
+
+  indexes {
+    transaction_id [name: 'idx_vision_txn']
+    object_type [name: 'idx_vision_object']
+    brand_detected [name: 'idx_vision_brand']
+    detection_confidence [name: 'idx_vision_confidence']
+  }
+
+  Note: 'Computer vision object and brand detection results'
+}
+
+// === MASTER DATA TABLES ===
+
+Table devices {
+  device_id varchar(50) [pk, note: 'Device identifier (e.g., SCOUTPI-0002)']
+  device_name varchar(100) [note: 'Human-readable device name']
+  device_type varchar(50) [default: 'scout_terminal', note: 'Device classification']
+  device_model varchar(100) [note: 'Device model/hardware specification']
+
+  // Location
+  store_id varchar(50) [ref: > stores.store_id, note: 'Assigned store location']
+  installation_location varchar(200) [note: 'Specific location within store']
+
+  // Status and configuration
+  status varchar(20) [default: 'active', note: 'active|inactive|maintenance|decommissioned']
+  firmware_version varchar(30) [note: 'Current firmware version']
+  last_heartbeat datetime [note: 'Last communication with device']
+
+  // Capabilities
+  has_audio_capture boolean [default: true, note: 'Audio recording capability']
+  has_vision_capture boolean [default: true, note: 'Image/video capture capability']
+  has_display boolean [default: false, note: 'Display/screen capability']
+  has_speakers boolean [default: false, note: 'Audio output capability']
+
+  // Configuration
+  capture_settings json [note: 'Audio/video capture settings']
+  ai_processing_settings json [note: 'AI processing configuration']
+
+  // Audit
+  installation_date date [note: 'Device installation date']
+  last_maintenance_date date [note: 'Last maintenance performed']
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+
+  indexes {
+    store_id [name: 'idx_devices_store']
+    status [name: 'idx_devices_status']
+    last_heartbeat [name: 'idx_devices_heartbeat']
+  }
+
+  Note: 'IoT device registry with capabilities and status'
+}
+
+Table stores {
+  store_id varchar(50) [pk, note: 'Store identifier']
+  store_name varchar(200) [note: 'Store display name']
+
+  // Store classification
+  store_type varchar(50) [note: 'convenience|supermarket|pharmacy|specialty|etc.']
+  store_format varchar(50) [note: 'traditional|modern|hybrid|etc.']
+  size_category varchar(20) [note: 'small|medium|large|xl']
+
+  // Geographic information
+  region varchar(100) [note: 'Administrative region']
+  province varchar(100) [note: 'Province/state']
+  city varchar(100) [note: 'City/municipality']
+  barangay varchar(100) [note: 'Barangay/district']
+  postal_code varchar(10) [note: 'Postal/ZIP code']
+  address text [note: 'Complete street address']
+
+  // Coordinates
+  latitude decimal(10,7) [note: 'GPS latitude']
+  longitude decimal(11,7) [note: 'GPS longitude']
+  elevation_meters int [note: 'Elevation above sea level']
+
+  // Operations
+  timezone varchar(50) [default: 'Asia/Manila', note: 'Local timezone']
+  operating_hours json [note: 'Daily operating hours']
+  peak_hours json [note: 'Peak traffic hours']
+
+  // Demographics
+  catchment_population int [note: 'Estimated catchment population']
+  economic_segment varchar(20) [note: 'A|B|C|D|E economic classification']
+  urban_rural varchar(10) [note: 'urban|suburban|rural']
+
+  // Contact and management
+  manager_name varchar(100) [note: 'Store manager name']
+  contact_phone varchar(20) [note: 'Primary contact number']
+  contact_email varchar(100) [note: 'Primary email contact']
+
+  // Status
+  active boolean [default: true, note: 'Store operational status']
+  scout_enabled boolean [default: true, note: 'Scout system enabled']
+  date_opened date [note: 'Store opening date']
+  scout_installation_date date [note: 'Scout system installation date']
+
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+
+  indexes {
+    (latitude, longitude) [name: 'idx_stores_coordinates']
+    region [name: 'idx_stores_region']
+    city [name: 'idx_stores_city']
+    store_type [name: 'idx_stores_type']
+    economic_segment [name: 'idx_stores_economic']
+  }
+
+  Note: 'Store master data with geographic and demographic attributes'
+}
+
+Table products {
+  product_id varchar(100) [pk, note: 'Product identifier']
+
+  // Product identification
+  sku varchar(100) [unique, note: 'Stock keeping unit']
+  gtin varchar(20) [note: 'Global Trade Item Number (barcode)']
+  product_name varchar(300) [note: 'Product display name']
+  local_name varchar(300) [note: 'Local language product name']
+
+  // Brand and categorization
+  brand_id varchar(100) [ref: > brands.brand_id]
+  manufacturer varchar(200) [note: 'Manufacturer name']
+  category varchar(100) [note: 'Primary product category']
+  subcategory varchar(100) [note: 'Product subcategory']
+  segment varchar(50) [note: 'Market segment (premium|mainstream|value)']
+
+  // Physical attributes
+  package_type varchar(50) [note: 'bottle|can|pouch|box|etc.']
+  package_size varchar(100) [note: 'Size description (e.g., "250ml", "1kg")']
+  net_weight_grams decimal(10,2) [note: 'Net weight in grams']
+  net_volume_ml decimal(10,2) [note: 'Net volume in milliliters']
+  dimensions_lwh varchar(50) [note: 'Length x Width x Height in cm']
+
+  // Pricing
+  suggested_retail_price decimal(10,2) [note: 'Manufacturer suggested retail price']
+  price_currency varchar(3) [default: 'PHP']
+  price_per_unit decimal(10,2) [note: 'Price per base unit (per gram, ml, etc.)']
+
+  // Content and nutrition
+  ingredients json [note: 'Ingredient list in order']
+  nutritional_info json [note: 'Nutritional facts per serving']
+  allergen_info json [note: 'Allergen information']
+  dietary_attributes json [note: 'halal|kosher|vegan|organic|etc.']
+
+  // Regulatory and compliance
+  fda_registration varchar(50) [note: 'FDA registration number if applicable']
+  import_permit varchar(50) [note: 'Import permit if applicable']
+  halal_certification boolean [default: false]
+  organic_certification boolean [default: false]
+
+  // Lifecycle
+  launch_date date [note: 'Product launch date']
+  discontinuation_date date [note: 'Product discontinuation date if applicable']
+  active boolean [default: true]
+
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+
+  indexes {
+    brand_id [name: 'idx_products_brand']
+    category [name: 'idx_products_category']
+    gtin [name: 'idx_products_gtin']
+    sku [name: 'idx_products_sku']
+  }
+
+  Note: 'Comprehensive product master data'
+}
+
+Table brands {
+  brand_id varchar(100) [pk, note: 'Brand identifier']
+  brand_name varchar(200) [unique, note: 'Brand display name']
+
+  // Brand hierarchy
+  parent_company varchar(200) [note: 'Parent company/conglomerate']
+  brand_portfolio varchar(100) [note: 'Brand portfolio/family']
+  subsidiary varchar(100) [note: 'Operating subsidiary']
+
+  // Classification
+  brand_tier varchar(20) [note: 'premium|mainstream|value|private_label']
+  category_focus varchar(100) [note: 'Primary category focus']
+  origin_country varchar(3) [note: 'Country of origin (ISO 3166-1)']
+
+  // Business relationship
+  is_tbwa_client boolean [default: false, note: 'TBWA advertising client']
+  client_tier varchar(20) [note: 'platinum|gold|silver|bronze for TBWA clients']
+  account_manager varchar(100) [note: 'TBWA account manager if client']
+
+  // Brand assets
+  logo_url varchar(500) [note: 'Brand logo URL']
+  primary_color varchar(7) [note: 'Primary brand color (hex)']
+  secondary_colors json [note: 'Secondary brand colors']
+  brand_fonts json [note: 'Brand typography guidelines']
+
+  // Recognition
+  brand_keywords json [note: 'Keywords for brand recognition']
+  common_misspellings json [note: 'Common misspellings for fuzzy matching']
+  local_variations json [note: 'Local name variations']
+
+  // Market presence
+  launch_date_philippines date [note: 'Launch date in Philippines market']
+  market_share_estimate decimal(5,2) [note: 'Estimated market share percentage']
+  distribution_channels json [note: 'Distribution channel presence']
+
+  active boolean [default: true]
+  created_at datetime [default: `now()`]
+  updated_at datetime [default: `now()`]
+
+  indexes {
+    is_tbwa_client [name: 'idx_brands_tbwa']
+    brand_tier [name: 'idx_brands_tier']
+    category_focus [name: 'idx_brands_category']
+    origin_country [name: 'idx_brands_origin']
+  }
+
+  Note: 'Brand master data with TBWA client relationship tracking'
+}
+
+// === ETL AND DATA LINEAGE ===
+
+Table etl_processing_log {
+  log_id bigint [pk, increment]
+
+  // Processing batch info
+  batch_id varchar(50) [note: 'Batch identifier for grouped processing']
+  process_name varchar(100) [note: 'ETL process name']
+  process_version varchar(20) [note: 'ETL process version']
+
+  // Source information
+  source_system varchar(50) [note: 'Source system identifier']
+  source_file_path varchar(1000) [note: 'Source file path']
+  source_file_hash varchar(64) [note: 'Source file SHA-256 hash']
+  source_records_count int [note: 'Number of records in source']
+
+  // Target information
+  target_table varchar(100) [note: 'Target table name']
+  target_schema varchar(50) [note: 'Target schema name']
+
+  // Processing results
+  records_processed int [note: 'Records successfully processed']
+  records_inserted int [note: 'Records inserted']
+  records_updated int [note: 'Records updated']
+  records_skipped int [note: 'Records skipped']
+  records_failed int [note: 'Records failed processing']
+
+  // Execution metadata
+  execution_start_time datetime [note: 'Process start timestamp']
+  execution_end_time datetime [note: 'Process completion timestamp']
+  execution_duration_seconds int [note: 'Total execution time']
+  memory_usage_mb decimal(10,2) [note: 'Peak memory usage']
+
+  // Status and error handling
+  processing_status varchar(20) [note: 'success|failure|partial|warning']
+  error_message text [note: 'Error details if failed']
+  warning_message text [note: 'Warning details if applicable']
+
+  // Data quality metrics
+  quality_score decimal(4,3) [note: 'Overall data quality score (0.000-1.000)']
+  completeness_score decimal(4,3) [note: 'Data completeness score']
+  accuracy_score decimal(4,3) [note: 'Data accuracy score']
+
+  created_at datetime [default: `now()`]
+
+  indexes {
+    batch_id [name: 'idx_etl_batch']
+    process_name [name: 'idx_etl_process']
+    execution_start_time [name: 'idx_etl_start_time']
+    processing_status [name: 'idx_etl_status']
+  }
+
+  Note: 'Comprehensive ETL processing audit trail'
+}
+
+// === ANALYTICS AND REPORTING VIEWS ===
+
+Note analytical_views {
+  '''
+  Key Analytical Views for Scout Analytics:
+
+  1. v_transaction_summary_daily
+     - Daily transaction aggregations by store, device, brand
+     - Customer demographic breakdowns
+     - Revenue and volume metrics
+
+  2. v_brand_performance_analysis
+     - Brand detection accuracy and confidence trends
+     - Brand mention frequency and context analysis
+     - Cross-brand interaction patterns
+
+  3. v_customer_behavior_insights
+     - Customer journey and interaction patterns
+     - Demographic-based purchasing behavior
+     - Sentiment and emotion correlation with purchases
+
+  4. v_product_category_trends
+     - Category performance across stores and time periods
+     - Substitution patterns and reasons
+     - Price elasticity and demand patterns
+
+  5. v_device_performance_monitoring
+     - Device uptime, data quality, and processing success rates
+     - Audio/vision capture quality metrics
+     - Maintenance scheduling and performance degradation alerts
+
+  6. v_store_operational_intelligence
+     - Store-level performance metrics and benchmarking
+     - Peak hours analysis and staffing optimization
+     - Geographic performance clustering
+
+  7. v_ai_model_performance
+     - Brand detection accuracy rates by model version
+     - Audio transcription quality and language detection
+     - Vision detection precision and recall metrics
+
+  8. v_tbwa_client_dashboard
+     - TBWA client brand performance and share of voice
+     - Competitive analysis and market positioning
+     - Campaign effectiveness measurement
+  '''
+}

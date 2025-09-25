@@ -1,0 +1,1 @@
+parse "sqlserver://sqltbwaprojectscoutserver.database.windows.net%20-d%20SQL-TBWA-ProjectScout-Reporting-Prod%20-U%20sqladmin%20-P%20Azure_pw26?app+name=sqlcmd": invalid URL escape "%20"

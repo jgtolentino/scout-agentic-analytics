@@ -1,0 +1,433 @@
+dbo	ct_ageXbrand	CREATE VIEW dbo.ct_ageXbrand AS
+SELECT age_bracket, brand,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY age_bracket, brand;
+dbo	ct_ageXcategory	CREATE VIEW dbo.ct_ageXcategory AS
+SELECT age_bracket, category,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY age_bracket, category;
+dbo	ct_ageXpack	CREATE VIEW dbo.ct_ageXpack AS
+SELECT age_bracket, pack_size,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY age_bracket, pack_size;
+dbo	ct_basketXcategory	CREATE VIEW dbo.ct_basketXcategory AS
+SELECT basket_size, category,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY basket_size, category;
+dbo	ct_basketXcusttype	CREATE VIEW dbo.ct_basketXcusttype AS
+SELECT basket_size, customer_type,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY basket_size, customer_type;
+dbo	ct_basketXemotions	CREATE VIEW dbo.ct_basketXemotions AS
+SELECT basket_size, emotions,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY basket_size, emotions;
+dbo	ct_basketXpay	CREATE VIEW dbo.ct_basketXpay AS
+SELECT basket_size, payment_method,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY basket_size, payment_method;
+dbo	ct_genderXdaypart	CREATE VIEW dbo.ct_genderXdaypart AS
+SELECT gender, daypart,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY gender, daypart;
+dbo	ct_payXdemo	CREATE VIEW dbo.ct_payXdemo AS
+SELECT payment_method, age_bracket, gender,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY payment_method, age_bracket, gender;
+dbo	ct_substEventXcategory	CREATE VIEW dbo.ct_substEventXcategory AS
+SELECT substitution_event, category,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+WHERE substitution_event IS NOT NULL
+GROUP 
+dbo	ct_substEventXreason	CREATE VIEW dbo.ct_substEventXreason AS
+SELECT substitution_event, substitution_reason,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+WHERE substitution_event IS NOT NU
+dbo	ct_suggestionAcceptedXbrand	CREATE VIEW dbo.ct_suggestionAcceptedXbrand AS
+SELECT suggestion_accepted, brand,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY suggestion_accepted, brand;
+dbo	ct_timeXbrand	CREATE VIEW dbo.ct_timeXbrand AS
+SELECT daypart, brand,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY daypart, brand;
+dbo	ct_timeXcategory	CREATE VIEW dbo.ct_timeXcategory AS
+SELECT
+  daypart,
+  category,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY daypart, category;
+dbo	ct_timeXdemo	CREATE VIEW dbo.ct_timeXdemo AS
+SELECT daypart, age_bracket, gender, role,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY daypart, age_bracket, gender, role;
+dbo	ct_timeXemotions	CREATE VIEW dbo.ct_timeXemotions AS
+SELECT daypart, emotions,
+  COUNT(*) AS txn_cnt,
+  SUM(amount) AS sales_total,
+  AVG(TRY_CAST(basket_size AS float)) AS avg_basket_size
+FROM dbo.v_insight_base
+GROUP BY daypart, emotions;
+dbo	gold_interaction_summary	
+-- ================================
+-- 🟨 GOLD LAYER VIEW
+-- ================================
+
+CREATE VIEW dbo.gold_interaction_summary AS
+SELECT 
+    t.StoreID,
+    t.FacialID,
+    t.Timestamp AS TranscriptTime,
+    v.Timestamp AS VisionTime,
+ 
+dbo	gold_reconstructed_transcripts	CREATE VIEW dbo.gold_reconstructed_transcripts AS SELECT s.InteractionID, STRING_AGG(t.ChunkText, ' ') WITHIN GROUP (ORDER BY t.ChunkIndex) AS FullTranscript, s.StoreID, s.ProductID, s.TransactionDate, s.DeviceID, s.FacialID, s.Sex, s.Age, s.EmotionalState
+dbo	silver_transcripts	
+-- ================================
+-- 🟨 SILVER LAYER VIEWS
+-- ================================
+
+CREATE VIEW dbo.silver_transcripts AS
+SELECT 
+    TranscriptID,
+    StoreID,
+    FacialID,
+    Timestamp,
+    TranscriptText,
+    Language
+FROM d
+dbo	silver_vision_detections	
+CREATE VIEW dbo.silver_vision_detections AS
+SELECT 
+    DetectionID,
+    StoreID,
+    DeviceID,
+    Timestamp,
+    DetectedObject,
+    Confidence
+FROM dbo.bronze_vision_detections
+WHERE Confidence >= 0.6;
+
+dbo	v_azure_norm	CREATE VIEW dbo.v_azure_norm AS
+        SELECT
+          CAST(InteractionID AS varchar(128))      AS sessionId,
+          CAST(DeviceID      AS varchar(128))      AS azure_deviceId,
+          CAST(StoreID       AS varchar(64))       AS azure_storeId,
+     
+dbo	v_data_quality_monitor	CREATE VIEW dbo.v_data_quality_monitor AS
+SELECT
+  CAST(GETDATE() AS date) as report_date,
+  GETDATE() as report_timestamp,
+  storeId,
+  deviceId,
+
+  -- Record Counts
+  COUNT(*) as total_records,
+  COUNT(CASE WHEN azure_ts >= DATEADD(day, -1, GETDATE()) TH
+dbo	v_duplicate_detection_monitor	CREATE VIEW dbo.v_duplicate_detection_monitor AS
+WITH payload_duplicates AS (
+  SELECT sessionId, COUNT(*) as duplicate_count
+  FROM dbo.PayloadTransactions
+  GROUP BY sessionId
+  HAVING COUNT(*) > 1
+)
+SELECT
+  CAST(GETDATE() AS date) as check_date,
+  GETD
+dbo	v_flat_export_sheet	-- ========================================================================
+-- CREATE CORRECTED FLAT EXPORT VIEW
+-- ========================================================================
+
+CREATE   VIEW dbo.v_flat_export_sheet AS
+WITH demo_agg AS (
+  -- A
+dbo	v_insight_base	CREATE VIEW dbo.v_insight_base AS
+SELECT
+  -- Core identifiers
+  sessionId,
+  deviceId,
+  storeId,
+  amount,
+
+  -- JSON extracted fields
+  JSON_VALUE(payload_json,'$.category') AS category,
+  JSON_VALUE(payload_json,'$.brand') AS brand,
+  JSON_VALUE(payloa
+dbo	v_nielsen_complete_analytics	
+-- Create enhanced analytics view that includes ALL transactions
+CREATE   VIEW dbo.v_nielsen_complete_analytics AS
+WITH EnhancedTransactions AS (
+    SELECT
+        v.canonical_tx_id,
+        CAST(v.txn_ts AS date) AS transaction_date,
+        v.store_id,
+dbo	v_nielsen_flat_export	
+CREATE VIEW dbo.v_nielsen_flat_export AS
+SELECT
+    -- Existing columns from v_flat_export_sheet for compatibility
+    vf.Transaction_ID,
+    vf.Transaction_Value,
+    vf.Basket_Size,
+    vf.Brand,
+    vf.Daypart,
+    vf.[Demographics (Age/Gender/Role)],
+
+dbo	v_nielsen_summary_analytics	
+CREATE VIEW dbo.v_nielsen_summary_analytics AS
+SELECT
+    nd.department_name AS Department,
+    COALESCE(parent.category_name, nc.category_name) AS Product_Group,
+    nc.category_name AS Category,
+    COUNT(DISTINCT vnf.Transaction_ID) AS Transaction_Coun
+dbo	v_payload_norm	CREATE VIEW dbo.v_payload_norm AS
+SELECT
+  -- sessionId: from table or inside JSON
+  COALESCE(
+    TRY_CAST(sessionId AS varchar(128)),
+    JSON_VALUE(payload_json, '$.transactionId'),
+    JSON_VALUE(payload_json, '$.sessionId'),
+    JSON_VALUE(payload_jso
+dbo	v_performance_metrics_dashboard	CREATE VIEW dbo.v_performance_metrics_dashboard AS
+SELECT
+  -- Time Windows
+  'Last Hour' as time_window,
+  COUNT(CASE WHEN azure_ts >= DATEADD(hour, -1, GETDATE()) THEN 1 END) as transaction_count,
+  COUNT(DISTINCT CASE WHEN azure_ts >= DATEADD(hour, -1, 
+dbo	v_pipeline_realtime_monitor	CREATE VIEW dbo.v_pipeline_realtime_monitor AS
+SELECT
+  CAST(azure_ts AS date) as transaction_date,
+  DATEPART(hour, azure_ts) as transaction_hour,
+  storeId,
+  deviceId,
+  COUNT(*) as transaction_count,
+  SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) a
+dbo	v_SalesInteractionsComplete	
+-- Create a comprehensive view that handles all NULLs and JOINs properly
+CREATE   VIEW dbo.v_SalesInteractionsComplete AS
+SELECT 
+    si.InteractionID,
+    si.StoreID,
+    s.StoreName,
+    s.Location as StoreLocation,
+    si.ProductID,
+    si.TransactionD
+dbo	v_store_facial_age_101_120	CREATE   VIEW dbo.v_store_facial_age_101_120 AS
+SELECT
+  s.StoreID,
+  s.StoreName,
+  s.DeviceID,
+  s.Location,
+  s.BarangayName,
+  s.MunicipalityName,
+  s.MunicipalityID,
+  s.GeoLatitude,
+  s.GeoLongitude,
+  COUNT(DISTINCT si.InteractionId) AS unique_inter
+dbo	v_store_health_dashboard	CREATE VIEW dbo.v_store_health_dashboard AS
+SELECT
+  storeId,
+  deviceId,
+  COUNT(*) as total_transactions,
+  COUNT(CASE WHEN azure_ts >= DATEADD(hour, -24, GETDATE()) THEN 1 END) as transactions_last_24h,
+  COUNT(CASE WHEN azure_ts >= DATEADD(hour, -1, GE
+dbo	v_transactions_crosstab_production	
+-- Crosstab (long form, stable 10 cols)
+CREATE   VIEW dbo.v_transactions_crosstab_production
+AS
+WITH f AS (
+  SELECT
+    [date]       = CAST(txn_ts AS date),
+    store_id,
+    daypart,
+    brand,
+    total_amount
+  FROM dbo.v_transactions_flat_production
+
+dbo	v_transactions_flat_production	
+-- Flat view: canonical_tx_id join; timestamp ONLY from SalesInteractions
+CREATE   VIEW dbo.v_transactions_flat_production
+AS
+SELECT
+  -- IDs / store
+  canonical_tx_id = LOWER(REPLACE(COALESCE(
+    CASE WHEN ISJSON(pt.payload_json) = 1
+         THEN JSON_
+dbo	v_transactions_flat_v24	CREATE   VIEW dbo.v_transactions_flat_v24
+AS
+/* 24-column compatibility view
+   - Source of truth: dbo.v_transactions_flat_production (JSON-safe with canonical joins)
+   - Simplified to use only production view data
+*/
+SELECT
+  canonical_tx_id             
+dbo	v_xtab_basketsize_category_abs	CREATE VIEW dbo.v_xtab_basketsize_category_abs AS
+WITH s AS (
+  SELECT
+      CAST(v.txn_ts AS date) AS [date],
+      v.store_id, v.store_name,
+      NULLIF(LTRIM(RTRIM(v.category)),'') AS category,
+      TRY_CONVERT(int, v.total_items)     AS total_items,
+
+dbo	v_xtab_basketsize_payment_abs	CREATE VIEW dbo.v_xtab_basketsize_payment_abs AS
+WITH s AS (
+  SELECT
+      CAST(v.txn_ts AS date) AS [date],
+      v.store_id, v.store_name,
+      NULLIF(LTRIM(RTRIM(v.payment_method)),'') AS payment_method,
+      TRY_CONVERT(int, v.total_items)          
+dbo	v_xtab_daypart_weektype_abs	CREATE VIEW dbo.v_xtab_daypart_weektype_abs AS
+SELECT
+    CAST(v.txn_ts AS date) AS [date],
+    v.store_id, v.store_name,
+    v.daypart,
+    v.weekday_weekend,
+    COUNT(*)                              AS txn_count,
+    SUM(TRY_CONVERT(int, v.total_items))
+dbo	v_xtab_time_brand_abs	CREATE VIEW dbo.v_xtab_time_brand_abs AS
+SELECT
+    b.[date], b.store_id, b.store_name, b.daypart, b.brand,
+    COUNT(*)                          AS txn_count,
+    SUM(ISNULL(b.total_items,0))      AS items_sum,
+    SUM(ISNULL(b.total_amount,0.00))  AS amo
+dbo	v_xtab_time_brand_category_abs	CREATE VIEW dbo.v_xtab_time_brand_category_abs AS
+SELECT
+    CAST(v.txn_ts AS date) AS [date],
+    v.store_id, v.store_name,
+    v.daypart,
+    NULLIF(LTRIM(RTRIM(v.brand)),'')    AS brand,
+    NULLIF(LTRIM(RTRIM(v.category)),'') AS category,
+    COUNT(*) 
+dbo	v_xtab_time_category_abs	CREATE VIEW dbo.v_xtab_time_category_abs AS
+SELECT
+    b.[date], b.store_id, b.store_name, b.daypart, b.category,
+    COUNT(*)                          AS txn_count,
+    SUM(ISNULL(b.total_items,0))      AS items_sum,
+    SUM(ISNULL(b.total_amount,0.00))  
+dbo	vw_campaign_effectiveness	-- === Views for Analytics ===
+
+-- Campaign effectiveness view
+CREATE   VIEW vw_campaign_effectiveness AS
+SELECT 
+    ca.campaign_id,
+    ca.asset_name,
+    p.brand,
+    p.category,
+    avr.overall_score,
+    avr.brand_compliance_score,
+    avr.technical_q
+dbo	vw_tbwa_brand_performance_mock	
+    CREATE   VIEW [dbo].[vw_tbwa_brand_performance_mock] AS
+    SELECT 
+      [brand],
+      [category],
+      [subcategory],
+      COUNT(*) as transaction_count,
+      SUM([peso_value]) as total_value,
+      AVG([peso_value]) as avg_value,
+      SUM([vol
+dbo	vw_tbwa_latest_mock_transactions	
+    CREATE   VIEW [dbo].[vw_tbwa_latest_mock_transactions] AS
+    SELECT t.*, m.[dataset_name], m.[created_at] as upload_date
+    FROM [dbo].[tbwa_transactions_mock] t
+    JOIN [dbo].[tbwa_data_metadata] m ON t.[metadata_id] = m.[id]
+    WHERE m.[id] = (S
+dbo	vw_tbwa_location_analytics_mock	
+    CREATE   VIEW [dbo].[vw_tbwa_location_analytics_mock] AS
+    SELECT 
+      [location],
+      [region],
+      COUNT(*) as transaction_count,
+      SUM([peso_value]) as total_value,
+      AVG([peso_value]) as avg_value,
+      COUNT(DISTINCT [consumer_id
+dbo	vw_transaction_analytics	-- Transaction analytics view
+CREATE   VIEW vw_transaction_analytics AS
+SELECT 
+    t.txn_id,
+    l.region,
+    l.province,
+    l.city,
+    l.barangay,
+    p.brand,
+    p.category,
+    ti.units,
+    ti.total_price,
+    t.ts as transaction_date,
+    c.age_b
+gold	v_transactions_crosstab	
+CREATE VIEW gold.v_transactions_crosstab AS
+SELECT
+  [date],
+  store_id,
+  store_name,
+  daypart,
+  brand,
+  txn_count,
+  total_amount
+FROM dbo.v_transactions_crosstab_production
+
+gold	v_transactions_flat	
+CREATE VIEW gold.v_transactions_flat AS
+SELECT
+  canonical_tx_id       AS CanonicalTxID,
+  transaction_id        AS TransactionID,
+  device_id             AS DeviceID,
+  store_id              AS StoreID,
+  store_name            AS StoreName,
+  brand,
+  pr
+gold	v_transactions_flat_v24	CREATE VIEW gold.v_transactions_flat_v24 AS SELECT * FROM dbo.v_transactions_flat_v24
+ref	v_persona_inference	-- ========================================================================
+-- CREATE SIMPLIFIED PERSONA INFERENCE VIEW
+-- ========================================================================
+
+CREATE   VIEW ref.v_persona_inference AS
+WITH base AS (
+  -
+sys	database_firewall_rules	CREATE VIEW sys.database_firewall_rules AS SELECT id, name, start_ip_address, end_ip_address, create_date, modify_date FROM sys.database_firewall_rules_table
+
+(53 rows affected)

@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
-CONN="$("$ROOT/scripts/conn_default.sh")"
-# Force SET NOCOUNT ON globally to prevent parsing regressions
-sqlcmd -S "$CONN" -Q "SET NOCOUNT ON;" >/dev/null 2>&1 || true
-exec sqlcmd -S "$CONN" "$@"
+CONN_STR="$("$ROOT/scripts/conn_default.sh")"
+
+# Parse connection string into individual parameters
+if [[ "$CONN_STR" == *" -d "* ]]; then
+  # Format: server -d database -U user -P password
+  eval "sqlcmd -S $CONN_STR \"\$@\""
+else
+  # Fallback to direct server parameter
+  exec sqlcmd -S "$CONN_STR" "$@"
+fi

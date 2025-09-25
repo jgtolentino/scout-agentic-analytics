@@ -1,0 +1,810 @@
+{
+  "metadata": {
+    "total_brands": 111,
+    "total_transactions": 11955,
+    "total_sales": 1308956.92,
+    "categories_count": 19,
+    "problematic_brands": 21
+  },
+  "categories": {
+    "Non-Alcoholic": {
+      "brand_count": 3,
+      "total_transactions": 691,
+      "total_sales": 74744.48,
+      "brands": [
+        {
+          "name": "Coca-Cola",
+          "transactions": 470,
+          "sales": 54351.78,
+          "has_data_issues": false
+        },
+        {
+          "name": "Sprite",
+          "transactions": 127,
+          "sales": 11310.95,
+          "has_data_issues": false
+        },
+        {
+          "name": "Pepsi",
+          "transactions": 94,
+          "sales": 9081.75,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Beverages": {
+      "brand_count": 13,
+      "total_transactions": 1593,
+      "total_sales": 165091.49999999997,
+      "brands": [
+        {
+          "name": "C2",
+          "transactions": 412,
+          "sales": 46849.33,
+          "has_data_issues": true
+        },
+        {
+          "name": "Kopiko",
+          "transactions": 212,
+          "sales": 18788.989999999998,
+          "has_data_issues": true
+        },
+        {
+          "name": "Nescaf\u00e9",
+          "transactions": 200,
+          "sales": 40162.96,
+          "has_data_issues": true
+        },
+        {
+          "name": "Great Taste",
+          "transactions": 188,
+          "sales": 23113.45,
+          "has_data_issues": true
+        },
+        {
+          "name": "Gatorade",
+          "transactions": 114,
+          "sales": 10046.189999999999,
+          "has_data_issues": true
+        },
+        {
+          "name": "Cobra",
+          "transactions": 86,
+          "sales": 4372.35,
+          "has_data_issues": true
+        },
+        {
+          "name": "Caf\u00e9 Puro",
+          "transactions": 77,
+          "sales": 3201.8,
+          "has_data_issues": true
+        },
+        {
+          "name": "Nestea",
+          "transactions": 70,
+          "sales": 3196.4,
+          "has_data_issues": true
+        },
+        {
+          "name": "Royal",
+          "transactions": 70,
+          "sales": 1999.35,
+          "has_data_issues": true
+        },
+        {
+          "name": "Red Bull",
+          "transactions": 58,
+          "sales": 8252.130000000001,
+          "has_data_issues": true
+        },
+        {
+          "name": "Ovaltine",
+          "transactions": 52,
+          "sales": 2536.25,
+          "has_data_issues": true
+        },
+        {
+          "name": "Extra Joss",
+          "transactions": 49,
+          "sales": 2442.3,
+          "has_data_issues": true
+        },
+        {
+          "name": "Tang",
+          "transactions": 5,
+          "sales": 130.0,
+          "has_data_issues": true
+        }
+      ]
+    },
+    "Body Care": {
+      "brand_count": 2,
+      "total_transactions": 636,
+      "total_sales": 86599.35,
+      "brands": [
+        {
+          "name": "Safeguard",
+          "transactions": 400,
+          "sales": 51530.31,
+          "has_data_issues": false
+        },
+        {
+          "name": "Dove",
+          "transactions": 236,
+          "sales": 35069.04,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Laundry": {
+      "brand_count": 4,
+      "total_transactions": 1118,
+      "total_sales": 77256.16,
+      "brands": [
+        {
+          "name": "Surf",
+          "transactions": 393,
+          "sales": 35684.18,
+          "has_data_issues": false
+        },
+        {
+          "name": "Tide",
+          "transactions": 271,
+          "sales": 14511.08,
+          "has_data_issues": false
+        },
+        {
+          "name": "Downy",
+          "transactions": 228,
+          "sales": 10439.52,
+          "has_data_issues": false
+        },
+        {
+          "name": "Ariel",
+          "transactions": 226,
+          "sales": 16621.38,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Snacks & Confectionery": {
+      "brand_count": 15,
+      "total_transactions": 1300,
+      "total_sales": 62304.34,
+      "brands": [
+        {
+          "name": "Oishi",
+          "transactions": 388,
+          "sales": 32016.22,
+          "has_data_issues": false
+        },
+        {
+          "name": "Jack 'n Jill",
+          "transactions": 137,
+          "sales": 10714.96,
+          "has_data_issues": false
+        },
+        {
+          "name": "Fudgee Bar",
+          "transactions": 125,
+          "sales": 3590.8,
+          "has_data_issues": false
+        },
+        {
+          "name": "Bingo",
+          "transactions": 122,
+          "sales": 2701.9,
+          "has_data_issues": false
+        },
+        {
+          "name": "Regent",
+          "transactions": 99,
+          "sales": 2783.6,
+          "has_data_issues": false
+        },
+        {
+          "name": "Tiger",
+          "transactions": 90,
+          "sales": 1556.45,
+          "has_data_issues": false
+        },
+        {
+          "name": "Presto",
+          "transactions": 82,
+          "sales": 2494.5000000000005,
+          "has_data_issues": true
+        },
+        {
+          "name": "Rebisco",
+          "transactions": 75,
+          "sales": 1944.9,
+          "has_data_issues": false
+        },
+        {
+          "name": "Nova",
+          "transactions": 57,
+          "sales": 1529.45,
+          "has_data_issues": false
+        },
+        {
+          "name": "Roller Coaster",
+          "transactions": 51,
+          "sales": 1172.6,
+          "has_data_issues": false
+        },
+        {
+          "name": "Sting",
+          "transactions": 40,
+          "sales": 1226.56,
+          "has_data_issues": false
+        },
+        {
+          "name": "Jimm's",
+          "transactions": 30,
+          "sales": 456.40000000000003,
+          "has_data_issues": false
+        },
+        {
+          "name": "Ding Dong",
+          "transactions": 2,
+          "sales": 60.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Choco Mucho",
+          "transactions": 1,
+          "sales": 36.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Maxx",
+          "transactions": 1,
+          "sales": 20.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Oral Care": {
+      "brand_count": 2,
+      "total_transactions": 497,
+      "total_sales": 85625.45,
+      "brands": [
+        {
+          "name": "Colgate",
+          "transactions": 310,
+          "sales": 58121.03,
+          "has_data_issues": false
+        },
+        {
+          "name": "Close Up",
+          "transactions": 187,
+          "sales": 27504.42,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Pantry Staples & Groceries": {
+      "brand_count": 7,
+      "total_transactions": 718,
+      "total_sales": 86396.48,
+      "brands": [
+        {
+          "name": "Bear Brand",
+          "transactions": 296,
+          "sales": 43277.13,
+          "has_data_issues": false
+        },
+        {
+          "name": "Milo",
+          "transactions": 173,
+          "sales": 27794.85,
+          "has_data_issues": false
+        },
+        {
+          "name": "Nido",
+          "transactions": 94,
+          "sales": 5963.650000000001,
+          "has_data_issues": true
+        },
+        {
+          "name": "Birch Tree",
+          "transactions": 78,
+          "sales": 3835.25,
+          "has_data_issues": false
+        },
+        {
+          "name": "Cowhead",
+          "transactions": 46,
+          "sales": 4343.6,
+          "has_data_issues": true
+        },
+        {
+          "name": "Eight O'Clock",
+          "transactions": 29,
+          "sales": 654.0,
+          "has_data_issues": true
+        },
+        {
+          "name": "Mighty",
+          "transactions": 2,
+          "sales": 528.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Food & Beverages": {
+      "brand_count": 4,
+      "total_transactions": 418,
+      "total_sales": 32453.32,
+      "brands": [
+        {
+          "name": "Alaska",
+          "transactions": 285,
+          "sales": 23987.75,
+          "has_data_issues": true
+        },
+        {
+          "name": "Blend 45",
+          "transactions": 62,
+          "sales": 3990.6,
+          "has_data_issues": true
+        },
+        {
+          "name": "Selecta",
+          "transactions": 52,
+          "sales": 3635.41,
+          "has_data_issues": true
+        },
+        {
+          "name": "Magnolia",
+          "transactions": 19,
+          "sales": 839.56,
+          "has_data_issues": true
+        }
+      ]
+    },
+    "Other Essentials": {
+      "brand_count": 13,
+      "total_transactions": 1017,
+      "total_sales": 132875.28,
+      "brands": [
+        {
+          "name": "GOMO",
+          "transactions": 250,
+          "sales": 59137.05,
+          "has_data_issues": false
+        },
+        {
+          "name": "Magic",
+          "transactions": 194,
+          "sales": 14167.1,
+          "has_data_issues": false
+        },
+        {
+          "name": "TNT",
+          "transactions": 147,
+          "sales": 26115.7,
+          "has_data_issues": false
+        },
+        {
+          "name": "Smart",
+          "transactions": 98,
+          "sales": 19172.68,
+          "has_data_issues": false
+        },
+        {
+          "name": "Lipovitan",
+          "transactions": 77,
+          "sales": 4829.1,
+          "has_data_issues": false
+        },
+        {
+          "name": "Leslie's",
+          "transactions": 59,
+          "sales": 2575.9,
+          "has_data_issues": false
+        },
+        {
+          "name": "Dewberry",
+          "transactions": 57,
+          "sales": 1469.3,
+          "has_data_issues": false
+        },
+        {
+          "name": "Supreme",
+          "transactions": 57,
+          "sales": 1583.9,
+          "has_data_issues": false
+        },
+        {
+          "name": "Bravo",
+          "transactions": 55,
+          "sales": 1538.45,
+          "has_data_issues": false
+        },
+        {
+          "name": "3JM",
+          "transactions": 11,
+          "sales": 1890.1,
+          "has_data_issues": false
+        },
+        {
+          "name": "Hello",
+          "transactions": 6,
+          "sales": 92.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Voice",
+          "transactions": 5,
+          "sales": 289.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Hany",
+          "transactions": 1,
+          "sales": 15.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Tobacco Products": {
+      "brand_count": 5,
+      "total_transactions": 386,
+      "total_sales": 120648.69,
+      "brands": [
+        {
+          "name": "Marlboro",
+          "transactions": 223,
+          "sales": 67899.71,
+          "has_data_issues": false
+        },
+        {
+          "name": "Camel",
+          "transactions": 106,
+          "sales": 40426.23,
+          "has_data_issues": false
+        },
+        {
+          "name": "TM",
+          "transactions": 51,
+          "sales": 9506.75,
+          "has_data_issues": false
+        },
+        {
+          "name": "Winston",
+          "transactions": 5,
+          "sales": 880.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Chesterfield",
+          "transactions": 1,
+          "sales": 1936.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Salty Snacks (Chichirya)": {
+      "brand_count": 5,
+      "total_transactions": 507,
+      "total_sales": 30986.980000000003,
+      "brands": [
+        {
+          "name": "Piattos",
+          "transactions": 214,
+          "sales": 20803.43,
+          "has_data_issues": false
+        },
+        {
+          "name": "Chippy",
+          "transactions": 121,
+          "sales": 4242.95,
+          "has_data_issues": false
+        },
+        {
+          "name": "V-Cut",
+          "transactions": 92,
+          "sales": 3039.4,
+          "has_data_issues": false
+        },
+        {
+          "name": "Pringles",
+          "transactions": 76,
+          "sales": 2801.2,
+          "has_data_issues": false
+        },
+        {
+          "name": "Boy Bawang",
+          "transactions": 4,
+          "sales": 100.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Instant Foods": {
+      "brand_count": 3,
+      "total_transactions": 449,
+      "total_sales": 28652.73,
+      "brands": [
+        {
+          "name": "Lucky Me",
+          "transactions": 201,
+          "sales": 15676.67,
+          "has_data_issues": false
+        },
+        {
+          "name": "Maggi",
+          "transactions": 164,
+          "sales": 11018.81,
+          "has_data_issues": false
+        },
+        {
+          "name": "Nissin",
+          "transactions": 84,
+          "sales": 1957.25,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Canned & Jarred Goods": {
+      "brand_count": 12,
+      "total_transactions": 584,
+      "total_sales": 56037.11,
+      "brands": [
+        {
+          "name": "Del Monte",
+          "transactions": 198,
+          "sales": 19128.12,
+          "has_data_issues": false
+        },
+        {
+          "name": "Century Tuna",
+          "transactions": 144,
+          "sales": 16801.04,
+          "has_data_issues": false
+        },
+        {
+          "name": "Marca Leon",
+          "transactions": 71,
+          "sales": 7319.75,
+          "has_data_issues": false
+        },
+        {
+          "name": "Dole",
+          "transactions": 67,
+          "sales": 5810.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Carnation",
+          "transactions": 54,
+          "sales": 2545.5,
+          "has_data_issues": false
+        },
+        {
+          "name": "Milkmaid",
+          "transactions": 34,
+          "sales": 2803.2,
+          "has_data_issues": false
+        },
+        {
+          "name": "555",
+          "transactions": 6,
+          "sales": 1170.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Angel",
+          "transactions": 4,
+          "sales": 224.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Baguio",
+          "transactions": 2,
+          "sales": 45.5,
+          "has_data_issues": false
+        },
+        {
+          "name": "CDO",
+          "transactions": 2,
+          "sales": 120.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Hunt's",
+          "transactions": 1,
+          "sales": 35.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "San Marino",
+          "transactions": 1,
+          "sales": 35.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Hair Care": {
+      "brand_count": 5,
+      "total_transactions": 659,
+      "total_sales": 124714.84,
+      "brands": [
+        {
+          "name": "Cream Silk",
+          "transactions": 179,
+          "sales": 38926.84,
+          "has_data_issues": false
+        },
+        {
+          "name": "Rejoice",
+          "transactions": 154,
+          "sales": 30935.18,
+          "has_data_issues": false
+        },
+        {
+          "name": "Palmolive",
+          "transactions": 125,
+          "sales": 11855.52,
+          "has_data_issues": false
+        },
+        {
+          "name": "Pantene",
+          "transactions": 121,
+          "sales": 25474.96,
+          "has_data_issues": false
+        },
+        {
+          "name": "Head & Shoulders",
+          "transactions": 80,
+          "sales": 17522.34,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Cooking Essentials": {
+      "brand_count": 6,
+      "total_transactions": 416,
+      "total_sales": 50073.14,
+      "brands": [
+        {
+          "name": "Datu Puti",
+          "transactions": 178,
+          "sales": 22738.29,
+          "has_data_issues": false
+        },
+        {
+          "name": "Star Margarine",
+          "transactions": 123,
+          "sales": 15973.27,
+          "has_data_issues": false
+        },
+        {
+          "name": "Silver Swan",
+          "transactions": 95,
+          "sales": 10353.83,
+          "has_data_issues": false
+        },
+        {
+          "name": "Palm",
+          "transactions": 11,
+          "sales": 638.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Blue Band",
+          "transactions": 8,
+          "sales": 204.75,
+          "has_data_issues": false
+        },
+        {
+          "name": "Fortune",
+          "transactions": 1,
+          "sales": 165.0,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Services": {
+      "brand_count": 2,
+      "total_transactions": 293,
+      "total_sales": 72868.47,
+      "brands": [
+        {
+          "name": "Globe",
+          "transactions": 148,
+          "sales": 28435.62,
+          "has_data_issues": false
+        },
+        {
+          "name": "Cherry Prepaid",
+          "transactions": 145,
+          "sales": 44432.85,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Alcoholic": {
+      "brand_count": 1,
+      "total_transactions": 119,
+      "total_sales": 4362.6,
+      "brands": [
+        {
+          "name": "San Mig",
+          "transactions": 119,
+          "sales": 4362.6,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Biscuits & Crackers": {
+      "brand_count": 5,
+      "total_transactions": 466,
+      "total_sales": 15623.8,
+      "brands": [
+        {
+          "name": "Chips Ahoy",
+          "transactions": 113,
+          "sales": 2537.7,
+          "has_data_issues": false
+        },
+        {
+          "name": "Oreo",
+          "transactions": 102,
+          "sales": 2398.35,
+          "has_data_issues": false
+        },
+        {
+          "name": "Cream-O",
+          "transactions": 88,
+          "sales": 1653.75,
+          "has_data_issues": false
+        },
+        {
+          "name": "SkyFlakes",
+          "transactions": 86,
+          "sales": 7330.65,
+          "has_data_issues": false
+        },
+        {
+          "name": "Hansel",
+          "transactions": 77,
+          "sales": 1703.35,
+          "has_data_issues": false
+        }
+      ]
+    },
+    "Candies & Sweets": {
+      "brand_count": 4,
+      "total_transactions": 88,
+      "total_sales": 1642.2,
+      "brands": [
+        {
+          "name": "Combi",
+          "transactions": 81,
+          "sales": 1517.2,
+          "has_data_issues": false
+        },
+        {
+          "name": "Choc-Nut",
+          "transactions": 5,
+          "sales": 75.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "Potchi",
+          "transactions": 1,
+          "sales": 15.0,
+          "has_data_issues": false
+        },
+        {
+          "name": "White Rabbit",
+          "transactions": 1,
+          "sales": 35.0,
+          "has_data_issues": false
+        }
+      ]
+    }
+  }
+}

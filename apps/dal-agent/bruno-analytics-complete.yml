@@ -1,0 +1,107 @@
+name: "Scout Analytics Complete Infrastructure Deployment"
+description: "Deploy reference tables, analytics marts, validation gates, and CSV exports"
+
+steps:
+  # Include keychain connection for environment setup
+  - include: bruno-keychain-conn.yml
+
+  # Step 1: Fix substitution event key mismatch
+  - run: |
+      set -e
+      echo "🔧 Step 1: Fixing substitution event key mismatch..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -i sql/analytics/001_fix_substitution_keys.sql
+      echo "✅ Substitution key mismatch fixed"
+    shell: bash
+
+  # Step 2: Create reference tables and mart schema
+  - run: |
+      set -e
+      echo "🏗️ Step 2: Creating reference tables and mart schema..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -i sql/analytics/002_create_reference_tables.sql
+      echo "✅ Reference tables created"
+    shell: bash
+
+  # Step 3: Seed reference data
+  - run: |
+      set -e
+      echo "🌱 Step 3: Seeding reference data..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -i sql/analytics/003_seed_reference_data.sql
+      echo "✅ Reference data seeded"
+    shell: bash
+
+  # Step 4: Create analytics marts
+  - run: |
+      set -e
+      echo "📊 Step 4: Creating analytics marts..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -i sql/analytics/004_create_marts.sql
+      echo "✅ Analytics marts created"
+    shell: bash
+
+  # Step 5: Run validation gates
+  - run: |
+      set -e
+      echo "🔍 Step 5: Running validation gates..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -i sql/analytics/005_validation_gates.sql
+      echo "✅ Validation gates passed"
+    shell: bash
+
+  # Step 6: Export analytics to CSV files
+  - run: |
+      set -e
+      echo "💾 Step 6: Exporting analytics to CSV..."
+
+      # Create output directory
+      mkdir -p out/analytics
+
+      # Export store profiles
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_store_profiles ORDER BY store_id" -s "," -W -h -1 > out/analytics/store_profiles.csv
+
+      # Export demographic brand/category analysis
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_demo_brand_cat WHERE category <> 'Unspecified' ORDER BY txn DESC" -s "," -W -h -1 > out/analytics/demo_brand_cat.csv
+
+      # Export time spreads
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_time_spreads ORDER BY yyyymm, weekday_name" -s "," -W -h -1 > out/analytics/time_spreads.csv
+
+      # Export tobacco metrics
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_tobacco_metrics ORDER BY store_id" -s "," -W -h -1 > out/analytics/tobacco_metrics.csv
+
+      # Export tobacco co-purchases (top 200)
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT TOP 200 * FROM mart.v_tobacco_copurchases ORDER BY tx DESC" -s "," -W -h -1 > out/analytics/tobacco_copurchases_top200.csv
+
+      # Export laundry metrics
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_laundry_metrics ORDER BY detergent_form" -s "," -W -h -1 > out/analytics/laundry_metrics.csv
+
+      # Export transcript terms
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SELECT * FROM mart.v_transcript_terms ORDER BY score DESC, baskets DESC" -s "," -W -h -1 > out/analytics/transcript_terms.csv
+
+      echo "✅ CSV exports completed"
+    shell: bash
+
+  # Step 7: Generate summary report
+  - run: |
+      set -e
+      echo "📋 Step 7: Generating summary report..."
+
+      # Count files and sizes
+      echo "📊 Analytics Export Summary" > out/analytics/SUMMARY.txt
+      echo "Generated: $(date)" >> out/analytics/SUMMARY.txt
+      echo "" >> out/analytics/SUMMARY.txt
+      echo "Files Created:" >> out/analytics/SUMMARY.txt
+
+      for file in out/analytics/*.csv; do
+        if [[ -f "$file" ]]; then
+          filename=$(basename "$file")
+          size=$(wc -c < "$file" | tr -d ' ')
+          rows=$(($(wc -l < "$file") - 1))  # Subtract header
+          echo "  $filename: $size bytes, $rows rows" >> out/analytics/SUMMARY.txt
+        fi
+      done
+
+      echo "" >> out/analytics/SUMMARY.txt
+      echo "🎉 Scout Analytics Infrastructure Successfully Deployed!" >> out/analytics/SUMMARY.txt
+
+      # Display summary
+      cat out/analytics/SUMMARY.txt
+
+      echo "✅ Summary report generated"
+    shell: bash

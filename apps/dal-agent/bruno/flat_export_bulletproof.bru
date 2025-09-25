@@ -1,0 +1,71 @@
+meta {
+  name: Scout Flat Export - Bullet-Proof CSV System
+  type: http
+  seq: 1
+}
+
+vars {
+  server: sqltbwaprojectscoutserver.database.windows.net
+  database: SQL-TBWA-ProjectScout-Reporting-Prod
+}
+
+script:pre-request {
+  // Ensure output directory exists
+  const fs = require('fs');
+  if (!fs.existsSync('out/flat')) {
+    fs.mkdirSync('out/flat', { recursive: true });
+  }
+}
+
+// Step 1: Create CSV-safe view
+post {
+  url: bruno://sql
+  body: text
+  auth: none
+}
+
+headers {
+  Content-Type: application/sql
+}
+
+body:text {
+  :bruno sql name:"ensure-csv-safe-view" conn:"$AZURE_SQL_CONN_STR" script:"CREATE OR ALTER VIEW dbo.v_flat_export_csvsafe AS SELECT [Transaction_ID],[Transaction_Value],[Basket_Size],REPLACE(REPLACE(LTRIM(RTRIM([Category])),CHAR(13),' '),CHAR(10),' ') AS [Category],REPLACE(REPLACE(LTRIM(RTRIM([Brand])),CHAR(13),' '),CHAR(10),' ') AS [Brand],[Daypart],REPLACE(REPLACE(LTRIM(RTRIM([Demographics (Age/Gender/Role)])),CHAR(13),' '),CHAR(10),' ') AS [Demographics (Age/Gender/Role)],[Weekday_vs_Weekend],[Time of transaction],REPLACE(REPLACE(LTRIM(RTRIM([Location])),CHAR(13),' '),CHAR(10),' ') AS [Location],REPLACE(REPLACE(LTRIM(RTRIM([Other_Products])),CHAR(13),' '),CHAR(10),' ') AS [Other_Products],[Was_Substitution] FROM dbo.v_flat_export_sheet;"
+}
+
+// Step 2: Export flat dataframe
+post {
+  url: bruno://shell
+  body: text
+  auth: none
+}
+
+body:text {
+  :bruno shell name:"flat-export" run:"sqlcmd -S 'sqltbwaprojectscoutserver.database.windows.net' -d 'SQL-TBWA-ProjectScout-Reporting-Prod' -G -C -Q \"SET NOCOUNT ON; SELECT * FROM dbo.v_flat_export_csvsafe ORDER BY [Transaction_ID];\" -s \",\" -W -h -1 -y 0 -o out/flat/flat_dataframe_bulletproof.csv"
+}
+
+script:post-response {
+  // Validate export
+  const fs = require('fs');
+  const path = 'out/flat/flat_dataframe_bulletproof.csv';
+
+  if (fs.existsSync(path)) {
+    const content = fs.readFileSync(path, 'utf8');
+    const rows = content.split('\n').filter(line => line.trim() !== '').length;
+
+    console.log(`✅ Export completed: ${rows} rows`);
+    console.log(`📁 File: ${path}`);
+
+    if (rows === 12192) {
+      console.log('🎉 Perfect! Exactly 12,192 rows exported.');
+    } else {
+      console.log(`⚠️ Row count: ${rows} (expected 12,192)`);
+    }
+
+    // Show sample
+    const lines = content.split('\n').slice(0, 3);
+    console.log('\nSample (first 3 lines):');
+    lines.forEach(line => console.log(line));
+  } else {
+    console.log('❌ Export file not created');
+  }
+}

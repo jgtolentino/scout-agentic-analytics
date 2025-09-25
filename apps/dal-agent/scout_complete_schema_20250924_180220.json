@@ -1,0 +1,1546 @@
+{
+  "schemas": [
+    {
+      "schema_name": "bronze"
+    },
+    {
+      "schema_name": "cdc"
+    },
+    {
+      "schema_name": "ces"
+    },
+    {
+      "schema_name": "db_accessadmin"
+    },
+    {
+      "schema_name": "db_backupoperator"
+    },
+    {
+      "schema_name": "db_datareader"
+    },
+    {
+      "schema_name": "db_datawriter"
+    },
+    {
+      "schema_name": "db_ddladmin"
+    },
+    {
+      "schema_name": "db_denydatareader"
+    },
+    {
+      "schema_name": "db_denydatawriter"
+    },
+    {
+      "schema_name": "db_owner"
+    },
+    {
+      "schema_name": "db_securityadmin"
+    },
+    {
+      "schema_name": "dbo"
+    },
+    {
+      "schema_name": "gold"
+    },
+    {
+      "schema_name": "guest"
+    },
+    {
+      "schema_name": "INFORMATION_SCHEMA"
+    },
+    {
+      "schema_name": "ops"
+    },
+    {
+      "schema_name": "poc"
+    },
+    {
+      "schema_name": "Sample"
+    },
+    {
+      "schema_name": "scout"
+    },
+    {
+      "schema_name": "silver"
+    },
+    {
+      "schema_name": "staging"
+    },
+    {
+      "schema_name": "sys"
+    }
+  ],
+  "tables": [
+    {
+      "schema_name": "bronze",
+      "table_name": "bronze_transactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "bronze",
+      "table_name": "dim_stores_ncr",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "bronze",
+      "table_name": "transactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "captured_columns",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "cdc_jobs",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "change_tables",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "dbo_Customers_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "dbo_Products_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "dbo_SalesInteractions_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "dbo_Stores_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "dbo_TranscriptChunkAudit_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "ddl_history",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "index_columns",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "lsn_time_mapping",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_brands_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_customers_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_products_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_stores_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_transaction_items_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "cdc",
+      "table_name": "poc_transactions_CT",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ces",
+      "table_name": "tbwa_business_predictions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ces",
+      "table_name": "tbwa_campaign_documents",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ces",
+      "table_name": "tbwa_campaigns",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ces",
+      "table_name": "tbwa_creative_analysis",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ces",
+      "table_name": "tbwa_data_metadata",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "adsbot_validation_result",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "audit_log",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Barangay",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Brands",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "BrandUpdates",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "BrandVersions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "bronze_device_logs",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "bronze_transcriptions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "bronze_vision_detections",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "campaign_performance",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "campaignInsights",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "consumer_profile",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "creative_asset",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "customer",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Customers",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "data_subject_request",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "DeviceData",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "DeviceStoreMap",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "fileMetadata",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "gold_store_performance",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "IntegrationAuditLogs",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "InteractionsUnified",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "location",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "migrations",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Municipality",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "pageIndex",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "PayloadTransactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "PayloadTransactionsStaging_csv",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "ph_awards_analysis_batches",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "ph_awards_assets",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "ph_awards_campaigns",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "ph_awards_pages",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "processingLogs",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "product",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Products",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Province",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "qualityMetrics",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Region",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "RequestMethods",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "SalesInteractionBrands",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "SalesInteractions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "SalesInteractionTranscripts",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "semanticIndex",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "SessionMatches",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "silver_location_verified",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "silver_txn_items",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "StoreLocationStaging",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "Stores",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "systranschemas",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "transaction",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "TransactionItems",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "TranscriptChunkAudit",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "TranscriptionDataTable",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "txn_item",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "txn_timestamp_overrides",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "dbo",
+      "table_name": "UnbrandedCommodities",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "gold",
+      "table_name": "scout_dashboard_transactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "gold",
+      "table_name": "tbwa_client_brands",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "ops",
+      "table_name": "LocationLoadLog",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "brands",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "customers",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "devices",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "products",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "request_behaviors",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "stores",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "substitutions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "transaction_items",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "poc",
+      "table_name": "transactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "Sample",
+      "table_name": "StoryTelling",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "Sample",
+      "table_name": "StoryTellingBrandLevel",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "Sample",
+      "table_name": "StoryTellingTransactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "brands",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "customers",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "devices",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "products",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "request_behaviors",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "stores",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "substitutions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "transaction_items",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "scout",
+      "table_name": "transactions",
+      "table_type": "BASE TABLE"
+    },
+    {
+      "schema_name": "staging",
+      "table_name": "StoreLocationImport",
+      "table_type": "BASE TABLE"
+    }
+  ],
+  "views": [
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_ageXbrand"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_ageXcategory"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_ageXpack"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_basketXcategory"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_basketXcusttype"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_basketXemotions"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_basketXpay"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_genderXdaypart"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_payXdemo"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_substEventXcategory"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_substEventXreason"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_suggestionAcceptedXbrand"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_timeXbrand"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_timeXcategory"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_timeXdemo"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "ct_timeXemotions"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "gold_interaction_summary"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "gold_reconstructed_transcripts"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "silver_transcripts"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "silver_vision_detections"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_azure_norm"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_data_quality_monitor"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_duplicate_detection_monitor"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_insight_base"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_payload_norm"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_performance_metrics_dashboard"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_pipeline_realtime_monitor"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_SalesInteractionsComplete"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_store_facial_age_101_120"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_store_health_dashboard"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_transactions_crosstab_production"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_transactions_flat_production"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_transactions_flat_v24"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_basketsize_category_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_basketsize_payment_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_daypart_weektype_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_time_brand_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_time_brand_category_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "v_xtab_time_category_abs"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "vw_campaign_effectiveness"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "vw_tbwa_brand_performance_mock"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "vw_tbwa_latest_mock_transactions"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "vw_tbwa_location_analytics_mock"
+    },
+    {
+      "schema_name": "dbo",
+      "view_name": "vw_transaction_analytics"
+    },
+    {
+      "schema_name": "gold",
+      "view_name": "v_transactions_crosstab"
+    },
+    {
+      "schema_name": "gold",
+      "view_name": "v_transactions_flat"
+    },
+    {
+      "schema_name": "gold",
+      "view_name": "v_transactions_flat_v24"
+    },
+    {
+      "schema_name": "sys",
+      "view_name": "database_firewall_rules"
+    }
+  ],
+  "procedures": [
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_125243501",
+      "created_date": "2025-06-25 05:13:31.497000",
+      "modified_date": "2025-06-25 05:13:31.563000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_1856725667",
+      "created_date": "2025-06-25 05:13:28.657000",
+      "modified_date": "2025-06-25 05:13:28.717000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_1984726123",
+      "created_date": "2025-06-25 05:13:29.547000",
+      "modified_date": "2025-06-25 05:13:29.613000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_2080726465",
+      "created_date": "2025-06-25 05:13:30.257000",
+      "modified_date": "2025-06-25 05:13:30.290000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_221243843",
+      "created_date": "2025-06-25 05:13:32.037000",
+      "modified_date": "2025-06-25 05:13:32.070000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_29243159",
+      "created_date": "2025-06-25 05:13:30.780000",
+      "modified_date": "2025-06-25 05:13:30.813000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_317244185",
+      "created_date": "2025-06-25 05:13:33.033000",
+      "modified_date": "2025-06-25 05:13:33.093000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_413244527",
+      "created_date": "2025-06-25 05:13:33.750000",
+      "modified_date": "2025-06-25 05:13:33.797000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_509244869",
+      "created_date": "2025-06-25 05:13:34.727000",
+      "modified_date": "2025-06-25 05:13:34.803000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_605245211",
+      "created_date": "2025-06-25 05:13:35.313000",
+      "modified_date": "2025-06-25 05:13:35.353000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_701245553",
+      "created_date": "2025-06-25 05:13:35.857000",
+      "modified_date": "2025-06-25 05:13:35.890000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_batchinsert_lsn_time_mapping",
+      "created_date": "2025-06-25 05:12:51.450000",
+      "modified_date": "2025-06-25 05:12:51.493000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_ins_dummy_lsn_time_mapping ",
+      "created_date": "2025-06-25 05:12:51.490000",
+      "modified_date": "2025-06-25 05:12:51.497000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_ins_instance_enabling_lsn_time_mapping ",
+      "created_date": "2025-06-25 05:12:51.497000",
+      "modified_date": "2025-06-25 05:12:51.503000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_ins_lsn_time_mapping",
+      "created_date": "2025-06-25 05:12:51.397000",
+      "modified_date": "2025-06-25 05:12:51.403000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_125243501",
+      "created_date": "2025-06-25 05:13:31.460000",
+      "modified_date": "2025-06-25 05:13:31.467000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_1856725667",
+      "created_date": "2025-06-25 05:13:28.607000",
+      "modified_date": "2025-06-25 05:13:28.613000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_1984726123",
+      "created_date": "2025-06-25 05:13:29.473000",
+      "modified_date": "2025-06-25 05:13:29.480000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_2080726465",
+      "created_date": "2025-06-25 05:13:30.217000",
+      "modified_date": "2025-06-25 05:13:30.223000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_221243843",
+      "created_date": "2025-06-25 05:13:32",
+      "modified_date": "2025-06-25 05:13:32.007000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_29243159",
+      "created_date": "2025-06-25 05:13:30.747000",
+      "modified_date": "2025-06-25 05:13:30.753000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_317244185",
+      "created_date": "2025-06-25 05:13:32.953000",
+      "modified_date": "2025-06-25 05:13:32.960000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_413244527",
+      "created_date": "2025-06-25 05:13:33.667000",
+      "modified_date": "2025-06-25 05:13:33.687000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_509244869",
+      "created_date": "2025-06-25 05:13:34.617000",
+      "modified_date": "2025-06-25 05:13:34.623000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_605245211",
+      "created_date": "2025-06-25 05:13:35.257000",
+      "modified_date": "2025-06-25 05:13:35.263000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_insdel_701245553",
+      "created_date": "2025-06-25 05:13:35.820000",
+      "modified_date": "2025-06-25 05:13:35.827000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_125243501",
+      "created_date": "2025-06-25 05:13:31.460000",
+      "modified_date": "2025-06-25 05:13:31.467000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_1856725667",
+      "created_date": "2025-06-25 05:13:28.610000",
+      "modified_date": "2025-06-25 05:13:28.617000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_1984726123",
+      "created_date": "2025-06-25 05:13:29.477000",
+      "modified_date": "2025-06-25 05:13:29.483000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_2080726465",
+      "created_date": "2025-06-25 05:13:30.220000",
+      "modified_date": "2025-06-25 05:13:30.227000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_221243843",
+      "created_date": "2025-06-25 05:13:32.003000",
+      "modified_date": "2025-06-25 05:13:32.010000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_29243159",
+      "created_date": "2025-06-25 05:13:30.747000",
+      "modified_date": "2025-06-25 05:13:30.753000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_317244185",
+      "created_date": "2025-06-25 05:13:32.957000",
+      "modified_date": "2025-06-25 05:13:32.963000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_413244527",
+      "created_date": "2025-06-25 05:13:33.683000",
+      "modified_date": "2025-06-25 05:13:33.690000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_509244869",
+      "created_date": "2025-06-25 05:13:34.620000",
+      "modified_date": "2025-06-25 05:13:34.637000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_605245211",
+      "created_date": "2025-06-25 05:13:35.260000",
+      "modified_date": "2025-06-25 05:13:35.267000"
+    },
+    {
+      "schema_name": "cdc",
+      "procedure_name": "sp_upd_701245553",
+      "created_date": "2025-06-25 05:13:35.823000",
+      "modified_date": "2025-06-25 05:13:35.830000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "PopulateSessionMatches",
+      "created_date": "2025-05-20 03:25:53",
+      "modified_date": "2025-05-20 03:25:53"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_adsbot_validation_summary",
+      "created_date": "2025-06-20 21:08:13.100000",
+      "modified_date": "2025-06-20 21:08:13.100000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_create_v_transactions_flat_authoritative",
+      "created_date": "2025-09-22 13:08:08.387000",
+      "modified_date": "2025-09-22 13:08:08.387000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_create_v_transactions_flat_min",
+      "created_date": "2025-09-22 13:14:03.313000",
+      "modified_date": "2025-09-22 13:14:03.313000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_refresh_analytics_views",
+      "created_date": "2025-09-22 13:53:09.697000",
+      "modified_date": "2025-09-23 07:09:24.590000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_scout_health_check",
+      "created_date": "2025-09-22 13:53:51.460000",
+      "modified_date": "2025-09-23 07:09:25.140000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_upsert_device_store",
+      "created_date": "2025-09-23 07:09:24.433000",
+      "modified_date": "2025-09-23 07:09:24.433000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "sp_validate_v24",
+      "created_date": "2025-09-22 20:44:40.580000",
+      "modified_date": "2025-09-22 20:44:40.580000"
+    },
+    {
+      "schema_name": "dbo",
+      "procedure_name": "VerifyScoutMigration",
+      "created_date": "2025-05-20 03:25:53.827000",
+      "modified_date": "2025-05-20 03:25:53.827000"
+    },
+    {
+      "schema_name": "gold",
+      "procedure_name": "sp_extract_scout_dashboard_data",
+      "created_date": "2025-09-23 08:25:49.180000",
+      "modified_date": "2025-09-23 08:25:49.180000"
+    }
+  ],
+  "functions": [
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_ ... ",
+      "created_date": "2025-06-25 05:12:51.393000",
+      "modified_date": "2025-06-25 05:12:51.400000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_...",
+      "created_date": "2025-06-25 05:12:51.390000",
+      "modified_date": "2025-06-25 05:12:51.397000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_dbo_Customers",
+      "created_date": "2025-06-25 05:13:29.443000",
+      "modified_date": "2025-06-25 05:13:29.443000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_dbo_Products",
+      "created_date": "2025-06-25 05:13:30.193000",
+      "modified_date": "2025-06-25 05:13:30.193000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_dbo_SalesInteractions",
+      "created_date": "2025-06-25 05:13:28.317000",
+      "modified_date": "2025-06-25 05:13:28.317000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_dbo_Stores",
+      "created_date": "2025-06-25 05:13:30.733000",
+      "modified_date": "2025-06-25 05:13:30.733000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_dbo_TranscriptChunkAudit",
+      "created_date": "2025-06-25 05:13:31.437000",
+      "modified_date": "2025-06-25 05:13:31.437000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_brands",
+      "created_date": "2025-06-25 05:13:33.603000",
+      "modified_date": "2025-06-25 05:13:33.603000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_customers",
+      "created_date": "2025-06-25 05:13:35.807000",
+      "modified_date": "2025-06-25 05:13:35.807000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_products",
+      "created_date": "2025-06-25 05:13:34.603000",
+      "modified_date": "2025-06-25 05:13:34.603000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_stores",
+      "created_date": "2025-06-25 05:13:35.240000",
+      "modified_date": "2025-06-25 05:13:35.240000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_transaction_items",
+      "created_date": "2025-06-25 05:13:32.907000",
+      "modified_date": "2025-06-25 05:13:32.907000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_all_changes_poc_transactions",
+      "created_date": "2025-06-25 05:13:31.983000",
+      "modified_date": "2025-06-25 05:13:31.983000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_ ... ",
+      "created_date": "2025-06-25 05:12:51.393000",
+      "modified_date": "2025-06-25 05:12:51.400000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_...",
+      "created_date": "2025-06-25 05:12:51.390000",
+      "modified_date": "2025-06-25 05:12:51.397000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_dbo_Customers",
+      "created_date": "2025-06-25 05:13:29.457000",
+      "modified_date": "2025-06-25 05:13:29.457000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_dbo_Products",
+      "created_date": "2025-06-25 05:13:30.200000",
+      "modified_date": "2025-06-25 05:13:30.200000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_dbo_SalesInteractions",
+      "created_date": "2025-06-25 05:13:28.553000",
+      "modified_date": "2025-06-25 05:13:28.553000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_dbo_Stores",
+      "created_date": "2025-06-25 05:13:30.737000",
+      "modified_date": "2025-06-25 05:13:30.737000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_dbo_TranscriptChunkAudit",
+      "created_date": "2025-06-25 05:13:31.440000",
+      "modified_date": "2025-06-25 05:13:31.440000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_brands",
+      "created_date": "2025-06-25 05:13:33.610000",
+      "modified_date": "2025-06-25 05:13:33.610000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_customers",
+      "created_date": "2025-06-25 05:13:35.813000",
+      "modified_date": "2025-06-25 05:13:35.813000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_products",
+      "created_date": "2025-06-25 05:13:34.610000",
+      "modified_date": "2025-06-25 05:13:34.610000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_stores",
+      "created_date": "2025-06-25 05:13:35.243000",
+      "modified_date": "2025-06-25 05:13:35.243000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_transaction_items",
+      "created_date": "2025-06-25 05:13:32.913000",
+      "modified_date": "2025-06-25 05:13:32.913000"
+    },
+    {
+      "schema_name": "cdc",
+      "function_name": "fn_cdc_get_net_changes_poc_transactions",
+      "created_date": "2025-06-25 05:13:31.990000",
+      "modified_date": "2025-06-25 05:13:31.990000"
+    }
+  ],
+  "foreign_keys": [
+    {
+      "constraint_name": "FK__adsbot_va__asset__7D2E8C24",
+      "parent_table": "adsbot_validation_result",
+      "parent_schema": "dbo",
+      "parent_column": "asset_id",
+      "referenced_table": "creative_asset",
+      "referenced_schema": "dbo",
+      "referenced_column": "asset_id"
+    },
+    {
+      "constraint_name": "FK__Barangay__Munici__3EC74557",
+      "parent_table": "Barangay",
+      "parent_schema": "dbo",
+      "parent_column": "MunicipalityID",
+      "referenced_table": "Municipality",
+      "referenced_schema": "dbo",
+      "referenced_column": "MunicipalityID"
+    },
+    {
+      "constraint_name": "FK_BrandUpdates_Brands",
+      "parent_table": "BrandUpdates",
+      "parent_schema": "dbo",
+      "parent_column": "BrandID",
+      "referenced_table": "Brands",
+      "referenced_schema": "dbo",
+      "referenced_column": "BrandID"
+    },
+    {
+      "constraint_name": "FK_BrandVersions_Brands",
+      "parent_table": "BrandVersions",
+      "parent_schema": "dbo",
+      "parent_column": "BrandID",
+      "referenced_table": "Brands",
+      "referenced_schema": "dbo",
+      "referenced_column": "BrandID"
+    },
+    {
+      "constraint_name": "FK__campaign___asset__02E7657A",
+      "parent_table": "campaign_performance",
+      "parent_schema": "dbo",
+      "parent_column": "asset_id",
+      "referenced_table": "creative_asset",
+      "referenced_schema": "dbo",
+      "referenced_column": "asset_id"
+    },
+    {
+      "constraint_name": "FK__consumer___custo__6FD49106",
+      "parent_table": "consumer_profile",
+      "parent_schema": "dbo",
+      "parent_column": "customer_id",
+      "referenced_table": "customer",
+      "referenced_schema": "dbo",
+      "referenced_column": "customer_id"
+    },
+    {
+      "constraint_name": "FK__consumer___txn_i__70C8B53F",
+      "parent_table": "consumer_profile",
+      "parent_schema": "dbo",
+      "parent_column": "txn_id",
+      "referenced_table": "transaction",
+      "referenced_schema": "dbo",
+      "referenced_column": "txn_id"
+    },
+    {
+      "constraint_name": "FK__creative___prod___76818E95",
+      "parent_table": "creative_asset",
+      "parent_schema": "dbo",
+      "parent_column": "prod_id",
+      "referenced_table": "product",
+      "referenced_schema": "dbo",
+      "referenced_column": "prod_id"
+    },
+    {
+      "constraint_name": "FK_DeviceData_Stores",
+      "parent_table": "DeviceData",
+      "parent_schema": "dbo",
+      "parent_column": "StoreID",
+      "referenced_table": "Stores",
+      "referenced_schema": "dbo",
+      "referenced_column": "StoreID"
+    },
+    {
+      "constraint_name": "FK_DeviceStoreMap_Stores",
+      "parent_table": "DeviceStoreMap",
+      "parent_schema": "dbo",
+      "parent_column": "StoreID",
+      "referenced_table": "Stores",
+      "referenced_schema": "dbo",
+      "referenced_column": "StoreID"
+    },
+    {
+      "constraint_name": "FK__Municipal__Provi__3BEAD8AC",
+      "parent_table": "Municipality",
+      "parent_schema": "dbo",
+      "parent_column": "ProvinceID",
+      "referenced_table": "Province",
+      "referenced_schema": "dbo",
+      "referenced_column": "ProvinceID"
+    },
+    {
+      "constraint_name": "FK_pageIndex_fileMetadata",
+      "parent_table": "pageIndex",
+      "parent_schema": "dbo",
+      "parent_column": "file_id",
+      "referenced_table": "fileMetadata",
+      "referenced_schema": "dbo",
+      "referenced_column": "file_id"
+    },
+    {
+      "constraint_name": "FK_Products_Brands",
+      "parent_table": "Products",
+      "parent_schema": "dbo",
+      "parent_column": "BrandID",
+      "referenced_table": "Brands",
+      "referenced_schema": "dbo",
+      "referenced_column": "BrandID"
+    },
+    {
+      "constraint_name": "FK__Province__Region__390E6C01",
+      "parent_table": "Province",
+      "parent_schema": "dbo",
+      "parent_column": "RegionID",
+      "referenced_table": "Region",
+      "referenced_schema": "dbo",
+      "referenced_column": "RegionID"
+    },
+    {
+      "constraint_name": "FK_qualityMetrics_pageIndex",
+      "parent_table": "qualityMetrics",
+      "parent_schema": "dbo",
+      "parent_column": "chunk_id",
+      "referenced_table": "pageIndex",
+      "referenced_schema": "dbo",
+      "referenced_column": "chunk_id"
+    },
+    {
+      "constraint_name": "FK_SalesInteractionBrands_InteractionID",
+      "parent_table": "SalesInteractionBrands",
+      "parent_schema": "dbo",
+      "parent_column": "InteractionID",
+      "referenced_table": "SalesInteractions",
+      "referenced_schema": "dbo",
+      "referenced_column": "InteractionID"
+    },
+    {
+      "constraint_name": "FK_SalesInteractions_Products",
+      "parent_table": "SalesInteractions",
+      "parent_schema": "dbo",
+      "parent_column": "ProductID",
+      "referenced_table": "Products",
+      "referenced_schema": "dbo",
+      "referenced_column": "ProductID"
+    },
+    {
+      "constraint_name": "FK_SalesInteractions_Stores",
+      "parent_table": "SalesInteractions",
+      "parent_schema": "dbo",
+      "parent_column": "StoreID",
+      "referenced_table": "Stores",
+      "referenced_schema": "dbo",
+      "referenced_column": "StoreID"
+    },
+    {
+      "constraint_name": "FK_SalesInteractionTranscripts_InteractionID",
+      "parent_table": "SalesInteractionTranscripts",
+      "parent_schema": "dbo",
+      "parent_column": "InteractionID",
+      "referenced_table": "SalesInteractions",
+      "referenced_schema": "dbo",
+      "referenced_column": "InteractionID"
+    },
+    {
+      "constraint_name": "FK_semanticIndex_pageIndex",
+      "parent_table": "semanticIndex",
+      "parent_schema": "dbo",
+      "parent_column": "chunk_id",
+      "referenced_table": "pageIndex",
+      "referenced_schema": "dbo",
+      "referenced_column": "chunk_id"
+    },
+    {
+      "constraint_name": "FK__transacti__custo__627A95E8",
+      "parent_table": "transaction",
+      "parent_schema": "dbo",
+      "parent_column": "customer_id",
+      "referenced_table": "customer",
+      "referenced_schema": "dbo",
+      "referenced_column": "customer_id"
+    },
+    {
+      "constraint_name": "FK__transacti__loc_i__618671AF",
+      "parent_table": "transaction",
+      "parent_schema": "dbo",
+      "parent_column": "loc_id",
+      "referenced_table": "location",
+      "referenced_schema": "dbo",
+      "referenced_column": "loc_id"
+    },
+    {
+      "constraint_name": "FK_TranscriptChunkAudit_InteractionID",
+      "parent_table": "TranscriptChunkAudit",
+      "parent_schema": "dbo",
+      "parent_column": "InteractionID",
+      "referenced_table": "SalesInteractions",
+      "referenced_schema": "dbo",
+      "referenced_column": "InteractionID"
+    },
+    {
+      "constraint_name": "FK__txn_item__prod_i__69279377",
+      "parent_table": "txn_item",
+      "parent_schema": "dbo",
+      "parent_column": "prod_id",
+      "referenced_table": "product",
+      "referenced_schema": "dbo",
+      "referenced_column": "prod_id"
+    },
+    {
+      "constraint_name": "FK__txn_item__substi__6B0FDBE9",
+      "parent_table": "txn_item",
+      "parent_schema": "dbo",
+      "parent_column": "substituted_from",
+      "referenced_table": "product",
+      "referenced_schema": "dbo",
+      "referenced_column": "prod_id"
+    },
+    {
+      "constraint_name": "FK__txn_item__txn_id__68336F3E",
+      "parent_table": "txn_item",
+      "parent_schema": "dbo",
+      "parent_column": "txn_id",
+      "referenced_table": "transaction",
+      "referenced_schema": "dbo",
+      "referenced_column": "txn_id"
+    },
+    {
+      "constraint_name": "FK__products__brand___3A379A64",
+      "parent_table": "products",
+      "parent_schema": "scout",
+      "parent_column": "brand_id",
+      "referenced_table": "brands",
+      "referenced_schema": "scout",
+      "referenced_column": "brand_id"
+    },
+    {
+      "constraint_name": "FK__transacti__produ__4885B9BB",
+      "parent_table": "transaction_items",
+      "parent_schema": "scout",
+      "parent_column": "product_id",
+      "referenced_table": "products",
+      "referenced_schema": "scout",
+      "referenced_column": "product_id"
+    },
+    {
+      "constraint_name": "FK__transacti__trans__47919582",
+      "parent_table": "transaction_items",
+      "parent_schema": "scout",
+      "parent_column": "transaction_id",
+      "referenced_table": "transactions",
+      "referenced_schema": "scout",
+      "referenced_column": "transaction_id"
+    },
+    {
+      "constraint_name": "FK__transacti__custo__42CCE065",
+      "parent_table": "transactions",
+      "parent_schema": "scout",
+      "parent_column": "customer_id",
+      "referenced_table": "customers",
+      "referenced_schema": "scout",
+      "referenced_column": "customer_id"
+    },
+    {
+      "constraint_name": "FK__transacti__devic__44B528D7",
+      "parent_table": "transactions",
+      "parent_schema": "scout",
+      "parent_column": "device_id",
+      "referenced_table": "devices",
+      "referenced_schema": "scout",
+      "referenced_column": "device_id"
+    },
+    {
+      "constraint_name": "FK__transacti__store__43C1049E",
+      "parent_table": "transactions",
+      "parent_schema": "scout",
+      "parent_column": "store_id",
+      "referenced_table": "stores",
+      "referenced_schema": "scout",
+      "referenced_column": "store_id"
+    }
+  ],
+  "record_counts": {
+    "bronze.transactions": "3",
+    "bronze.bronze_transactions": "3",
+    "dbo.PayloadTransactions": "12192",
+    "dbo.SalesInteractions": "165485",
+    "dbo.TransactionItems": "0",
+    "dbo.Stores": "21",
+    "dbo.Products": "1",
+    "dbo.Customers": "0",
+    "gold.scout_dashboard_transactions": "12101",
+    "dbo.v_transactions_flat_production": "12192",
+    "dbo.v_transactions_flat_v24": "12192",
+    "poc.transactions": "0",
+    "scout.transactions": "0"
+  }
+}

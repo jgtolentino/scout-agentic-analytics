@@ -1,0 +1,22 @@
+name: docs-guard
+on:
+  pull_request:
+    paths:
+      - 'sql/**.sql'
+      - 'docs/**'
+jobs:
+  guard:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for diff
+      - name: Install dependencies
+        run: |
+          brew install bruno || npm i -g @usebruno/cli
+          echo "Dependencies installed"
+      - name: Check documentation drift
+        run: make guard
+        env:
+          # Note: Using env secret placeholder - actual secret managed via GitHub repo settings
+          AZURE_SQL_CONN_STR: ${{ secrets.AZURE_SQL_CONN_STR }}

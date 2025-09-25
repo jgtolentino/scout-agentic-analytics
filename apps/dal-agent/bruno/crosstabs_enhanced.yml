@@ -1,0 +1,129 @@
+name: "Scout Analytics — Enhanced Cross-Tabs & Flat Export"
+description: "Comprehensive export including flat dataframe (12,192 rows) and enhanced cross-tabulations with validation"
+
+steps:
+  # Fetch connection credentials from keychain
+  - run: |
+      set -eo pipefail
+      CONN_STR=$(security find-generic-password -s "SQL-TBWA-ProjectScout-Reporting-Prod" -w 2>/dev/null || echo "")
+      if [ -z "$CONN_STR" ]; then
+        echo "❌ Connection string not found in keychain"
+        echo "Add credentials: security add-generic-password -s 'SQL-TBWA-ProjectScout-Reporting-Prod' -a 'scout-analytics' -w 'your-connection-string'"
+        exit 1
+      fi
+      echo "✅ Connection credentials available"
+      export AZURE_SQL_CONN_STR="$CONN_STR"
+
+  # Create output directories
+  - run: |
+      set -eo pipefail
+      mkdir -p out/{flat,analytics}
+      echo "✅ Output directories created"
+
+  # Validation gate: Ensure exactly 12,192 rows in flat export view
+  - run: |
+      set -eo pipefail
+      echo "🔍 Validating flat export row count..."
+      ROWS=$(sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; SELECT CAST(COUNT(*) AS int) FROM dbo.v_flat_export_sheet" -h -1 -W | awk 'NR==1{print $1}')
+      if [ "$ROWS" = "12192" ]; then
+        echo "✅ flat_export_sheet rows = $ROWS (matches expected 12,192)"
+      else
+        echo "❌ row-count mismatch: got $ROWS, expected 12,192"
+        exit 1
+      fi
+
+  # Export full flat dataframe (12,192 rows)
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting full flat dataframe (12,192 rows)..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; SELECT * FROM dbo.v_flat_export_sheet ORDER BY [Transaction_ID];" -s "," -W -h -1 > out/flat/flat_dataframe.csv
+      echo "✅ Full flat export completed"
+
+  # Export sample flat dataframe (200 rows for presentations)
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting flat dataframe sample (200 rows)..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; WITH t AS (SELECT ROW_NUMBER() OVER(ORDER BY [Transaction_ID]) AS rn, * FROM dbo.v_flat_export_sheet) SELECT * FROM t WHERE rn <= 200 ORDER BY rn;" -s "," -W -h -1 > out/flat/flat_dataframe_sample_200.csv
+      echo "✅ Sample flat export completed"
+
+  # Export Gender × Daypart cross-tabulation
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting Gender × Daypart cross-tabulation..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON;
+      WITH base AS (
+        SELECT [Daypart],
+               Gender = CASE
+                 WHEN [Demographics (Age/Gender/Role)] LIKE '% Male%' OR [Demographics (Age/Gender/Role)] LIKE 'Male %' OR [Demographics (Age/Gender/Role)] LIKE '% Male' THEN 'Male'
+                 WHEN [Demographics (Age/Gender/Role)] LIKE '% Female%' OR [Demographics (Age/Gender/Role)] LIKE 'Female %' OR [Demographics (Age/Gender/Role)] LIKE '% Female' THEN 'Female'
+                 ELSE 'Unknown'
+               END
+        FROM dbo.v_flat_export_sheet
+      )
+      SELECT Gender,[Daypart],COUNT(*) AS TxCount
+      FROM base
+      GROUP BY Gender,[Daypart]
+      ORDER BY Gender,[Daypart];" -s "," -W -h -1 > out/analytics/gender_x_daypart.csv
+      echo "✅ Gender × Daypart export completed"
+
+  # Export BasketSize × Category cross-tabulation
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting BasketSize × Category cross-tabulation..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON;
+      WITH b AS (
+        SELECT
+          Bucket = CASE
+                     WHEN [Basket_Size] IS NULL          THEN 'Unknown'
+                     WHEN [Basket_Size] <= 1             THEN '1'
+                     WHEN [Basket_Size] = 2              THEN '2'
+                     WHEN [Basket_Size] BETWEEN 3 AND 4  THEN '3-4'
+                     WHEN [Basket_Size] BETWEEN 5 AND 7  THEN '5-7'
+                     ELSE '8+'
+                   END,
+          [Category]
+        FROM dbo.v_flat_export_sheet
+        WHERE [Category] IS NOT NULL
+      )
+      SELECT Bucket AS BasketSize_Bucket,[Category],COUNT(*) AS TxCount
+      FROM b
+      GROUP BY Bucket,[Category]
+      ORDER BY
+        CASE Bucket WHEN '1' THEN 1 WHEN '2' THEN 2 WHEN '3-4' THEN 3 WHEN '5-7' THEN 4 WHEN '8+' THEN 5 ELSE 6 END,
+        [Category];" -s "," -W -h -1 > out/analytics/basketsize_x_category.csv
+      echo "✅ BasketSize × Category export completed"
+
+  # Export Daypart × Category cross-tabulation (existing)
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting Daypart × Category cross-tabulation..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; SELECT [Daypart], [Category], COUNT(*) AS TxCount FROM dbo.v_flat_export_sheet WHERE [Category] IS NOT NULL GROUP BY [Daypart], [Category] ORDER BY [Daypart], [Category];" -s "," -W -h -1 > out/analytics/daypart_x_category.csv
+      echo "✅ Daypart × Category export completed"
+
+  # Export Weekend × Category cross-tabulation (existing)
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting Weekend × Category cross-tabulation..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; SELECT [Weekday_vs_Weekend], [Category], COUNT(*) AS TxCount FROM dbo.v_flat_export_sheet WHERE [Category] IS NOT NULL GROUP BY [Weekday_vs_Weekend], [Category] ORDER BY [Weekday_vs_Weekend], [Category];" -s "," -W -h -1 > out/analytics/weekend_x_category.csv
+      echo "✅ Weekend × Category export completed"
+
+  # Export Brand × Category cross-tabulation (existing)
+  - run: |
+      set -eo pipefail
+      echo "📊 Exporting Brand × Category cross-tabulation..."
+      sqlcmd -S "$AZURE_SQL_CONN_STR" -Q "SET NOCOUNT ON; SELECT [Brand], [Category], COUNT(*) AS TxCount FROM dbo.v_flat_export_sheet WHERE [Brand] IS NOT NULL AND [Category] IS NOT NULL GROUP BY [Brand], [Category] ORDER BY [Brand], [Category];" -s "," -W -h -1 > out/analytics/brand_x_category.csv
+      echo "✅ Brand × Category export completed"
+
+  # Final summary and file listing
+  - run: |
+      set -eo pipefail
+      echo ""
+      echo "🎉 Enhanced analytics exports completed successfully!"
+      echo ""
+      echo "📁 Files generated:"
+      echo "   Flat Exports:"
+      ls -la out/flat/*.csv | awk '{printf "     %s (%s bytes)\n", $9, $5}' 2>/dev/null || echo "     No flat files found"
+      echo "   Analytics:"
+      ls -la out/analytics/*.csv | awk '{printf "     %s (%s bytes)\n", $9, $5}' 2>/dev/null || echo "     No analytics files found"
+      echo ""
+      echo "✅ All exports ready for analysis!"
