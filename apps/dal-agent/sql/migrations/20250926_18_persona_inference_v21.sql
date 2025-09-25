@@ -21,7 +21,7 @@ BEGIN
             t.canonical_tx_id,
             LOWER(
                 REPLACE(REPLACE(REPLACE(
-                    COALESCE(t.audio_transcript,'') + ' ' + COALESCE(t.demographics_text,''),
+                    COALESCE(t.audio_transcript,''),
                     CHAR(10),' '), CHAR(13),' '), CHAR(9),' ')
             ) AS raw_text
         FROM dbo.v_transactions_flat_production t
@@ -100,7 +100,9 @@ BEGIN
                 ELSE 0.75                                   -- Lower confidence for priority 3+
             END +
             -- Bonus for multiple include hits (max +0.04)
-            CASE WHEN inc.inc_hits > 1 THEN LEAST(0.04, 0.01 * (inc.inc_hits-1)) ELSE 0.00 END +
+            CASE WHEN inc.inc_hits > 1 THEN
+                CASE WHEN 0.01 * (inc.inc_hits-1) < 0.04 THEN 0.01 * (inc.inc_hits-1) ELSE 0.04 END
+                ELSE 0.00 END +
             -- Bonus for bulk baskets (suggests reseller behavior)
             CASE WHEN bs.basket_size = 'bulk' THEN 0.02 ELSE 0.00 END AS confidence
         FROM inc

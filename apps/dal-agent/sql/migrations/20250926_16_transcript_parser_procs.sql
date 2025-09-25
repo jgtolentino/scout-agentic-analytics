@@ -69,7 +69,7 @@ BEGIN
            c.utt
     FROM cleaned c;
 
-    /* Seed hour bucket signals */
+    /* Seed hour bucket signals - only for rows with txn_ts */
     MERGE etl.persona_signal_facts AS tgt
     USING (
         SELECT
@@ -83,6 +83,7 @@ BEGIN
             END AS signal_value,
             CAST(1.00 AS decimal(5,2)) AS weight
         FROM dbo.v_transactions_flat_production t
+        WHERE t.txn_ts IS NOT NULL
     ) s
     ON (tgt.canonical_tx_id = s.canonical_tx_id AND tgt.signal_type='hour')
     WHEN MATCHED THEN UPDATE SET
@@ -90,7 +91,7 @@ BEGIN
     WHEN NOT MATCHED THEN INSERT (canonical_tx_id, signal_type, signal_value, weight)
         VALUES (s.canonical_tx_id, s.signal_type, s.signal_value, s.weight);
 
-    /* Seed basket size signals */
+    /* Seed basket size signals - only for rows with total_items */
     MERGE etl.persona_signal_facts AS tgt
     USING (
         SELECT t.canonical_tx_id,
@@ -102,6 +103,7 @@ BEGIN
                END AS signal_value,
                CAST(1.00 AS decimal(5,2)) AS weight
         FROM dbo.v_transactions_flat_production t
+        WHERE t.total_items IS NOT NULL
     ) s
     ON (tgt.canonical_tx_id = s.canonical_tx_id AND tgt.signal_type='basket_size')
     WHEN MATCHED THEN UPDATE SET
