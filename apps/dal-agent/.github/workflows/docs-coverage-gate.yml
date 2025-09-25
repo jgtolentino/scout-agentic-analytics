@@ -1,0 +1,15 @@
+name: docs-coverage-gate
+on:
+  push:
+    paths: [ 'docs/DB_CHANGELOG.md' ]
+  pull_request:
+    paths: [ 'docs/DB_CHANGELOG.md' ]
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail if coverage is false
+        run: |
+          tail -n 50 docs/DB_CHANGELOG.md | grep -q 'Coverage OK: true' || \
+          (echo '❌ Coverage OK is false in DB_CHANGELOG.md'; exit 1)
