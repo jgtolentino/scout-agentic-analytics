@@ -643,3 +643,22 @@ inquiries-headers: ## Print first row (headers) of key exports for quick schema 
 		[ -f "$$f" ] || continue; \
 		printf "  - %s: " "$$f"; head -1 "$$f" || true; \
 	done
+
+.PHONY: inquiries-headers-validate
+inquiries-headers-validate: ## Validate CSV headers match expected schemas (fails on drift)
+	@echo "$(YELLOW)🔒 Validating CSV headers...$(NC)"
+	@fail=0; \
+	check() { f="$$1"; exp="$$2"; got=$$(head -1 "$$f" | tr -d '\r'); \
+		if [ "$$got" != "$$exp" ]; then \
+			echo "::error file=$$f::Header mismatch. expected='$$exp' got='$$got'"; fail=1; \
+		fi; }; \
+	check out/inquiries_filtered/overall/store_profiles.csv "store_id,store_name,region,transactions,total_items,total_amount" ; \
+	check out/inquiries_filtered/overall/sales_by_week.csv "iso_week,week_start,transactions,total_amount" ; \
+	check out/inquiries_filtered/overall/daypart_by_category.csv "daypart,category,transactions,share_pct" ; \
+	check out/inquiries_filtered/tobacco/demo_gender_age_brand.csv "gender,age_band,brand,transactions,share_pct" ; \
+	check out/inquiries_filtered/tobacco/purchase_profile_pdp.csv "dom_bucket,transactions,share_pct" ; \
+	check out/inquiries_filtered/tobacco/sales_by_day_daypart.csv "date,daypart,transactions,share_pct" ; \
+	check out/inquiries_filtered/tobacco/sticks_per_visit.csv "transaction_id,brand,items,sticks_per_pack,estimated_sticks" ; \
+	check out/inquiries_filtered/tobacco/copurchase_categories.csv "category,co_category,txn_cocount,confidence,lift" ; \
+	check out/inquiries_filtered/laundry/detergent_type.csv "detergent_type,with_fabcon,transactions,share_pct" ; \
+	exit $$fail
