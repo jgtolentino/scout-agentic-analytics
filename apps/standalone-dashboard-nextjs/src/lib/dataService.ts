@@ -20,7 +20,7 @@ import type {
 } from '@/lib/types';
 
 // Data source configuration
-type DataSourceMode = 'azure' | 'parquet' | 'mock';
+type DataSourceMode = 'azure' | 'sql' | 'parquet' | 'mock';
 
 const DATA_SOURCE = (process.env.NEXT_PUBLIC_DATA_SOURCE || 'azure') as DataSourceMode;
 const AZURE_FUNCTION_BASE = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
@@ -28,6 +28,7 @@ const PARQUET_BASE_URL = process.env.NEXT_PUBLIC_PARQUET_BASE_URL || '/data/parq
 const FUNCTION_KEY = process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY;
 
 const USE_AZURE = DATA_SOURCE === 'azure' || DATA_SOURCE === 'production';
+const USE_SQL = DATA_SOURCE === 'sql';
 const USE_PARQUET = DATA_SOURCE === 'parquet';
 const USE_MOCK = DATA_SOURCE === 'mock' || process.env.NEXT_PUBLIC_USE_MOCK === '1';
 
@@ -41,6 +42,8 @@ export async function callRPC<T = any>(
   // Route to appropriate data source
   if (USE_AZURE) {
     return callAzureRPC<T>(functionName, params);
+  } else if (USE_SQL) {
+    return callSqlRPC<T>(functionName, params);
   } else if (USE_PARQUET) {
     return callParquetRPC<T>(functionName, params);
   } else {
@@ -133,6 +136,67 @@ async function callAzureRPC<T = any>(
 
   // This should never be reached, but TypeScript requires it
   return callMockRPC<T>(functionName, params);
+}
+
+// Azure SQL Database direct connection (for production App Service)
+async function callSqlRPC<T = any>(
+  functionName: string,
+  params: Record<string, any> = {}
+): Promise<T> {
+  console.log(`🗄️ Azure SQL: ${functionName}`);
+
+  // Import the database functions only when needed (server-side only)
+  if (typeof window !== 'undefined') {
+    console.warn('⚠️ SQL calls not supported in browser, falling back to Azure Functions');
+    return callAzureRPC<T>(functionName, params);
+  }
+
+  try {
+    // Dynamic import to prevent bundling on client
+    const dbModule = await import('@/lib/db');
+    const { executeStoredProcedure } = dbModule;
+
+    // Map RPC function names to stored procedures
+    const sqlProcedureMapping: Record<string, string> = {
+      'rpc_executive_overview': 'sp_get_executive_overview',
+      'rpc_sku_counts': 'sp_get_sku_counts',
+      'rpc_pareto_category': 'sp_get_pareto_categories',
+      'rpc_basket_pairs': 'sp_get_basket_pairs',
+      'rpc_behavior_kpis': 'sp_get_behavior_kpis',
+      'rpc_request_methods': 'sp_get_request_methods',
+      'rpc_acceptance_by_method': 'sp_get_acceptance_by_method',
+      'rpc_top_paths': 'sp_get_top_paths',
+      'rpc_geo_metric': 'sp_get_geo_metrics',
+      'rpc_compare': 'sp_get_compare_data',
+      'rpc_insights': 'sp_get_insights'
+    };
+
+    const procedureName = sqlProcedureMapping[functionName];
+    if (!procedureName) {
+      console.warn(`⚠️ No SQL procedure mapped for ${functionName}, falling back to Azure Functions`);
+      return callAzureRPC<T>(functionName, params);
+    }
+
+    // Convert params to SQL parameters
+    const sqlParams: Record<string, any> = {};
+    if (params.filters) {
+      sqlParams.filters_json = JSON.stringify(params.filters);
+    }
+    if (params.top_n) {
+      sqlParams.top_n = params.top_n;
+    }
+
+    console.log(`🔍 Executing SQL procedure: ${procedureName}`);
+    const result = await executeStoredProcedure<T>(procedureName, sqlParams);
+
+    console.log(`✅ SQL data retrieved: ${functionName}`);
+    return Array.isArray(result) && result.length === 1 ? result[0] : result;
+
+  } catch (error) {
+    console.error(`❌ SQL call failed for ${functionName}:`, error);
+    console.warn(`🔄 Falling back to Azure Functions`);
+    return callAzureRPC<T>(functionName, params);
+  }
 }
 
 // Parquet file data source

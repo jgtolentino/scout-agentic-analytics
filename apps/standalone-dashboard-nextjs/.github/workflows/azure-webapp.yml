@@ -1,0 +1,107 @@
+name: Deploy Scout Dashboard to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/standalone-dashboard-nextjs/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: choice
+        options: [production, staging]
+        default: production
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    defaults:
+      run:
+        working-directory: apps/standalone-dashboard-nextjs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/standalone-dashboard-nextjs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        run: npm run build
+
+      - name: Verify standalone build
+        run: |
+          if [ ! -d ".next/standalone" ]; then
+            echo "❌ Standalone build not found"
+            exit 1
+          fi
+          echo "✅ Standalone build verified"
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy
+
+          # Copy standalone server
+          cp -r .next/standalone/* deploy/
+
+          # Copy static assets
+          mkdir -p deploy/.next
+          cp -r .next/static deploy/.next/static
+
+          # Copy public assets
+          if [ -d "public" ]; then
+            cp -r public deploy/public
+          fi
+
+          # Create optimized package.json for Azure
+          cat > deploy/package.json << EOF
+          {
+            "name": "scout-dashboard-standalone",
+            "version": "1.0.0",
+            "private": true,
+            "scripts": {
+              "start": "NODE_ENV=production node server.js"
+            },
+            "dependencies": {
+              "mssql": "^11.0.1"
+            },
+            "engines": {
+              "node": ">=20.0.0"
+            }
+          }
+          EOF
+
+          echo "✅ Deployment package prepared"
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: apps/standalone-dashboard-nextjs/deploy
+
+      - name: Verify deployment
+        run: |
+          echo "🚀 Deployment completed"
+          echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          echo "Health check: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health"
+
+          # Wait for deployment to be ready
+          sleep 30
+
+          # Test health endpoint
+          if curl -f "https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health"; then
+            echo "✅ Health check passed"
+          else
+            echo "⚠️ Health check failed - check Azure App Service logs"
+          fi
