@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import type { BehaviorKPIs as BehaviorKPIType } from '@/lib/supabase/types';
+import type { BehaviorKPIs as BehaviorKPIType } from '@/lib/types';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,

@@ -12,7 +12,7 @@ const Plot = dynamic(() => import('react-plotly.js'), {
   ),
 });
 import { useDrillHandler } from '@/lib/hooks';
-import type { BasketPair } from '@/lib/supabase/types';
+import type { BasketPair } from '@/lib/types';
 
 interface ChordSubstitutionsProps {
   data: BasketPair[];

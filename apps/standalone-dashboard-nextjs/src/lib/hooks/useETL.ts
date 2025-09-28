@@ -69,15 +69,13 @@ export function useExportToStorage() {
     mutationFn: async (request: ExportRequest): Promise<ExportResponse> => {
       setIsExporting(true);
       
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://your-project.supabase.co' 
-        ? 'http://localhost:54321'
-        : process.env.NEXT_PUBLIC_SUPABASE_URL;
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/export-to-storage`, {
+      const azureBase = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
+
+      const response = await fetch(`${azureBase}/export-to-storage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-key'}`,
+          'x-functions-key': process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY || '',
         },
         body: JSON.stringify(request),
       });
@@ -112,15 +110,13 @@ export function useMirrorToS3() {
     mutationFn: async (request: MirrorRequest): Promise<MirrorResponse> => {
       setIsMirroring(true);
       
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://your-project.supabase.co' 
-        ? 'http://localhost:54321'
-        : process.env.NEXT_PUBLIC_SUPABASE_URL;
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/mirror-to-s3`, {
+      const azureBase = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
+
+      const response = await fetch(`${azureBase}/mirror-to-s3`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-key'}`,
+          'x-functions-key': process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY || '',
         },
         body: JSON.stringify(request),
       });
@@ -182,10 +178,10 @@ export function useETLStatus(pipelineId?: string, options?: UseQueryOptions<ETLS
       }
       
       // In production, call actual status endpoint
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/etl-status${pipelineId ? `?pipeline_id=${pipelineId}` : ''}`, {
+      const azureBase = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
+      const response = await fetch(`${azureBase}/etl-status${pipelineId ? `?pipeline_id=${pipelineId}` : ''}`, {
         headers: {
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+          'x-functions-key': process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY || '',
         },
       });
       
@@ -204,16 +200,14 @@ export function useETLStatus(pipelineId?: string, options?: UseQueryOptions<ETLS
 // Hook for generating dashboard links
 export function useDashboardLink() {
   const generateLink = (dataset?: string, filters?: Record<string, any>) => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://your-project.supabase.co' 
-      ? 'http://localhost:54321'
-      : process.env.NEXT_PUBLIC_SUPABASE_URL;
-    
+    const azureBase = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
+
     const params = new URLSearchParams();
     if (dataset) params.set('dataset', dataset);
     if (filters) params.set('filters', JSON.stringify(filters));
-    
+
     const queryString = params.toString();
-    return `${supabaseUrl}/functions/v1/dashboard${queryString ? `?${queryString}` : ''}`;
+    return `${azureBase}/dashboard${queryString ? `?${queryString}` : ''}`;
   };
   
   const openDashboard = (dataset?: string, filters?: Record<string, any>) => {

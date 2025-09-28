@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
-import type { AnalyticsFilters } from '@/lib/supabase/types';
+import type { AnalyticsFilters } from '@/lib/types';
 
 interface FilterStore {
   filters: AnalyticsFilters;

@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useDrillHandler } from '@/lib/hooks';
-import type { ParetoCategory } from '@/lib/supabase/types';
+import type { ParetoCategory } from '@/lib/types';
 
 const Plot = dynamic(() => import('react-plotly.js'), {
   ssr: false,
