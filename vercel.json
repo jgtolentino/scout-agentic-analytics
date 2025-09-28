@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "buildCommand": "cd apps/standalone-dashboard-nextjs && npm run build",
+  "installCommand": "npm install --no-audit --no-fund --legacy-peer-deps",
+  "framework": "nextjs",
+  "outputDirectory": "apps/standalone-dashboard-nextjs/.next",
+  "functions": {
+    "apps/standalone-dashboard-nextjs/src/app/api/export/**/*.{js,ts}": {
+      "runtime": "nodejs20.x",
+      "memory": 512,
+      "maxDuration": 10
+    }
+  },
+  "env": {
+    "EXPORT_DELEGATION_MODE": "resolve",
+    "NODE_ENV": "production"
+  },
+  "headers": [
+    {
+      "source": "/api/export/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/export/:path*",
+      "destination": "/apps/standalone-dashboard-nextjs/src/app/api/export/:path*"
+    }
+  ]
+}
