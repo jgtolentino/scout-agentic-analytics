@@ -1,4 +1,15 @@
 {
+  "/api/kpis/route": "app/api/kpis/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/transactions/route": "app/api/transactions/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
+  "/behavior/page": "app/behavior/page.js",
+  "/competition/page": "app/competition/page.js",
+  "/etl/page": "app/etl/page.js",
+  "/journey/page": "app/journey/page.js",
+  "/product-mix/page": "app/product-mix/page.js",
+  "/page": "app/page.js",
+  "/geography/page": "app/geography/page.js",
+  "/trends/page": "app/trends/page.js",
+  "/profiling/page": "app/profiling/page.js"
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR from 'swr';
-import { callSupabaseRPC } from '@/lib/supabase/client';
+import { dataService } from '@/lib/dataService';
 import type {
   AnalyticsFilters,
   ExecutiveOverview,
@@ -15,13 +15,13 @@ import type {
   GeoMetric,
   CompareResult,
   Insight
-} from '@/lib/supabase/types';
+} from '@/lib/types';
 
 // Executive Overview Hook
 export function useExecutiveOverview(filters: AnalyticsFilters) {
   return useSWR(
     ['executive_overview', filters],
-    () => callSupabaseRPC<ExecutiveOverview>('rpc_executive_overview', { filters }),
+    () => dataService.getExecutiveOverview(filters),
     {
       refreshInterval: 300000, // 5 minutes
       revalidateOnFocus: false,
@@ -34,7 +34,7 @@ export function useExecutiveOverview(filters: AnalyticsFilters) {
 export function useSKUCounts(filters: AnalyticsFilters) {
   return useSWR(
     ['sku_counts', filters],
-    () => callSupabaseRPC<SKUCounts>('rpc_sku_counts', { filters }),
+    () => dataService.getSKUCounts(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -47,7 +47,7 @@ export function useSKUCounts(filters: AnalyticsFilters) {
 export function useParetoCategories(filters: AnalyticsFilters) {
   return useSWR(
     ['pareto_categories', filters],
-    () => callSupabaseRPC<ParetoCategory[]>('rpc_pareto_category', { filters }),
+    () => dataService.getParetoCategories(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -60,7 +60,7 @@ export function useParetoCategories(filters: AnalyticsFilters) {
 export function useBasketPairs(filters: AnalyticsFilters, topN: number = 10) {
   return useSWR(
     ['basket_pairs', filters, topN],
-    () => callSupabaseRPC<BasketPair[]>('rpc_basket_pairs', { filters, top_n: topN }),
+    () => dataService.getBasketPairs(filters, topN),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -73,7 +73,7 @@ export function useBasketPairs(filters: AnalyticsFilters, topN: number = 10) {
 export function useBehaviorKPIs(filters: AnalyticsFilters) {
   return useSWR(
     ['behavior_kpis', filters],
-    () => callSupabaseRPC<BehaviorKPIs>('rpc_behavior_kpis', { filters }),
+    () => dataService.getBehaviorKPIs(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -86,7 +86,7 @@ export function useBehaviorKPIs(filters: AnalyticsFilters) {
 export function useRequestMethods(filters: AnalyticsFilters) {
   return useSWR(
     ['request_methods', filters],
-    () => callSupabaseRPC<RequestMethod[]>('rpc_request_methods', { filters }),
+    () => dataService.getRequestMethods(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -99,7 +99,7 @@ export function useRequestMethods(filters: AnalyticsFilters) {
 export function useAcceptanceByMethod(filters: AnalyticsFilters) {
   return useSWR(
     ['acceptance_by_method', filters],
-    () => callSupabaseRPC<AcceptanceByMethod[]>('rpc_acceptance_by_method', { filters }),
+    () => dataService.getAcceptanceByMethod(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -112,7 +112,7 @@ export function useAcceptanceByMethod(filters: AnalyticsFilters) {
 export function useTopPaths(filters: AnalyticsFilters) {
   return useSWR(
     ['top_paths', filters],
-    () => callSupabaseRPC<TopPath[]>('rpc_top_paths', { filters }),
+    () => dataService.getTopPaths(filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -129,11 +129,7 @@ export function useGeoMetric(
 ) {
   return useSWR(
     ['geo_metric', level, parentCode, filters],
-    () => callSupabaseRPC<GeoMetric[]>('rpc_geo_metric', { 
-      level, 
-      parent_code: parentCode, 
-      filters 
-    }),
+    () => dataService.getGeoMetric(level, parentCode, filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -150,7 +146,7 @@ export function useCompare(
 ) {
   return useSWR(
     ['compare', mode, items, filters],
-    () => callSupabaseRPC<CompareResult>('rpc_compare', { mode, items, filters }),
+    () => dataService.getCompare(mode, items, filters),
     {
       refreshInterval: 300000,
       revalidateOnFocus: false,
@@ -160,34 +156,11 @@ export function useCompare(
   );
 }
 
-// Insights Hook  
+// Insights Hook
 export function useInsights(filters?: AnalyticsFilters) {
   return useSWR(
     ['insights', filters],
-    async () => {
-      // For now, return mock insights until insights table is populated
-      const mockInsights: Insight[] = [
-        {
-          id: '1',
-          type: 'trend',
-          title: 'Sales Increase',
-          description: 'Sales have increased 15% this month compared to last month',
-          delta: '+15%',
-          confidence: 0.95,
-          timestamp: new Date().toISOString(),
-        },
-        {
-          id: '2', 
-          type: 'anomaly',
-          title: 'Regional Variance',
-          description: 'NCR region showing 25% higher conversion rates',
-          delta: '+25%',
-          confidence: 0.88,
-          timestamp: new Date().toISOString(),
-        },
-      ];
-      return mockInsights;
-    },
+    () => dataService.getInsights(filters),
     {
       refreshInterval: 600000, // 10 minutes
       revalidateOnFocus: false,
