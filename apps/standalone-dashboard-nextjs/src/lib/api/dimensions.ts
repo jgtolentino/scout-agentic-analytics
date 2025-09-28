@@ -1,6 +1,6 @@
 'use client';
 
-import { callEdgeFunction } from '../api';
+import { callAzureFunction } from '../api';
 
 // Dimension types
 export type DimensionOption = {
@@ -31,7 +31,7 @@ export const dimensionAPI = {
   // Brand hierarchy: Category → Brand → SKU
   getBrands: async (category?: string): Promise<DimensionOption[]> => {
     try {
-      return await callEdgeFunction('dimensions/brands', { category });
+      return await callAzureFunction('dimensions/brands', { category });
     } catch (error) {
       console.warn('Brands API failed, using fallback data:', error);
       return getFallbackBrands(category);
@@ -41,7 +41,7 @@ export const dimensionAPI = {
   // Region hierarchy: Region → Province → City → Store
   getRegions: async (level?: 'region' | 'province' | 'city' | 'store', parent?: string): Promise<DimensionOption[]> => {
     try {
-      return await callEdgeFunction('dimensions/regions', { level, parent });
+      return await callAzureFunction('dimensions/regions', { level, parent });
     } catch (error) {
       console.warn('Regions API failed, using fallback data:', error);
       return getFallbackRegions(level, parent);
@@ -51,7 +51,7 @@ export const dimensionAPI = {
   // Available cohorts for analysis
   getCohorts: async (type?: 'monthly' | 'weekly' | 'quarterly'): Promise<CohortInfo[]> => {
     try {
-      return await callEdgeFunction('dimensions/cohorts', { type });
+      return await callAzureFunction('dimensions/cohorts', { type });
     } catch (error) {
       console.warn('Cohorts API failed, using fallback data:', error);
       return getFallbackCohorts(type);
@@ -61,7 +61,7 @@ export const dimensionAPI = {
   // Customer segments
   getSegments: async (): Promise<SegmentInfo[]> => {
     try {
-      return await callEdgeFunction('dimensions/segments');
+      return await callAzureFunction('dimensions/segments');
     } catch (error) {
       console.warn('Segments API failed, using fallback data:', error);
       return getFallbackSegments();
@@ -71,7 +71,7 @@ export const dimensionAPI = {
   // SKUs for a specific brand
   getSKUs: async (brand: string): Promise<DimensionOption[]> => {
     try {
-      return await callEdgeFunction('dimensions/skus', { brand });
+      return await callAzureFunction('dimensions/skus', { brand });
     } catch (error) {
       console.warn('SKUs API failed, using fallback data:', error);
       return getFallbackSKUs(brand);
@@ -81,7 +81,7 @@ export const dimensionAPI = {
   // Stores for a specific city/region
   getStores: async (city?: string, region?: string): Promise<DimensionOption[]> => {
     try {
-      return await callEdgeFunction('dimensions/stores', { city, region });
+      return await callAzureFunction('dimensions/stores', { city, region });
     } catch (error) {
       console.warn('Stores API failed, using fallback data:', error);
       return getFallbackStores(city, region);

@@ -3,7 +3,7 @@
 // Mock Registry System for Scout v7.1 Dashboard
 // Provides realistic data for all dashboard components in development mode
 
-import type { 
+import type {
   ExecutiveOverview,
   SKUCounts,
   ParetoCategory,
@@ -14,7 +14,7 @@ import type {
   TopPath,
   GeoMetric,
   Insight
-} from '@/lib/supabase/types';
+} from '@/lib/types';
 
 // Registry interface for type safety
 interface MockRegistry {

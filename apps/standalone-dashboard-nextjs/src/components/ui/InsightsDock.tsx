@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useInsights } from '@/lib/hooks';
-import type { Insight } from '@/lib/supabase/types';
+import type { Insight } from '@/lib/types';
 
 interface InsightsDockProps {
   filters?: any;

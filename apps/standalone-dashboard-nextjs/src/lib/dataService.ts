@@ -1,7 +1,7 @@
 'use client';
 
-// Azure Functions Data Service for Scout v7.1 Dashboard
-// Connects to Azure Functions API with fallback to mock data
+// Multi-Mode Data Service for Scout v7.1 Dashboard
+// Supports Azure Functions, Parquet files, and Mock data sources
 
 import { getMockData, withMockDelay } from '@/lib/mocks/registry';
 import type {
@@ -19,22 +19,42 @@ import type {
   Insight
 } from '@/lib/types';
 
-// Azure Functions configuration
+// Data source configuration
+type DataSourceMode = 'azure' | 'parquet' | 'mock';
+
+const DATA_SOURCE = (process.env.NEXT_PUBLIC_DATA_SOURCE || 'azure') as DataSourceMode;
 const AZURE_FUNCTION_BASE = process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE || 'https://fn-scout-readonly.azurewebsites.net/api';
-const USE_AZURE = process.env.NEXT_PUBLIC_DATA_SOURCE === 'azure' || process.env.NEXT_PUBLIC_DATA_SOURCE === 'production';
+const PARQUET_BASE_URL = process.env.NEXT_PUBLIC_PARQUET_BASE_URL || '/data/parquet';
 const FUNCTION_KEY = process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY;
 
-// Azure Functions API call with retry logic and fallback
+const USE_AZURE = DATA_SOURCE === 'azure' || DATA_SOURCE === 'production';
+const USE_PARQUET = DATA_SOURCE === 'parquet';
+const USE_MOCK = DATA_SOURCE === 'mock' || process.env.NEXT_PUBLIC_USE_MOCK === '1';
+
+// Multi-mode data service call with fallback chain
 export async function callRPC<T = any>(
   functionName: string,
   params: Record<string, any> = {}
 ): Promise<T> {
-  console.log(`🔷 Azure Data Service: ${functionName} called with params:`, params);
+  console.log(`📊 Data Service (${DATA_SOURCE}): ${functionName} called with params:`, params);
 
-  if (!USE_AZURE) {
-    console.log(`📊 Fallback: Using mock data for ${functionName}`);
+  // Route to appropriate data source
+  if (USE_AZURE) {
+    return callAzureRPC<T>(functionName, params);
+  } else if (USE_PARQUET) {
+    return callParquetRPC<T>(functionName, params);
+  } else {
+    console.log(`📊 Using mock data for ${functionName}`);
     return callMockRPC<T>(functionName, params);
   }
+}
+
+// Azure Functions API call with retry logic and fallback
+async function callAzureRPC<T = any>(
+  functionName: string,
+  params: Record<string, any> = {}
+): Promise<T> {
+  console.log(`🔷 Azure Functions: ${functionName}`);
 
   // Map RPC function names to Azure Function endpoints
   const azureEndpointMapping: Record<string, string> = {
@@ -97,8 +117,13 @@ export async function callRPC<T = any>(
       console.error(`❌ Azure Function ${endpoint} failed (attempt ${attempt}):`, error);
 
       if (attempt === maxRetries) {
-        console.warn(`🔄 All Azure attempts failed for ${functionName}, falling back to mock data`);
-        return callMockRPC<T>(functionName, params);
+        console.warn(`🔄 All Azure attempts failed for ${functionName}, falling back to Parquet then Mock`);
+        try {
+          return await callParquetRPC<T>(functionName, params);
+        } catch (parquetError) {
+          console.warn(`🔄 Parquet fallback failed, using mock data`);
+          return callMockRPC<T>(functionName, params);
+        }
       }
 
       // Exponential backoff
@@ -110,7 +135,101 @@ export async function callRPC<T = any>(
   return callMockRPC<T>(functionName, params);
 }
 
-// Fallback to mock data when Azure is unavailable
+// Parquet file data source
+async function callParquetRPC<T = any>(
+  functionName: string,
+  params: Record<string, any> = {}
+): Promise<T> {
+  console.log(`📄 Parquet Data: ${functionName}`);
+
+  // Map RPC function names to Parquet file paths
+  const parquetFileMapping: Record<string, string> = {
+    'rpc_executive_overview': 'executive_overview.parquet',
+    'rpc_sku_counts': 'sku_counts.parquet',
+    'rpc_pareto_category': 'pareto_categories.parquet',
+    'rpc_basket_pairs': 'basket_pairs.parquet',
+    'rpc_behavior_kpis': 'behavior_kpis.parquet',
+    'rpc_request_methods': 'request_methods.parquet',
+    'rpc_acceptance_by_method': 'acceptance_by_method.parquet',
+    'rpc_top_paths': 'top_paths.parquet',
+    'rpc_geo_metric': 'geo_metrics.parquet',
+    'rpc_compare': 'compare_data.parquet',
+    'rpc_insights': 'insights.parquet'
+  };
+
+  const fileName = parquetFileMapping[functionName];
+  if (!fileName) {
+    console.warn(`⚠️ No Parquet file mapped for ${functionName}, falling back to mock`);
+    return callMockRPC<T>(functionName, params);
+  }
+
+  try {
+    const url = `${PARQUET_BASE_URL}/${fileName}`;
+
+    // For browser environments, we'll load JSON versions of Parquet data
+    // In production, this would be handled by a service that converts Parquet to JSON
+    const jsonUrl = url.replace('.parquet', '.json');
+
+    const response = await fetch(jsonUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      cache: 'force-cache' // Cache Parquet data aggressively
+    });
+
+    if (!response.ok) {
+      throw new Error(`Parquet file ${fileName} not found: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ Parquet data loaded: ${fileName}`);
+
+    // Apply basic filtering based on params
+    return applyParquetFilters(data, params) as T;
+
+  } catch (error) {
+    console.error(`❌ Parquet data failed for ${functionName}:`, error);
+    console.warn(`🔄 Falling back to mock data`);
+    return callMockRPC<T>(functionName, params);
+  }
+}
+
+// Apply basic filtering to Parquet data
+function applyParquetFilters(data: any, params: Record<string, any>): any {
+  if (!params.filters || !Array.isArray(data)) {
+    return data;
+  }
+
+  const { filters } = params;
+  let filteredData = data;
+
+  // Apply region filter
+  if (filters.region && data.some((item: any) => item.region)) {
+    filteredData = filteredData.filter((item: any) => item.region === filters.region);
+  }
+
+  // Apply category filter
+  if (filters.category && data.some((item: any) => item.category)) {
+    filteredData = filteredData.filter((item: any) => item.category === filters.category);
+  }
+
+  // Apply date range filter (simplified)
+  if (filters.date_start && data.some((item: any) => item.date)) {
+    filteredData = filteredData.filter((item: any) =>
+      new Date(item.date) >= new Date(filters.date_start)
+    );
+  }
+
+  // Apply limit
+  if (params.top_n) {
+    filteredData = filteredData.slice(0, params.top_n);
+  }
+
+  return filteredData;
+}
+
+// Fallback to mock data when other sources are unavailable
 async function callMockRPC<T = any>(
   functionName: string,
   params: Record<string, any> = {}
@@ -255,42 +374,121 @@ export const dataService = {
   }
 };
 
+// Switch data source mode
+export function switchDataSource(mode: DataSourceMode): void {
+  // This would typically update environment or localStorage
+  // For now, we'll update a runtime flag
+  console.log(`🔄 Switching data source to: ${mode}`);
+
+  // In a real implementation, this might:
+  // 1. Update localStorage
+  // 2. Trigger a page reload
+  // 3. Update runtime configuration
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('dataSource', mode);
+    window.location.reload();
+  }
+}
+
+// Get current data source from runtime or localStorage
+export function getCurrentDataSource(): DataSourceMode {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('dataSource') as DataSourceMode;
+    if (stored && ['azure', 'parquet', 'mock'].includes(stored)) {
+      return stored;
+    }
+  }
+  return DATA_SOURCE;
+}
+
 // Health check for data service
 export function getDataServiceStatus() {
-  const isAzureMode = USE_AZURE;
+  const currentSource = getCurrentDataSource();
   const hasAzureConfig = !!AZURE_FUNCTION_BASE && AZURE_FUNCTION_BASE !== 'https://fn-scout-readonly.azurewebsites.net/api';
+  const hasParquetConfig = !!PARQUET_BASE_URL && PARQUET_BASE_URL !== '/data/parquet';
+
+  const statusMap = {
+    azure: 'azure',
+    parquet: 'parquet',
+    mock: 'mock'
+  };
+
+  const providerMap = {
+    azure: 'Azure Functions',
+    parquet: 'Parquet Files',
+    mock: 'Local Mock Data'
+  };
+
+  const messageMap = {
+    azure: `🔷 Using Azure Functions at ${AZURE_FUNCTION_BASE}${FUNCTION_KEY ? ' (authenticated)' : ' (no auth)'}`,
+    parquet: `📄 Using Parquet files from ${PARQUET_BASE_URL}`,
+    mock: '📊 Using local mock data'
+  };
 
   return {
-    status: isAzureMode ? 'azure' : 'mock',
-    provider: isAzureMode ? 'Azure Functions' : 'Local Mock Data',
-    version: '2.0.0',
+    status: statusMap[currentSource] || 'mock',
+    provider: providerMap[currentSource] || 'Local Mock Data',
+    version: '3.0.0',
     timestamp: new Date().toISOString(),
     configuration: {
+      currentSource,
       azureBaseUrl: AZURE_FUNCTION_BASE,
+      parquetBaseUrl: PARQUET_BASE_URL,
       hasAuth: !!FUNCTION_KEY,
-      dataSource: process.env.NEXT_PUBLIC_DATA_SOURCE || 'mock_csv',
-      useAzure: isAzureMode,
-      hasConfig: hasAzureConfig
+      dataSource: currentSource,
+      useAzure: currentSource === 'azure',
+      useParquet: currentSource === 'parquet',
+      useMock: currentSource === 'mock',
+      hasAzureConfig,
+      hasParquetConfig
     },
-    message: isAzureMode
-      ? `🔷 Using Azure Functions at ${AZURE_FUNCTION_BASE}${FUNCTION_KEY ? ' (authenticated)' : ' (no auth)'}`
-      : '📊 Using local mock data - Azure disabled'
+    message: messageMap[currentSource] || '📊 Using local mock data'
   };
 }
 
-// Test Azure connection
-export async function testAzureConnection(): Promise<{
+// Test data source connections
+export async function testDataSourceConnection(source?: DataSourceMode): Promise<{
   success: boolean;
   responseTime: number;
   error?: string;
 }> {
-  if (!USE_AZURE) {
+  const testSource = source || getCurrentDataSource();
+  const startTime = Date.now();
+
+  try {
+    switch (testSource) {
+      case 'azure':
+        return await testAzureConnection();
+      case 'parquet':
+        return await testParquetConnection();
+      case 'mock':
+        return {
+          success: true,
+          responseTime: Date.now() - startTime,
+        };
+      default:
+        return {
+          success: false,
+          responseTime: Date.now() - startTime,
+          error: `Unknown data source: ${testSource}`
+        };
+    }
+  } catch (error) {
     return {
       success: false,
-      responseTime: 0,
-      error: 'Azure mode disabled'
+      responseTime: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+}
+
+// Test Azure connection
+async function testAzureConnection(): Promise<{
+  success: boolean;
+  responseTime: number;
+  error?: string;
+}> {
 
   const startTime = Date.now();
 
@@ -320,6 +518,45 @@ export async function testAzureConnection(): Promise<{
       success: false,
       responseTime: Date.now() - startTime,
       error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+// Test Parquet data source
+async function testParquetConnection(): Promise<{
+  success: boolean;
+  responseTime: number;
+  error?: string;
+}> {
+  const startTime = Date.now();
+
+  try {
+    // Test if we can access a sample Parquet file
+    const testUrl = `${PARQUET_BASE_URL}/executive_overview.json`;
+    const response = await fetch(testUrl, {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000)
+    });
+
+    const responseTime = Date.now() - startTime;
+
+    if (response.ok) {
+      return {
+        success: true,
+        responseTime
+      };
+    } else {
+      return {
+        success: false,
+        responseTime,
+        error: `Parquet data not accessible: ${response.status} ${response.statusText}`
+      };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      responseTime: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Parquet connection failed'
     };
   }
 }

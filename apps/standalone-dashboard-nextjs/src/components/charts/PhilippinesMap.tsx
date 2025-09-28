@@ -3,7 +3,7 @@
 import { useMemo, useRef, useCallback, useState } from 'react';
 import Map, { Source, Layer, MapRef } from 'react-map-gl';
 import { useDrillHandler } from '@/lib/hooks';
-import type { GeoMetric } from '@/lib/supabase/types';
+import type { GeoMetric } from '@/lib/types';
 
 interface PhilippinesMapProps {
   data: GeoMetric[];

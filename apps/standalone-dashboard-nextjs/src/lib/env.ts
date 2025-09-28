@@ -12,10 +12,10 @@ export const ENV = {
   SCOUT_VERSION: process.env.NEXT_PUBLIC_SCOUT_VERSION ?? "7",
   ENABLE_SCOUT_AI: process.env.NEXT_PUBLIC_ENABLE_SCOUT_AI === "1",
   
-  // Supabase configuration
-  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  SUPABASE_FUNCTIONS_URL: process.env.NEXT_PUBLIC_SUPABASE_FUNCTIONS_URL ?? "/functions/v1",
+  // Data service configuration
+  DATA_SOURCE: process.env.NEXT_PUBLIC_DATA_SOURCE ?? "azure",
+  AZURE_FUNCTION_BASE: process.env.NEXT_PUBLIC_AZURE_FUNCTION_BASE ?? "https://fn-scout-readonly.azurewebsites.net/api",
+  AZURE_FUNCTION_KEY: process.env.NEXT_PUBLIC_AZURE_FUNCTION_KEY ?? "",
   
   // Amazon theme configuration
   AI_ASSISTANT: process.env.NEXT_PUBLIC_AI_ASSISTANT === "1",

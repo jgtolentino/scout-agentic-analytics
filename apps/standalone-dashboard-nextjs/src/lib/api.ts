@@ -2,37 +2,41 @@
 
 import { ENV } from './env';
 
-// Edge Function caller
-export async function callEdgeFunction<T>(
-  functionName: string, 
+// Azure Function caller
+export async function callAzureFunction<T>(
+  functionName: string,
   body: any = {},
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl = ENV.SUPABASE_URL;
-  const anonKey = ENV.SUPABASE_ANON_KEY;
-  const functionBase = ENV.SUPABASE_FUNCTIONS_URL || '/functions/v1';
-  
-  if (!baseUrl || !anonKey) {
-    console.warn(`Edge function ${functionName} called but Supabase not configured, using mock data`);
-    throw new Error('Supabase not configured');
+  const baseUrl = ENV.AZURE_FUNCTION_BASE;
+  const functionKey = ENV.AZURE_FUNCTION_KEY;
+
+  if (!baseUrl) {
+    console.warn(`Azure function ${functionName} called but not configured, using mock data`);
+    throw new Error('Azure Functions not configured');
   }
-  
-  const url = `${baseUrl}${functionBase}/${functionName}`;
-  
+
+  const url = `${baseUrl}/${functionName}`;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
+
+  if (functionKey) {
+    headers['x-functions-key'] = functionKey;
+  }
+
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${anonKey}`,
-      ...options.headers,
-    },
+    headers,
     body: JSON.stringify(body),
     cache: "no-store",
     ...options,
   });
 
   if (!response.ok) {
-    throw new Error(`Edge function ${functionName} failed: ${response.status} ${response.statusText}`);
+    throw new Error(`Azure function ${functionName} failed: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
@@ -42,7 +46,7 @@ export async function callEdgeFunction<T>(
 export const api = {
   executive: async (filters: any) => {
     try {
-      return await callEdgeFunction('executive', { filters });
+      return await callAzureFunction('analytics/executive', { filters });
     } catch (error) {
       console.warn('Executive API failed, using fallback data:', error);
       return {
@@ -69,7 +73,7 @@ export const api = {
 
   trends: async (filters: any) => {
     try {
-      return await callEdgeFunction('trends', { filters });
+      return await callAzureFunction('analytics/trends', { filters });
     } catch (error) {
       console.warn('Trends API failed, using fallback data:', error);
       return {
@@ -91,7 +95,7 @@ export const api = {
 
   productMix: async (filters: any) => {
     try {
-      return await callEdgeFunction('product_mix', { filters });
+      return await callAzureFunction('analytics/product-mix', { filters });
     } catch (error) {
       console.warn('Product Mix API failed, using fallback data:', error);
       return {
@@ -115,7 +119,7 @@ export const api = {
 
   behavior: async (filters: any) => {
     try {
-      return await callEdgeFunction('behavior', { filters });
+      return await callAzureFunction('analytics/behavior', { filters });
     } catch (error) {
       console.warn('Behavior API failed, using fallback data:', error);
       const hours = ['6a', '9a', '12p', '3p', '6p', '9p'];
@@ -142,7 +146,7 @@ export const api = {
 
   profiling: async (filters: any) => {
     try {
-      return await callEdgeFunction('profiling', { filters });
+      return await callAzureFunction('analytics/profiling', { filters });
     } catch (error) {
       console.warn('Profiling API failed, using fallback data:', error);
       return {
@@ -168,7 +172,7 @@ export const api = {
 
   competition: async (filters: any) => {
     try {
-      return await callEdgeFunction('competition', { filters });
+      return await callAzureFunction('analytics/competition', { filters });
     } catch (error) {
       console.warn('Competition API failed, using fallback data:', error);
       return {
@@ -202,7 +206,7 @@ export const api = {
 
   geography: async (filters: any) => {
     try {
-      return await callEdgeFunction('geography', { filters });
+      return await callAzureFunction('analytics/geography', { filters });
     } catch (error) {
       console.warn('Geography API failed, using fallback data:', error);
       return {
@@ -227,7 +231,7 @@ export const api = {
   // Journey Analytics APIs - extend existing pattern
   cohortRetention: async (filters: any) => {
     try {
-      return await callEdgeFunction('competitive-cohorts', { filters });
+      return await callAzureFunction('analytics/cohorts', { filters });
     } catch (error) {
       console.warn('Cohort Retention API failed, using fallback data:', error);
       return generateCohortFallback(filters);
@@ -236,7 +240,7 @@ export const api = {
 
   brandSwitching: async (filters: any) => {
     try {
-      return await callEdgeFunction('competitive-switching', { filters });
+      return await callAzureFunction('analytics/switching', { filters });
     } catch (error) {
       console.warn('Brand Switching API failed, using fallback data:', error);
       return generateSwitchingFallback(filters);
@@ -245,7 +249,7 @@ export const api = {
 
   journeyFunnel: async (filters: any, steps?: string[]) => {
     try {
-      return await callEdgeFunction('competitive-funnel', { filters, steps });
+      return await callAzureFunction('analytics/funnel', { filters, steps });
     } catch (error) {
       console.warn('Journey Funnel API failed, using fallback data:', error);
       return generateFunnelFallback(filters, steps);
@@ -254,7 +258,7 @@ export const api = {
 
   journeyPaths: async (filters: any, maxDepth?: number) => {
     try {
-      return await callEdgeFunction('competitive-paths', { filters, maxDepth });
+      return await callAzureFunction('analytics/paths', { filters, maxDepth });
     } catch (error) {
       console.warn('Journey Paths API failed, using fallback data:', error);
       return generatePathsFallback(filters);

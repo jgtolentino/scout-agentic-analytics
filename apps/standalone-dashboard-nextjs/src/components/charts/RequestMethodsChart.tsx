@@ -11,7 +11,7 @@ const Plot = dynamic(() => import('react-plotly.js'), {
     </div>
   ),
 });
-import type { RequestMethod, AcceptanceByMethod } from '@/lib/supabase/types';
+import type { RequestMethod, AcceptanceByMethod } from '@/lib/types';
 
 interface RequestMethodsChartProps {
   requestData: RequestMethod[];
