@@ -1,0 +1,182 @@
+table "silver_conversation_ai"
+    description: "Silver layer conversation AI analysis results from Azure Text Analytics"
+
+    query:
+        "
+        SELECT
+            canonical_tx_id,
+            interaction_id,
+            sentiment,
+            sentiment_pos,
+            sentiment_neu,
+            sentiment_neg,
+            key_phrases,
+            language,
+            language_confidence,
+            original_text,
+            text_length,
+            word_count,
+            key_phrases_count,
+            processing_timestamp,
+            processing_version,
+            processing_status,
+            error_message,
+            created_date,
+            modified_date
+        FROM silver.conversation_ai
+        WHERE processing_status = 'completed'
+            AND sentiment IS NOT NULL
+        "
+
+    column canonical_tx_id
+        dataType: string
+        sourceColumn: "canonical_tx_id"
+        description: "Links to mart_tx.TransactionID"
+
+    column interaction_id
+        dataType: string
+        sourceColumn: "interaction_id"
+        description: "Original interaction identifier"
+
+    column sentiment
+        dataType: string
+        sourceColumn: "sentiment"
+        description: "Overall sentiment: positive, neutral, negative"
+
+    column sentiment_pos
+        dataType: double
+        sourceColumn: "sentiment_pos"
+        description: "Positive sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column sentiment_neu
+        dataType: double
+        sourceColumn: "sentiment_neu"
+        description: "Neutral sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column sentiment_neg
+        dataType: double
+        sourceColumn: "sentiment_neg"
+        description: "Negative sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column key_phrases
+        dataType: string
+        sourceColumn: "key_phrases"
+        description: "Semicolon-delimited key phrases extracted from text"
+
+    column language
+        dataType: string
+        sourceColumn: "language"
+        description: "ISO language code (en, tl, ceb, etc.)"
+
+    column language_confidence
+        dataType: double
+        sourceColumn: "language_confidence"
+        description: "Language detection confidence score (0-1)"
+        formatString: "0.000"
+
+    column original_text
+        dataType: string
+        sourceColumn: "original_text"
+        description: "Original conversation text"
+
+    column text_length
+        dataType: int64
+        sourceColumn: "text_length"
+        description: "Character count of original text"
+
+    column word_count
+        dataType: int64
+        sourceColumn: "word_count"
+        description: "Word count of original text"
+
+    column key_phrases_count
+        dataType: int64
+        sourceColumn: "key_phrases_count"
+        description: "Number of key phrases extracted"
+
+    column processing_timestamp
+        dataType: dateTime
+        sourceColumn: "processing_timestamp"
+        description: "When the AI processing was completed"
+        formatString: "General Date"
+
+    column processing_version
+        dataType: string
+        sourceColumn: "processing_version"
+        description: "Text Analytics API version used"
+
+    column processing_status
+        dataType: string
+        sourceColumn: "processing_status"
+        description: "Processing status: completed, failed, partial"
+
+    column error_message
+        dataType: string
+        sourceColumn: "error_message"
+        description: "Error details if processing failed"
+
+    column created_date
+        dataType: dateTime
+        sourceColumn: "created_date"
+        description: "Record creation timestamp"
+        formatString: "General Date"
+
+    column modified_date
+        dataType: dateTime
+        sourceColumn: "modified_date"
+        description: "Record modification timestamp"
+        formatString: "General Date"
+
+    // Calculated columns for enhanced analysis
+    column sentiment_score
+        dataType: double
+        expression: "silver_conversation_ai[sentiment_pos] - silver_conversation_ai[sentiment_neg]"
+        description: "Calculated sentiment score (-1 to +1)"
+        formatString: "0.000"
+
+    column sentiment_category
+        dataType: string
+        expression:
+            "
+            SWITCH(
+                TRUE(),
+                silver_conversation_ai[sentiment_score] > 0.2, \"Highly Positive\",
+                silver_conversation_ai[sentiment_score] > 0.0, \"Positive\",
+                silver_conversation_ai[sentiment_score] > -0.2, \"Neutral\",
+                silver_conversation_ai[sentiment_score] > -0.5, \"Negative\",
+                \"Highly Negative\"
+            )
+            "
+        description: "Categorized sentiment based on score ranges"
+
+    column text_length_category
+        dataType: string
+        expression:
+            "
+            SWITCH(
+                TRUE(),
+                silver_conversation_ai[text_length] > 500, \"Long\",
+                silver_conversation_ai[text_length] > 100, \"Medium\",
+                \"Short\"
+            )
+            "
+        description: "Text length categorization"
+
+    column language_confidence_level
+        dataType: string
+        expression:
+            "
+            SWITCH(
+                TRUE(),
+                silver_conversation_ai[language_confidence] > 0.95, \"High\",
+                silver_conversation_ai[language_confidence] > 0.8, \"Medium\",
+                \"Low\"
+            )
+            "
+        description: "Language detection confidence level"
+
+    // Annotations for Power BI optimization
+    annotation PBI_Id = "silver_conversation_ai"

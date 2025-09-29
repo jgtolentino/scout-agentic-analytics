@@ -1,0 +1,246 @@
+table "platinum_conversation_ai"
+    description: "Platinum layer ML-enriched conversation analytics with advanced insights"
+
+    query:
+        "
+        SELECT
+            canonical_tx_id,
+            interaction_id,
+            sentiment,
+            sentiment_pos,
+            sentiment_neu,
+            sentiment_neg,
+            key_phrases,
+            language,
+            language_confidence,
+            original_text,
+            text_length,
+            word_count,
+            sentiment_score,
+            sentiment_confidence,
+            sentiment_intensity,
+            cleaned_text,
+            dominant_topic,
+            topic_probability,
+            topic_keywords,
+            phrase_count_enhanced,
+            avg_phrase_length,
+            business_keywords,
+            emotion_keywords,
+            product_keywords,
+            length_classification,
+            engagement_level,
+            conversation_type,
+            advanced_processing_timestamp,
+            processing_version,
+            model_version
+        FROM platinum.conversation_ai_enriched
+        "
+
+    column canonical_tx_id
+        dataType: string
+        sourceColumn: "canonical_tx_id"
+        description: "Links to mart_tx.TransactionID"
+
+    column interaction_id
+        dataType: string
+        sourceColumn: "interaction_id"
+        description: "Original interaction identifier"
+
+    column sentiment
+        dataType: string
+        sourceColumn: "sentiment"
+        description: "Overall sentiment: positive, neutral, negative"
+
+    column sentiment_pos
+        dataType: double
+        sourceColumn: "sentiment_pos"
+        description: "Positive sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column sentiment_neu
+        dataType: double
+        sourceColumn: "sentiment_neu"
+        description: "Neutral sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column sentiment_neg
+        dataType: double
+        sourceColumn: "sentiment_neg"
+        description: "Negative sentiment confidence score (0-1)"
+        formatString: "0.000"
+
+    column key_phrases
+        dataType: string
+        sourceColumn: "key_phrases"
+        description: "Semicolon-delimited key phrases from Text Analytics"
+
+    column language
+        dataType: string
+        sourceColumn: "language"
+        description: "ISO language code (en, tl, ceb, etc.)"
+
+    column language_confidence
+        dataType: double
+        sourceColumn: "language_confidence"
+        description: "Language detection confidence score (0-1)"
+        formatString: "0.000"
+
+    column original_text
+        dataType: string
+        sourceColumn: "original_text"
+        description: "Original conversation text"
+
+    column text_length
+        dataType: int64
+        sourceColumn: "text_length"
+        description: "Character count of original text"
+
+    column word_count
+        dataType: int64
+        sourceColumn: "word_count"
+        description: "Word count of original text"
+
+    // Enhanced ML-derived columns
+    column sentiment_score
+        dataType: double
+        sourceColumn: "sentiment_score"
+        description: "Calculated sentiment score (-1 to +1)"
+        formatString: "0.000"
+
+    column sentiment_confidence
+        dataType: double
+        sourceColumn: "sentiment_confidence"
+        description: "Overall sentiment confidence based on score distribution"
+        formatString: "0.000"
+
+    column sentiment_intensity
+        dataType: string
+        sourceColumn: "sentiment_intensity"
+        description: "Sentiment intensity: Strong, Moderate, Mild, Unknown"
+
+    column cleaned_text
+        dataType: string
+        sourceColumn: "cleaned_text"
+        description: "Preprocessed text used for ML analysis"
+
+    column dominant_topic
+        dataType: int64
+        sourceColumn: "dominant_topic"
+        description: "Primary topic ID from LDA topic modeling"
+
+    column topic_probability
+        dataType: double
+        sourceColumn: "topic_probability"
+        description: "Probability score for dominant topic (0-1)"
+        formatString: "0.000"
+
+    column topic_keywords
+        dataType: string
+        sourceColumn: "topic_keywords"
+        description: "Top keywords representing the dominant topic"
+
+    column phrase_count_enhanced
+        dataType: int64
+        sourceColumn: "phrase_count_enhanced"
+        description: "Enhanced phrase count from ML analysis"
+
+    column avg_phrase_length
+        dataType: double
+        sourceColumn: "avg_phrase_length"
+        description: "Average length of extracted phrases"
+        formatString: "0.0"
+
+    column business_keywords
+        dataType: string
+        sourceColumn: "business_keywords"
+        description: "Business-related keywords found in conversation"
+
+    column emotion_keywords
+        dataType: string
+        sourceColumn: "emotion_keywords"
+        description: "Emotion-related keywords found in conversation"
+
+    column product_keywords
+        dataType: string
+        sourceColumn: "product_keywords"
+        description: "Product-related keywords found in conversation"
+
+    column length_classification
+        dataType: string
+        sourceColumn: "length_classification"
+        description: "Text length classification: Brief, Standard, Detailed"
+
+    column engagement_level
+        dataType: string
+        sourceColumn: "engagement_level"
+        description: "Customer engagement level: Low, Medium, High"
+
+    column conversation_type
+        dataType: string
+        sourceColumn: "conversation_type"
+        description: "Conversation type classification based on patterns"
+
+    column advanced_processing_timestamp
+        dataType: dateTime
+        sourceColumn: "advanced_processing_timestamp"
+        description: "When the advanced ML processing was completed"
+        formatString: "General Date"
+
+    column processing_version
+        dataType: string
+        sourceColumn: "processing_version"
+        description: "Advanced processing pipeline version"
+
+    column model_version
+        dataType: string
+        sourceColumn: "model_version"
+        description: "ML model version used for topic modeling"
+
+    // Calculated columns for enhanced business intelligence
+    column has_business_keywords
+        dataType: boolean
+        expression: "LEN(platinum_conversation_ai[business_keywords]) > 0"
+        description: "Indicates if business-related keywords were found"
+
+    column has_emotion_keywords
+        dataType: boolean
+        expression: "LEN(platinum_conversation_ai[emotion_keywords]) > 0"
+        description: "Indicates if emotion-related keywords were found"
+
+    column has_product_keywords
+        dataType: boolean
+        expression: "LEN(platinum_conversation_ai[product_keywords]) > 0"
+        description: "Indicates if product-related keywords were found"
+
+    column is_high_engagement
+        dataType: boolean
+        expression: "platinum_conversation_ai[engagement_level] = \"High\""
+        description: "Indicates high customer engagement conversations"
+
+    column is_complaint
+        dataType: boolean
+        expression: "SEARCH(\"Complaint\", platinum_conversation_ai[conversation_type], 1, 0) > 0"
+        description: "Indicates complaint-type conversations"
+
+    column is_praise
+        dataType: boolean
+        expression: "SEARCH(\"Praise\", platinum_conversation_ai[conversation_type], 1, 0) > 0"
+        description: "Indicates praise-type conversations"
+
+    column topic_confidence_level
+        dataType: string
+        expression:
+            "
+            SWITCH(
+                TRUE(),
+                platinum_conversation_ai[topic_probability] > 0.8, \"High\",
+                platinum_conversation_ai[topic_probability] > 0.6, \"Medium\",
+                platinum_conversation_ai[topic_probability] > 0.4, \"Low\",
+                \"Very Low\"
+            )
+            "
+        description: "Topic assignment confidence level"
+
+    // Annotations for Power BI optimization
+    annotation PBI_Id = "platinum_conversation_ai"

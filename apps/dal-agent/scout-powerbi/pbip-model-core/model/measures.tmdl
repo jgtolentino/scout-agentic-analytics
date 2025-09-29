@@ -332,3 +332,266 @@ measure "Category Sales Rank" =
         DESC
     )
 formatString: #,0
+
+// ========================================
+// CONVERSATION AI & SENTIMENT MEASURES
+// ========================================
+
+// Basic Conversation Metrics
+measure "Total Conversations" = DISTINCTCOUNT(silver_conversation_ai[canonical_tx_id])
+formatString: #,0
+
+measure "Processed Conversations" =
+    CALCULATE(
+        [Total Conversations],
+        silver_conversation_ai[processing_status] = "completed"
+    )
+formatString: #,0
+
+measure "Conversation Processing Rate" =
+    DIVIDE([Processed Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Average Text Length" =
+    AVERAGE(silver_conversation_ai[text_length])
+formatString: #,0
+
+measure "Average Word Count" =
+    AVERAGE(silver_conversation_ai[word_count])
+formatString: #,0
+
+measure "Average Key Phrases" =
+    AVERAGE(silver_conversation_ai[key_phrases_count])
+formatString: #,0.0
+
+// Sentiment Analysis Measures
+measure "Average Sentiment Score" =
+    AVERAGE(silver_conversation_ai[sentiment_score])
+formatString: 0.000
+
+measure "Positive Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[sentiment] = "positive")
+formatString: #,0
+
+measure "Negative Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[sentiment] = "negative")
+formatString: #,0
+
+measure "Neutral Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[sentiment] = "neutral")
+formatString: #,0
+
+measure "Positive Sentiment %" =
+    DIVIDE([Positive Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Negative Sentiment %" =
+    DIVIDE([Negative Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Neutral Sentiment %" =
+    DIVIDE([Neutral Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Net Sentiment Score" =
+    [Positive Sentiment %] - [Negative Sentiment %]
+formatString: 0.00%
+
+measure "Average Positive Confidence" =
+    AVERAGE(silver_conversation_ai[sentiment_pos])
+formatString: 0.000
+
+measure "Average Negative Confidence" =
+    AVERAGE(silver_conversation_ai[sentiment_neg])
+formatString: 0.000
+
+// Language Distribution Measures
+measure "English Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[language] = "en")
+formatString: #,0
+
+measure "Tagalog Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[language] = "tl")
+formatString: #,0
+
+measure "Cebuano Conversations" =
+    CALCULATE([Total Conversations], silver_conversation_ai[language] = "ceb")
+formatString: #,0
+
+measure "English Conversations %" =
+    DIVIDE([English Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Local Language %" =
+    DIVIDE([Tagalog Conversations] + [Cebuano Conversations], [Total Conversations], 0)
+formatString: 0.00%
+
+measure "Average Language Confidence" =
+    AVERAGE(silver_conversation_ai[language_confidence])
+formatString: 0.000
+
+// Sentiment-Revenue Correlation
+measure "Positive Sentiment Revenue" =
+    CALCULATE([Total Sales], silver_conversation_ai[sentiment] = "positive")
+formatString: "₱"#,0
+
+measure "Negative Sentiment Revenue" =
+    CALCULATE([Total Sales], silver_conversation_ai[sentiment] = "negative")
+formatString: "₱"#,0
+
+measure "Average Revenue per Positive Conversation" =
+    DIVIDE([Positive Sentiment Revenue], [Positive Conversations], 0)
+formatString: "₱"#,0.00
+
+measure "Average Revenue per Negative Conversation" =
+    DIVIDE([Negative Sentiment Revenue], [Negative Conversations], 0)
+formatString: "₱"#,0.00
+
+measure "Sentiment Revenue Impact" =
+    [Average Revenue per Positive Conversation] - [Average Revenue per Negative Conversation]
+formatString: "₱"#,0.00
+
+// ========================================
+// ADVANCED AI ANALYTICS (PLATINUM LAYER)
+// ========================================
+
+measure "ML Processed Conversations" = DISTINCTCOUNT(platinum_conversation_ai[canonical_tx_id])
+formatString: #,0
+
+measure "Average Sentiment Confidence (ML)" =
+    AVERAGE(platinum_conversation_ai[sentiment_confidence])
+formatString: 0.000
+
+measure "High Engagement Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[engagement_level] = "High")
+formatString: #,0
+
+measure "High Engagement Rate" =
+    DIVIDE([High Engagement Conversations], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+measure "Complaint Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[is_complaint] = TRUE)
+formatString: #,0
+
+measure "Praise Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[is_praise] = TRUE)
+formatString: #,0
+
+measure "Complaint Rate" =
+    DIVIDE([Complaint Conversations], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+measure "Praise Rate" =
+    DIVIDE([Praise Conversations], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+// Topic Analysis Measures
+measure "Average Topic Probability" =
+    AVERAGE(platinum_conversation_ai[topic_probability])
+formatString: 0.000
+
+measure "High Confidence Topics" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[topic_confidence_level] = "High")
+formatString: #,0
+
+measure "High Topic Confidence Rate" =
+    DIVIDE([High Confidence Topics], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+measure "Business Keywords Found" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[has_business_keywords] = TRUE)
+formatString: #,0
+
+measure "Emotion Keywords Found" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[has_emotion_keywords] = TRUE)
+formatString: #,0
+
+measure "Product Keywords Found" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[has_product_keywords] = TRUE)
+formatString: #,0
+
+measure "Business Keywords Rate" =
+    DIVIDE([Business Keywords Found], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+// Conversation Classification Measures
+measure "Detailed Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[length_classification] = "Detailed")
+formatString: #,0
+
+measure "Standard Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[length_classification] = "Standard")
+formatString: #,0
+
+measure "Brief Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[length_classification] = "Brief")
+formatString: #,0
+
+measure "Detailed Conversation Rate" =
+    DIVIDE([Detailed Conversations], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+// Conversation Quality Indicators
+measure "Strong Sentiment Conversations" =
+    CALCULATE([ML Processed Conversations], platinum_conversation_ai[sentiment_intensity] = "Strong")
+formatString: #,0
+
+measure "Strong Sentiment Rate" =
+    DIVIDE([Strong Sentiment Conversations], [ML Processed Conversations], 0)
+formatString: 0.00%
+
+measure "Average Phrase Length (ML)" =
+    AVERAGE(platinum_conversation_ai[avg_phrase_length])
+formatString: #,0.0
+
+// Time-based AI Measures
+measure "Conversations Last Month" =
+    CALCULATE(
+        [Total Conversations],
+        DATESINPERIOD(
+            dim_date[Date],
+            LASTDATE(dim_date[Date]),
+            -1,
+            MONTH
+        )
+    )
+formatString: #,0
+
+measure "Sentiment Trend (MoM)" =
+    [Average Sentiment Score] -
+    CALCULATE(
+        [Average Sentiment Score],
+        DATESINPERIOD(
+            dim_date[Date],
+            LASTDATE(dim_date[Date]),
+            -1,
+            MONTH
+        )
+    )
+formatString: 0.000
+
+measure "Conversation Growth Rate" =
+    DIVIDE(
+        [Total Conversations] - [Conversations Last Month],
+        [Conversations Last Month],
+        0
+    )
+formatString: 0.00%
+
+// AI Data Quality Measures
+measure "Processing Success Rate" =
+    DIVIDE(
+        CALCULATE([Total Conversations], silver_conversation_ai[processing_status] = "completed"),
+        [Total Conversations],
+        0
+    )
+formatString: 0.00%
+
+measure "Failed Processing Count" =
+    CALCULATE([Total Conversations], silver_conversation_ai[processing_status] = "failed")
+formatString: #,0
+
+measure "Average Processing Quality Score" =
+    ([Average Language Confidence] + [Average Sentiment Confidence (ML)]) / 2
+formatString: 0.000

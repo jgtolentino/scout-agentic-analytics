@@ -61,3 +61,20 @@ relationship "platinum_predictions-dim_category"
     isActive: true
     cardinality: manyToOne
     relyOnReferentialIntegrity: false
+
+// Conversation AI relationships
+relationship "silver_conversation_ai-mart_tx"
+    fromColumn: silver_conversation_ai[canonical_tx_id]
+    toColumn: mart_tx[TransactionID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: oneToOne
+    relyOnReferentialIntegrity: false
+
+relationship "platinum_conversation_ai-mart_tx"
+    fromColumn: platinum_conversation_ai[canonical_tx_id]
+    toColumn: mart_tx[TransactionID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: oneToOne
+    relyOnReferentialIntegrity: false

@@ -1,8 +1,8 @@
 model "Scout Analytics Model"
     defaultPowerBIDataSourceVersion: powerBI_V3
 
-    annotation PBI_QueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments"]
-    annotation PBI_ProxyQueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments"]
+    annotation PBI_QueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments","silver_conversation_ai","platinum_conversation_ai"]
+    annotation PBI_ProxyQueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments","silver_conversation_ai","platinum_conversation_ai"]
     annotation __PBI_TimeIntelligenceEnabled = 1
     annotation PBIDesktopVersion = 2.125.1467.0 (24.01)
     annotation PBI_DataAccessOptions = "legacyRedirects,returnErrorValuesAsNull"
@@ -26,6 +26,8 @@ model "Scout Analytics Model"
     include "tables/mart_tx.tmdl"
     include "tables/platinum_predictions.tmdl"
     include "tables/security_assignments.tmdl"
+    include "tables/silver_conversation_ai.tmdl"
+    include "tables/platinum_conversation_ai.tmdl"
     include "relationships.tmdl"
     include "measures.tmdl"
     include "roles.tmdl"
