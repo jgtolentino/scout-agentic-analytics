@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "route": "/api/*", "rewrite": "https://fn-scout-readonly.azurewebsites.net/api/{*path}", "allowedRoles": ["anonymous"] }
+  ],
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/assets/*","/favicon.ico","/robots.txt"] }
+}

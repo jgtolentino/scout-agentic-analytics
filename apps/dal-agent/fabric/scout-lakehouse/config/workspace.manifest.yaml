@@ -1,0 +1,133 @@
+workspace:
+  name: scout-lakehouse
+  description: "Scout Analytics - Medallion Architecture (Bronze/Silver in Lakehouse + Gold/Platinum in Warehouse)"
+  capacity: auto
+  region: "Southeast Asia"
+
+items:
+  - type: lakehouse
+    name: scout-lakehouse
+    description: "Bronze and Silver data layers with Delta tables"
+    shortcuts: []
+    initial_tables:
+      bronze:
+        - sales_interactions_raw
+        - payload_transactions_raw
+        - stores_raw
+        - brands_raw
+        - categories_raw
+      silver:
+        - transactions
+        - transaction_items
+        - dim_store
+        - dim_brand
+        - dim_category
+        - dim_date
+        - dim_time
+
+  - type: warehouse
+    name: scout-warehouse
+    description: "Gold views and Platinum ML registry"
+    connection_string: "Data Source=scout-warehouse.datawarehouse.fabric.microsoft.com"
+    run_sql:
+      - path: warehouse/01_warehouse_ddl.sql
+        description: "Create Gold/Platinum schemas and ML registry tables"
+        timeout_minutes: 10
+      - path: warehouse/02_warehouse_views.sql
+        description: "Create Gold views referencing Lakehouse Silver tables"
+        timeout_minutes: 5
+        token_replacements:
+          "<LAKEHOUSE_SQL_NAME>": "scout-lakehouse"
+
+  - type: notebook
+    name: silver_etl
+    display_name: "02_silver_transformation"
+    language: pyspark
+    path: notebooks/02_silver_transformation.py
+    description: "Bronze → Silver ETL with JSON explosion and dimensional modeling"
+    lakehouse: scout-lakehouse
+    default_pool: "Starter Pool"
+    timeout_minutes: 30
+
+  - type: powerbi_model
+    name: scout-semantic-model
+    display_name: "Scout Analytics Model"
+    model_json: powerbi/semantic_model.json
+    measures_dax: powerbi/measures.dax
+    description: "60+ DAX measures for Scout business intelligence"
+    refresh_schedule: "0 */4 * * *"  # Every 4 hours
+
+  - type: validation
+    name: fabric_validator
+    sql_script: validation/validate_fabric.sql
+    description: "Automated data quality and system health validation"
+    run_on_warehouse: scout-warehouse
+    expected_result_format: "single_row_json"
+
+bindings:
+  lakehouse_sql_name: scout-lakehouse
+  warehouse_name: scout-warehouse
+  workspace_name: scout-lakehouse
+
+connection_settings:
+  azure_sql:
+    server: "sqltbwaprojectscoutserver.database.windows.net"
+    database: "SQL-TBWA-ProjectScout-Reporting-Prod"
+    port: 1433
+    authentication: "ActiveDirectoryMSI"
+    source_tables:
+      - canonical.SalesInteractionFact
+      - dbo.PayloadTransactions
+      - dbo.Stores
+      - dbo.Brands
+      - dbo.Categories
+
+data_quality:
+  validation_schedule: "0 5 * * *"  # Daily at 5 AM
+  alert_thresholds:
+    data_freshness_days: 2
+    missing_transactions_percent: 5
+    revenue_variance_percent: 10
+    cross_layer_consistency_percent: 95
+    persona_coverage_percent: 95
+  notification_channels:
+    - email
+    - teams
+
+deployment_order:
+  1: workspace_creation
+  2: lakehouse_creation
+  3: warehouse_creation
+  4: warehouse_ddl_execution
+  5: warehouse_views_creation
+  6: notebook_upload
+  7: powerbi_model_deployment
+  8: validation_execution
+  9: scheduling_configuration
+
+success_criteria:
+  - schemas_created: ["gold", "platinum"]
+  - gold_views_accessible: true
+  - platinum_tables_created: 7
+  - lakehouse_silver_tables: 7
+  - validation_verdict: ["pass", "warn"]
+  - powerbi_measures_count: 60
+  - data_freshness_days: 7
+
+troubleshooting:
+  common_issues:
+    - issue: "Cross-database views fail"
+      solution: "Ensure Lakehouse and Warehouse are in same workspace"
+    - issue: "Managed Identity authentication fails"
+      solution: "Configure Azure SQL firewall and MI permissions"
+    - issue: "PySpark notebook timeout"
+      solution: "Increase timeout_minutes or use larger pool"
+    - issue: "Power BI refresh fails"
+      solution: "Check warehouse connection string and permissions"
+
+estimated_deployment_time:
+  infrastructure_setup: "30 minutes"
+  data_engineering: "60 minutes"
+  analytics_deployment: "30 minutes"
+  validation_testing: "15 minutes"
+  total: "2 hours 15 minutes"

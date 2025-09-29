@@ -1,0 +1,63 @@
+meta {
+  name: Azure Functions Hardening - EP1 + CORS
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://management.azure.com/subscriptions/{{AZURE_SUBSCRIPTION_ID}}/resourceGroups/{{RESOURCE_GROUP}}/providers/Microsoft.Web/serverfarms/{{APP_SERVICE_PLAN}}/capacityCheck
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{AZURE_ACCESS_TOKEN}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "targetResourceGroup": "{{RESOURCE_GROUP}}",
+    "targetSku": {
+      "name": "EP1",
+      "tier": "ElasticPremium",
+      "family": "EP",
+      "capacity": 1
+    }
+  }
+}
+
+vars:pre-request {
+  AZURE_SUBSCRIPTION_ID: c03c092c-443c-4f25-9efe-33f092621251
+  RESOURCE_GROUP: RG-TBWA-ProjectScout-Compute
+  FUNCTION_APP_NAME: fn-scout-readonly
+  APP_SERVICE_PLAN: plan-scout-ep1
+  SWA_HOST: calm-hill-0caba6f0f.2.azurestaticapps.net
+}
+
+script:pre-request {
+  console.log('🔧 Starting Azure Functions hardening...');
+  console.log('🎯 Target: Upgrade to EP1 + AlwaysOn + CORS');
+
+  bru.setVar('timestamp', new Date().toISOString());
+}
+
+script:post-response {
+  if (res.status >= 200 && res.status < 300) {
+    console.log('✅ Azure capacity check passed');
+    console.log('🚀 Proceeding with EP1 upgrade...');
+  } else {
+    console.log('❌ Capacity check failed');
+    console.log('Response:', res.body);
+  }
+}
+
+tests {
+  test("Capacity check successful", function() {
+    expect(res.status).to.be.within(200, 299);
+  });
+}

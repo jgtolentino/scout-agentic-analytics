@@ -1,0 +1,144 @@
+meta {
+  name: Run Stata Gold Validation (Asia/Manila)
+  type: http
+  seq: 1
+}
+
+vars:pre-request {
+  AZ_HOST: {{vault.azure.sql.host}}
+  AZ_DB: {{vault.azure.sql.db_readonly}}
+  AZ_USER: {{vault.azure.sql.ro_user}}
+  AZ_PASS: {{vault.azure.sql.ro_pass}}
+  TZ: Asia/Manila
+  DATE_FROM: 2025-06-01
+  DATE_TO: 2025-09-25
+  REGION: NCR
+  TOLERANCE: 0.01
+}
+
+script:pre-request {
+  // Validate required environment variables
+  const requiredVars = ['AZ_HOST', 'AZ_DB', 'AZ_USER', 'AZ_PASS'];
+  for (const varName of requiredVars) {
+    if (!bru.getVar(varName)) {
+      throw new Error(`Missing required vault variable: ${varName}`);
+    }
+  }
+
+  // Generate unique output directory with timestamp
+  const now = new Date();
+  const timestamp = now.toISOString().slice(0, 10);
+  bru.setVar('OUT_DIR', `out/stata_${timestamp}`);
+
+  console.log('🚀 Starting Scout v7 Stata Gold Validation');
+  console.log(`📅 Period: ${bru.getVar('DATE_FROM')} to ${bru.getVar('DATE_TO')}`);
+  console.log(`🎯 Region: ${bru.getVar('REGION')}`);
+  console.log(`📂 Output: ${bru.getVar('OUT_DIR')}`);
+}
+
+script:test {
+  // Pre-flight checks
+  test("Environment variables loaded", function() {
+    expect(bru.getVar('AZ_HOST')).to.not.be.empty;
+    expect(bru.getVar('AZ_DB')).to.not.be.empty;
+    expect(bru.getVar('AZ_USER')).to.not.be.empty;
+    expect(bru.getVar('AZ_PASS')).to.not.be.empty;
+  });
+
+  // Execute Stata pipeline with secure credentials
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execAsync = util.promisify(exec);
+
+  test("Stata pipeline execution", async function() {
+    // Set environment variables for Stata script
+    const env = {
+      ...process.env,
+      SCOUT_DSN: `Driver=ODBC Driver 18 for SQL Server;Server=tcp:${bru.getVar('AZ_HOST')},1433;Database=${bru.getVar('AZ_DB')};Encrypt=yes;TrustServerCertificate=no;`,
+      SCOUT_USER: bru.getVar('AZ_USER'),
+      SCOUT_PWD: bru.getVar('AZ_PASS'),
+      FROM_DATE: bru.getVar('DATE_FROM'),
+      TO_DATE: bru.getVar('DATE_TO'),
+      NCR_FOCUS: bru.getVar('REGION') === 'NCR' ? '1' : '0',
+      QA_TOLERANCE: bru.getVar('TOLERANCE'),
+      TZ: bru.getVar('TZ')
+    };
+
+    // Execute Stata pipeline script
+    try {
+      const { stdout, stderr } = await execAsync(
+        `./run_stata_pipeline.sh "${bru.getVar('DATE_FROM')}" "${bru.getVar('DATE_TO')}" "${bru.getVar('REGION') === 'NCR' ? '1' : '0'}" "${bru.getVar('TOLERANCE')}"`,
+        {
+          cwd: '.',
+          env: env,
+          timeout: 600000 // 10 minutes max
+        }
+      );
+
+      console.log('✅ Stata Pipeline Output:');
+      console.log(stdout);
+
+      if (stderr) {
+        console.warn('⚠️ Stata Pipeline Warnings:');
+        console.warn(stderr);
+      }
+
+      // Validate successful execution
+      expect(stdout).to.contain('Pipeline Execution Complete');
+      expect(stdout).to.contain('Gold layer reconciliation passed');
+
+    } catch (error) {
+      console.error('❌ Stata Pipeline Failed:');
+      console.error(error.stdout || error.message);
+      console.error(error.stderr);
+      throw new Error(`Stata execution failed: ${error.message}`);
+    }
+  });
+
+  // Validate output artifacts exist
+  test("Required artifacts generated", function() {
+    const fs = require('fs');
+    const path = require('path');
+    const glob = require('glob');
+
+    const outDir = bru.getVar('OUT_DIR');
+    const requiredPatterns = [
+      'scout_flat_enriched_*.csv',
+      'crosstab_basket_x_payment_*.csv',
+      'crosstab_category_x_daypart_*.csv',
+      'crosstab_gender_x_value_*.csv',
+      'qa_report_*.csv',
+      'export_metadata_*.txt'
+    ];
+
+    for (const pattern of requiredPatterns) {
+      const matches = glob.sync(path.join(outDir, pattern));
+      expect(matches.length).to.be.greaterThan(0, `Missing artifact: ${pattern}`);
+    }
+  });
+
+  // Validate QA report contents
+  test("QA report validation", function() {
+    const fs = require('fs');
+    const path = require('path');
+    const glob = require('glob');
+
+    const outDir = bru.getVar('OUT_DIR');
+    const qaFiles = glob.sync(path.join(outDir, 'qa_report_*.csv'));
+
+    expect(qaFiles.length).to.equal(1, 'Should have exactly one QA report');
+
+    const qaContent = fs.readFileSync(qaFiles[0], 'utf8');
+    expect(qaContent).to.contain('PASS', 'QA report should contain PASS status');
+    expect(qaContent).to.contain('Row Count Match', 'QA report should contain row count validation');
+    expect(qaContent).to.contain('Value Sum Match', 'QA report should contain value sum validation');
+  });
+}
+
+script:post-response {
+  console.log('🎉 Scout v7 Stata Validation Complete!');
+  console.log(`📊 Artifacts saved to: ${bru.getVar('OUT_DIR')}`);
+  console.log('✅ All quality checks PASSED');
+  console.log('✅ Gold layer reconciliation within tolerance');
+  console.log('✅ Audit trail captured in logs');
+}

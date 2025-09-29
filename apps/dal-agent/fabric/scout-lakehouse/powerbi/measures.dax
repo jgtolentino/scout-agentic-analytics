@@ -1,0 +1,347 @@
+// =====================================================
+// Scout Lakehouse - Power BI DAX Measures (60+ measures)
+// Core business metrics for Scout Analytics
+// =====================================================
+
+// =====================================================
+// REVENUE METRICS
+// =====================================================
+
+Total Revenue = SUM(mart_tx[transaction_value])
+
+Revenue Yesterday =
+CALCULATE([Total Revenue], DATEADD(mart_tx[transaction_date], -1, DAY))
+
+Revenue MTD =
+TOTALMTD([Total Revenue], mart_tx[transaction_date])
+
+Revenue YTD =
+TOTALYTD([Total Revenue], mart_tx[transaction_date])
+
+Revenue Growth MoM =
+VAR CurrentMonth = [Total Revenue]
+VAR PreviousMonth = CALCULATE([Total Revenue], DATEADD(mart_tx[transaction_date], -1, MONTH))
+RETURN DIVIDE(CurrentMonth - PreviousMonth, PreviousMonth, 0)
+
+Revenue Growth % = FORMAT([Revenue Growth MoM], "0.0%")
+
+// =====================================================
+// TRANSACTION METRICS
+// =====================================================
+
+Transaction Count = COUNTROWS(mart_tx)
+
+Transactions Yesterday =
+CALCULATE([Transaction Count], DATEADD(mart_tx[transaction_date], -1, DAY))
+
+Transaction Growth Daily =
+DIVIDE([Transaction Count] - [Transactions Yesterday], [Transactions Yesterday], 0)
+
+Average Transaction Value = DIVIDE([Total Revenue], [Transaction Count], 0)
+
+ATV Target = 150  // ₱150 target
+
+ATV vs Target = [Average Transaction Value] - [ATV Target]
+
+ATV Performance = IF([ATV vs Target] >= 0, "Above Target", "Below Target")
+
+// =====================================================
+// CUSTOMER METRICS
+// =====================================================
+
+Unique Customers = DISTINCTCOUNT(fact_tx[facial_id])
+
+Customer Penetration = DIVIDE([Unique Customers], [Transaction Count], 0)
+
+Average Spend Per Customer = DIVIDE([Total Revenue], [Unique Customers], 0)
+
+Customer Frequency = DIVIDE([Transaction Count], [Unique Customers], 0)
+
+New Customers =
+CALCULATE(
+    DISTINCTCOUNT(fact_tx[facial_id]),
+    FILTER(
+        fact_tx,
+        fact_tx[transaction_date] =
+        CALCULATE(MIN(fact_tx[transaction_date]), ALLEXCEPT(fact_tx, fact_tx[facial_id]))
+    )
+)
+
+Returning Customers = [Unique Customers] - [New Customers]
+
+Customer Retention Rate = DIVIDE([Returning Customers], [Unique Customers], 0)
+
+// =====================================================
+// BASKET METRICS
+// =====================================================
+
+Average Basket Size = AVERAGE(mart_tx[basket_size])
+
+Basket Target = 2.5
+
+Basket Performance = IF([Average Basket Size] >= [Basket Target], "Above Target", "Below Target")
+
+Total Units = SUM(mart_tx[basket_size])
+
+// =====================================================
+// STORE METRICS
+// =====================================================
+
+Active Stores = DISTINCTCOUNT(mart_tx[store_id])
+
+Revenue Per Store = DIVIDE([Total Revenue], [Active Stores], 0)
+
+Transactions Per Store = DIVIDE([Transaction Count], [Active Stores], 0)
+
+Top Store =
+CALCULATE(
+    SELECTEDVALUE(dim_store[store_name]),
+    TOPN(1, VALUES(dim_store[store_id]), [Total Revenue])
+)
+
+Store Rank = RANKX(ALL(dim_store[store_name]), [Total Revenue], , DESC, DENSE)
+
+// =====================================================
+// TIME-BASED METRICS
+// =====================================================
+
+Weekday Revenue =
+CALCULATE([Total Revenue], mart_tx[weekday_vs_weekend] = "Weekday")
+
+Weekend Revenue =
+CALCULATE([Total Revenue], mart_tx[weekday_vs_weekend] = "Weekend")
+
+Weekend vs Weekday = DIVIDE([Weekend Revenue], [Weekday Revenue], 0)
+
+Morning Sales =
+CALCULATE([Total Revenue], fact_tx[time_of_day_category] = "Early-Morning")
+
+Afternoon Sales =
+CALCULATE([Total Revenue], fact_tx[time_of_day_category] = "Afternoon")
+
+Evening Sales =
+CALCULATE([Total Revenue], fact_tx[time_of_day_category] = "Evening")
+
+Peak Hours Revenue =
+CALCULATE([Total Revenue], fact_tx[hour_24] >= 7 && fact_tx[hour_24] <= 9
+                        || fact_tx[hour_24] >= 17 && fact_tx[hour_24] <= 19)
+
+// =====================================================
+// GEOGRAPHICAL METRICS
+// =====================================================
+
+NCR Revenue =
+CALCULATE([Total Revenue], dim_store[region_name] = "NCR")
+
+NCR Share = DIVIDE([NCR Revenue], [Total Revenue], 0)
+
+Provincial Revenue =
+CALCULATE([Total Revenue], dim_store[region_name] <> "NCR")
+
+Regional Diversity = DISTINCTCOUNT(dim_store[region_name])
+
+Top Region =
+CALCULATE(
+    SELECTEDVALUE(dim_store[region_name]),
+    TOPN(1, VALUES(dim_store[region_name]), [Total Revenue])
+)
+
+// =====================================================
+// NIELSEN CATEGORY METRICS
+// =====================================================
+
+Tobacco Revenue =
+CALCULATE([Total Revenue], dim_brand[is_tobacco] = TRUE)
+
+Tobacco Share = DIVIDE([Tobacco Revenue], [Total Revenue], 0)
+
+Laundry Revenue =
+CALCULATE([Total Revenue], dim_brand[is_laundry] = TRUE)
+
+Laundry Share = DIVIDE([Laundry Revenue], [Total Revenue], 0)
+
+Premium Revenue =
+CALCULATE([Total Revenue], dim_brand[is_premium] = TRUE)
+
+Premium Share = DIVIDE([Premium Revenue], [Total Revenue], 0)
+
+Category Diversity = DISTINCTCOUNT(dim_brand[nielsen_l1_category])
+
+// =====================================================
+// CUSTOMER SEGMENTATION
+// =====================================================
+
+High Value Customers =
+CALCULATE([Unique Customers], mart_tx[transaction_value_category] = "High")
+
+Young Customers =
+CALCULATE([Unique Customers], mart_tx[age_group] = "Young")
+
+Adult Customers =
+CALCULATE([Unique Customers], mart_tx[age_group] = "Adult")
+
+Senior Customers =
+CALCULATE([Unique Customers], mart_tx[age_group] = "Senior")
+
+Large Basket Customers =
+CALCULATE([Unique Customers], mart_tx[basket_size_category] = "Large")
+
+// =====================================================
+// PERFORMANCE INDICATORS
+// =====================================================
+
+Revenue Velocity = DIVIDE([Total Revenue], DISTINCTCOUNT(mart_tx[transaction_date]), 0)
+
+Business Health Score =
+([Revenue Growth MoM] + 1) * 0.3 +
+([Customer Retention Rate]) * 0.3 +
+(DIVIDE([Average Transaction Value], [ATV Target], 1)) * 0.2 +
+(DIVIDE([Average Basket Size], [Basket Target], 1)) * 0.2
+
+Performance Status =
+SWITCH(
+    TRUE(),
+    [Business Health Score] >= 1.2, "Excellent",
+    [Business Health Score] >= 1.0, "Good",
+    [Business Health Score] >= 0.8, "Fair",
+    "Needs Improvement"
+)
+
+Market Penetration =
+([Unique Customers] / 10000) * 0.4 +
+([Active Stores] / 100) * 0.3 +
+([Regional Diversity] / 20) * 0.3
+
+// =====================================================
+// FORECASTING MEASURES
+// =====================================================
+
+Revenue Forecast Next Month = [Total Revenue] * (1 + [Revenue Growth MoM])
+
+Annual Projection = [Revenue MTD] * (12 / MONTH(TODAY()))
+
+Target Achievement = DIVIDE([Revenue YTD], [Annual Projection], 0)
+
+Days Remaining = DAY(EOMONTH(TODAY(), 0)) - DAY(TODAY())
+
+Projected Month End = [Revenue MTD] + ([Revenue Velocity] * [Days Remaining])
+
+// =====================================================
+// COMPARATIVE MEASURES
+// =====================================================
+
+Revenue vs Last Year =
+[Total Revenue] -
+CALCULATE([Total Revenue], SAMEPERIODLASTYEAR(mart_tx[transaction_date]))
+
+YoY Growth =
+DIVIDE([Revenue vs Last Year],
+       CALCULATE([Total Revenue], SAMEPERIODLASTYEAR(mart_tx[transaction_date])), 0)
+
+YoY Growth % = FORMAT([YoY Growth], "0.0%")
+
+Market Share Est = [Total Revenue] / 50000000  // ₱50M estimated market
+
+Competitive Position =
+IF([Market Share Est] >= 0.05, "Leader",
+   IF([Market Share Est] >= 0.02, "Strong", "Niche"))
+
+// =====================================================
+// OPERATIONAL EFFICIENCY
+// =====================================================
+
+Revenue Per Hour =
+DIVIDE([Total Revenue],
+       CALCULATE(DISTINCTCOUNT(fact_tx[hour_24]), fact_tx[hour_24] >= 6 && fact_tx[hour_24] <= 22), 0)
+
+Transactions Per Hour =
+DIVIDE([Transaction Count],
+       CALCULATE(DISTINCTCOUNT(fact_tx[hour_24]), fact_tx[hour_24] >= 6 && fact_tx[hour_24] <= 22), 0)
+
+Peak vs Off-Peak =
+DIVIDE([Peak Hours Revenue],
+       CALCULATE([Total Revenue], fact_tx[hour_24] < 7 || fact_tx[hour_24] > 19), 0)
+
+Store Efficiency =
+([Revenue Per Store] / 10000) * 0.6 +
+([Transactions Per Store] / 100) * 0.4
+
+// =====================================================
+// CONDITIONAL FORMATTING
+// =====================================================
+
+Revenue Color = IF([Revenue Growth MoM] > 0, "Green", "Red")
+
+ATV Color = IF([Average Transaction Value] >= [ATV Target], "Green", "Orange")
+
+Customer Color = IF([New Customers] > [Returning Customers] * 0.1, "Green", "Orange")
+
+Performance Color =
+SWITCH([Performance Status],
+    "Excellent", "Green",
+    "Good", "LightGreen",
+    "Fair", "Yellow",
+    "Red")
+
+// =====================================================
+// BUSINESS INSIGHTS
+// =====================================================
+
+Best Performing Hour =
+CALCULATE(
+    SELECTEDVALUE(fact_tx[hour_24]),
+    TOPN(1, VALUES(fact_tx[hour_24]), [Total Revenue])
+)
+
+Peak Sales Day =
+CALCULATE(
+    SELECTEDVALUE(mart_tx[weekday_vs_weekend]),
+    TOPN(1, VALUES(mart_tx[weekday_vs_weekend]), [Total Revenue])
+)
+
+Most Valuable Segment =
+CALCULATE(
+    SELECTEDVALUE(mart_tx[transaction_value_category]),
+    TOPN(1, VALUES(mart_tx[transaction_value_category]), [Total Revenue])
+)
+
+Growth Momentum =
+IF([Transaction Growth Daily] > 0.05, "Accelerating",
+   IF([Transaction Growth Daily] > 0, "Growing",
+      IF([Transaction Growth Daily] > -0.05, "Stable", "Declining")))
+
+Customer Lifecycle Value =
+AVERAGEX(
+    VALUES(fact_tx[facial_id]),
+    CALCULATE(SUM(fact_tx[transaction_value]))
+)
+
+// =====================================================
+// ADVANCED ANALYTICS
+// =====================================================
+
+Revenue Concentration =
+DIVIDE(
+    CALCULATE([Total Revenue], TOPN(10, VALUES(dim_store[store_id]), [Total Revenue])),
+    [Total Revenue], 0)
+
+Customer Concentration =
+DIVIDE(
+    CALCULATE([Total Revenue], TOPN(100, VALUES(fact_tx[facial_id]), [Average Spend Per Customer])),
+    [Total Revenue], 0)
+
+Seasonal Index =
+DIVIDE([Total Revenue],
+       CALCULATE([Total Revenue], ALL(mart_tx[transaction_date])), 0) * 100
+
+Store Performance Variance =
+STDEV.P(
+    ADDCOLUMNS(
+        VALUES(dim_store[store_id]),
+        "StoreRevenue", [Total Revenue]
+    ),
+    [StoreRevenue]
+)
+
+Transaction Value Stability =
+1 - (STDEV.P(mart_tx[transaction_value]) / [Average Transaction Value])

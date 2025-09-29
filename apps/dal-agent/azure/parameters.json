@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sku": {
+      "value": "Standard"
+    },
+    "staticWebAppName": {
+      "value": "swa-scout-dashboard-prod"
+    },
+    "functionAppName": {
+      "value": "scout-func-prod"
+    },
+    "repositoryUrl": {
+      "value": "https://github.com/your-org/scout-v7"
+    },
+    "branch": {
+      "value": "main"
+    },
+    "repositoryToken": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/{subscription-id}/resourceGroups/RG-TBWA-ProjectScout-Compute/providers/Microsoft.KeyVault/vaults/kv-scout-tbwa-1750202017"
+        },
+        "secretName": "github-token"
+      }
+    },
+    "appLocation": {
+      "value": "/apps/dal-agent"
+    },
+    "apiLocation": {
+      "value": ""
+    },
+    "outputLocation": {
+      "value": "out"
+    }
+  }
+}

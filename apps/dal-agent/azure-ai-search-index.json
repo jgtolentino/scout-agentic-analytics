@@ -1,0 +1,142 @@
+{
+  "name": "scout-rag",
+  "fields": [
+    {
+      "name": "doc_id",
+      "type": "Edm.String",
+      "key": true,
+      "filterable": true,
+      "searchable": false,
+      "sortable": false,
+      "facetable": false
+    },
+    {
+      "name": "text",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "analyzer": "en.microsoft"
+    },
+    {
+      "name": "store",
+      "type": "Edm.String",
+      "filterable": true,
+      "facetable": true,
+      "searchable": true,
+      "sortable": true
+    },
+    {
+      "name": "brand",
+      "type": "Edm.String",
+      "filterable": true,
+      "facetable": true,
+      "searchable": true,
+      "sortable": true
+    },
+    {
+      "name": "category",
+      "type": "Edm.String",
+      "filterable": true,
+      "facetable": true,
+      "searchable": true,
+      "sortable": true
+    },
+    {
+      "name": "region",
+      "type": "Edm.String",
+      "filterable": true,
+      "facetable": true,
+      "searchable": false,
+      "sortable": true
+    },
+    {
+      "name": "value",
+      "type": "Edm.Double",
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "searchable": false
+    },
+    {
+      "name": "transaction_date",
+      "type": "Edm.DateTimeOffset",
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "searchable": false
+    },
+    {
+      "name": "embedding",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "filterable": false,
+      "sortable": false,
+      "facetable": false,
+      "dimensions": 1536,
+      "vectorSearchProfile": "v1"
+    }
+  ],
+  "vectorSearch": {
+    "profiles": [
+      {
+        "name": "v1",
+        "algorithmConfiguration": "hnsw"
+      }
+    ],
+    "algorithms": [
+      {
+        "name": "hnsw",
+        "kind": "hnsw",
+        "hnswParameters": {
+          "metric": "cosine",
+          "m": 4,
+          "efConstruction": 400,
+          "efSearch": 500
+        }
+      }
+    ]
+  },
+  "semantic": {
+    "configurations": [
+      {
+        "name": "scout-semantic",
+        "prioritizedFields": {
+          "titleField": {
+            "fieldName": "brand"
+          },
+          "prioritizedContentFields": [
+            {
+              "fieldName": "text"
+            }
+          ],
+          "prioritizedKeywordsFields": [
+            {
+              "fieldName": "category"
+            },
+            {
+              "fieldName": "store"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "suggesters": [
+    {
+      "name": "sg-brands",
+      "searchMode": "analyzingInfixMatching",
+      "sourceFields": [
+        "brand",
+        "category",
+        "store"
+      ]
+    }
+  ],
+  "corsOptions": {
+    "allowedOrigins": [
+      "*"
+    ]
+  }
+}

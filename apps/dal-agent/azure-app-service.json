@@ -1,0 +1,101 @@
+{
+  "name": "scout-analytics-app",
+  "type": "Microsoft.Web/sites",
+  "apiVersion": "2022-03-01",
+  "location": "[parameters('location')]",
+  "kind": "app,linux",
+  "properties": {
+    "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+    "siteConfig": {
+      "linuxFxVersion": "NODE|18-lts",
+      "alwaysOn": true,
+      "ftpsState": "Disabled",
+      "minTlsVersion": "1.2",
+      "scmMinTlsVersion": "1.2",
+      "use32BitWorkerProcess": false,
+      "webSocketsEnabled": true,
+      "requestTracingEnabled": true,
+      "detailedErrorLoggingEnabled": true,
+      "httpLoggingEnabled": true,
+      "logsDirectorySizeLimit": 35,
+      "appSettings": [
+        {
+          "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+          "value": "false"
+        },
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "AZURE_SQL_SERVER",
+          "value": "sqltbwaprojectscoutserver.database.windows.net"
+        },
+        {
+          "name": "AZURE_SQL_DATABASE",
+          "value": "SQL-TBWA-ProjectScout-Reporting-Prod"
+        },
+        {
+          "name": "AZURE_SQL_USERNAME",
+          "value": "@Microsoft.KeyVault(SecretUri=https://kv-scout-tbwa-1750202017.vault.azure.net/secrets/azure-sql-username/)"
+        },
+        {
+          "name": "AZURE_SQL_PASSWORD",
+          "value": "@Microsoft.KeyVault(SecretUri=https://kv-scout-tbwa-1750202017.vault.azure.net/secrets/azure-sql-password/)"
+        },
+        {
+          "name": "AZURE_SQL_CONNECTION_STRING",
+          "value": "@Microsoft.KeyVault(SecretUri=https://kv-scout-tbwa-1750202017.vault.azure.net/secrets/azure-sql-conn-str/)"
+        },
+        {
+          "name": "ANALYTICS_API_VERSION",
+          "value": "v1"
+        },
+        {
+          "name": "ENABLE_REAL_TIME_MONITORING",
+          "value": "true"
+        },
+        {
+          "name": "ENABLE_CULTURAL_ANALYTICS",
+          "value": "true"
+        },
+        {
+          "name": "ENABLE_CONVERSATION_INTELLIGENCE",
+          "value": "true"
+        },
+        {
+          "name": "MAX_QUERY_TIMEOUT_MS",
+          "value": "30000"
+        },
+        {
+          "name": "CONNECTION_POOL_MAX",
+          "value": "20"
+        },
+        {
+          "name": "CONNECTION_POOL_MIN",
+          "value": "5"
+        },
+        {
+          "name": "CACHE_TTL_SECONDS",
+          "value": "300"
+        }
+      ],
+      "connectionStrings": [
+        {
+          "name": "DefaultConnection",
+          "type": "SQLAzure",
+          "connectionString": "@Microsoft.KeyVault(SecretUri=https://kv-scout-tbwa-1750202017.vault.azure.net/secrets/azure-sql-conn-str/)"
+        }
+      ]
+    },
+    "httpsOnly": true,
+    "publicNetworkAccess": "Enabled",
+    "storageAccountRequired": false
+  },
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "dependsOn": [
+    "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+  ]
+}

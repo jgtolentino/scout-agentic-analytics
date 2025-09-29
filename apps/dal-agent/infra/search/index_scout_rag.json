@@ -1,0 +1,178 @@
+{
+  "name": "scout-rag",
+  "fields": [
+    {
+      "name": "id",
+      "type": "Edm.String",
+      "key": true,
+      "filterable": true,
+      "sortable": true,
+      "searchable": false,
+      "facetable": false
+    },
+    {
+      "name": "brand",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true,
+      "sortable": true
+    },
+    {
+      "name": "category",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true,
+      "sortable": true
+    },
+    {
+      "name": "store",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true,
+      "sortable": true
+    },
+    {
+      "name": "region",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "facetable": true,
+      "sortable": true
+    },
+    {
+      "name": "text",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "facetable": false,
+      "sortable": false,
+      "analyzer": "standard.lucene"
+    },
+    {
+      "name": "vector",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "filterable": false,
+      "facetable": false,
+      "sortable": false,
+      "dimensions": 1536,
+      "vectorSearchProfile": "scout-rag-profile"
+    },
+    {
+      "name": "revenue",
+      "type": "Edm.Double",
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "searchable": false
+    },
+    {
+      "name": "volume",
+      "type": "Edm.Int32",
+      "filterable": true,
+      "sortable": true,
+      "facetable": false,
+      "searchable": false
+    },
+    {
+      "name": "transaction_date",
+      "type": "Edm.DateTimeOffset",
+      "filterable": true,
+      "sortable": true,
+      "facetable": true,
+      "searchable": false
+    },
+    {
+      "name": "metadata",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "facetable": false,
+      "sortable": false
+    }
+  ],
+  "vectorSearch": {
+    "profiles": [
+      {
+        "name": "scout-rag-profile",
+        "algorithm": "scout-hnsw",
+        "vectorizer": "scout-openai"
+      }
+    ],
+    "algorithms": [
+      {
+        "name": "scout-hnsw",
+        "kind": "hnsw",
+        "hnswParameters": {
+          "metric": "cosine",
+          "m": 4,
+          "efConstruction": 400,
+          "efSearch": 500
+        }
+      }
+    ],
+    "vectorizers": [
+      {
+        "name": "scout-openai",
+        "kind": "azureOpenAI",
+        "azureOpenAIParameters": {
+          "resourceUri": "https://openai.azure.com",
+          "deploymentId": "text-embedding-3-large",
+          "modelName": "text-embedding-3-large"
+        }
+      }
+    ]
+  },
+  "semantic": {
+    "defaultConfiguration": "scout-semantic-config",
+    "configurations": [
+      {
+        "name": "scout-semantic-config",
+        "prioritizedFields": {
+          "titleField": {
+            "fieldName": "brand"
+          },
+          "contentFields": [
+            {
+              "fieldName": "text"
+            },
+            {
+              "fieldName": "metadata"
+            }
+          ],
+          "keywordsFields": [
+            {
+              "fieldName": "category"
+            },
+            {
+              "fieldName": "store"
+            },
+            {
+              "fieldName": "region"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "suggesters": [
+    {
+      "name": "scout-suggester",
+      "searchMode": "analyzingInfixMatching",
+      "sourceFields": [
+        "brand",
+        "category",
+        "store"
+      ]
+    }
+  ],
+  "corsOptions": {
+    "allowedOrigins": [
+      "*"
+    ],
+    "maxAgeInSeconds": 60
+  }
+}

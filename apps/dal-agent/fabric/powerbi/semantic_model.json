@@ -1,0 +1,840 @@
+{
+  "name": "Scout Analytics Model",
+  "description": "Scout v7 Analytics Semantic Model for Microsoft Fabric",
+  "version": "1.0",
+  "compatibilityLevel": 1600,
+  "model": {
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"dim_date\",\"dim_time\",\"dim_store\",\"dim_brand\",\"dim_category\",\"fact_transactions\",\"fact_transaction_items\"]"
+      },
+      {
+        "name": "PBI_ProxyQueryOrder",
+        "value": "[\"dim_date\",\"dim_time\",\"dim_store\",\"dim_brand\",\"dim_category\",\"fact_transactions\",\"fact_transaction_items\"]"
+      }
+    ],
+    "culture": "en-US",
+    "cultures": [
+      {
+        "name": "en-US",
+        "linguisticMetadata": {
+          "content": {
+            "Language": "en-US",
+            "Version": "1.0.0"
+          },
+          "contentType": "json"
+        }
+      }
+    ],
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "en-US",
+    "tables": [
+      {
+        "name": "dim_date",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "date_key",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "date_key",
+            "sourceColumn": "date_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "full_date",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ],
+            "dataType": "dateTime",
+            "formatString": "Long Date",
+            "lineageTag": "full_date",
+            "sourceColumn": "full_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "year",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "year",
+            "sourceColumn": "year",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "quarter",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "quarter",
+            "sourceColumn": "quarter",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "month",
+            "sourceColumn": "month",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "month_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "month_name",
+            "sourceColumn": "month_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "day_of_week",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "day_of_week",
+            "sourceColumn": "day_of_week",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "day_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "day_name",
+            "sourceColumn": "day_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_weekend",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "boolean",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "lineageTag": "is_weekend",
+            "sourceColumn": "is_weekend",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_holiday",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "boolean",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "lineageTag": "is_holiday",
+            "sourceColumn": "is_holiday",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "dim_date",
+        "partitions": [
+          {
+            "name": "dim_date",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Source = Sql.Database(\"<WAREHOUSE_SQL_NAME>\", \"<WAREHOUSE_NAME>\"),",
+                "    gold_dim_date_ref = Source{[Schema=\"gold\",Item=\"dim_date_ref\"]}[Data]",
+                "in",
+                "    gold_dim_date_ref"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_time",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "time_key",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "time_key",
+            "sourceColumn": "time_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "hour_24",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "hour_24",
+            "sourceColumn": "hour_24",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "time_of_day_category",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "time_of_day_category",
+            "sourceColumn": "time_of_day_category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "business_time_period",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "business_time_period",
+            "sourceColumn": "business_time_period",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "dim_time",
+        "partitions": [
+          {
+            "name": "dim_time",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Source = Sql.Database(\"<WAREHOUSE_SQL_NAME>\", \"<WAREHOUSE_NAME>\"),",
+                "    gold_dim_time_ref = Source{[Schema=\"gold\",Item=\"dim_time_ref\"]}[Data]",
+                "in",
+                "    gold_dim_time_ref"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_store",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "store_id",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "store_id",
+            "sourceColumn": "store_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "store_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "store_name",
+            "sourceColumn": "store_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "region_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "region_name",
+            "sourceColumn": "region_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "province_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "province_name",
+            "sourceColumn": "province_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "municipality_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "municipality_name",
+            "sourceColumn": "municipality_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "latitude",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "double",
+            "formatString": "0.00",
+            "lineageTag": "latitude",
+            "sourceColumn": "latitude",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "longitude",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "double",
+            "formatString": "0.00",
+            "lineageTag": "longitude",
+            "sourceColumn": "longitude",
+            "summarizeBy": "average"
+          }
+        ],
+        "lineageTag": "dim_store",
+        "partitions": [
+          {
+            "name": "dim_store",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Source = Sql.Database(\"<WAREHOUSE_SQL_NAME>\", \"<WAREHOUSE_NAME>\"),",
+                "    gold_dim_store_ref = Source{[Schema=\"gold\",Item=\"dim_store_ref\"]}[Data]",
+                "in",
+                "    gold_dim_store_ref"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "dim_brand",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "brand_id",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "brand_id",
+            "sourceColumn": "brand_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "brand_name",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "brand_name",
+            "sourceColumn": "brand_name",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "nielsen_l1_category",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "nielsen_l1_category",
+            "sourceColumn": "nielsen_l1_category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "nielsen_l2_category",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "nielsen_l2_category",
+            "sourceColumn": "nielsen_l2_category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "nielsen_l3_category",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "nielsen_l3_category",
+            "sourceColumn": "nielsen_l3_category",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "is_premium",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "boolean",
+            "formatString": "\"TRUE\";\"TRUE\";\"FALSE\"",
+            "lineageTag": "is_premium",
+            "sourceColumn": "is_premium",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "dim_brand",
+        "partitions": [
+          {
+            "name": "dim_brand",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Source = Sql.Database(\"<WAREHOUSE_SQL_NAME>\", \"<WAREHOUSE_NAME>\"),",
+                "    gold_dim_brand_ref = Source{[Schema=\"gold\",Item=\"dim_brand_ref\"]}[Data]",
+                "in",
+                "    gold_dim_brand_ref"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      },
+      {
+        "name": "fact_transactions",
+        "annotations": [
+          {
+            "name": "PBI_ResultType",
+            "value": "Table"
+          }
+        ],
+        "columns": [
+          {
+            "name": "canonical_tx_id",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "canonical_tx_id",
+            "sourceColumn": "canonical_tx_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "store_id",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "store_id",
+            "sourceColumn": "store_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "facial_id",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "facial_id",
+            "sourceColumn": "facial_id",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "transaction_date",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "UnderlyingDateTimeDataType",
+                "value": "Date"
+              }
+            ],
+            "dataType": "dateTime",
+            "formatString": "Short Date",
+            "lineageTag": "transaction_date",
+            "sourceColumn": "transaction_date",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "date_key",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "date_key",
+            "sourceColumn": "date_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "time_key",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "time_key",
+            "sourceColumn": "time_key",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "transaction_value",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              },
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"currencyCulture\":\"en-PH\"}"
+              }
+            ],
+            "dataType": "decimal",
+            "formatString": "₱#,0.00;(₱#,0.00);₱#,0.00",
+            "lineageTag": "transaction_value",
+            "sourceColumn": "transaction_value",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "basket_size",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "basket_size",
+            "sourceColumn": "basket_size",
+            "summarizeBy": "sum"
+          },
+          {
+            "name": "customer_age",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "int64",
+            "formatString": "0",
+            "lineageTag": "customer_age",
+            "sourceColumn": "customer_age",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "customer_gender",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "customer_gender",
+            "sourceColumn": "customer_gender",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "emotional_state",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "emotional_state",
+            "sourceColumn": "emotional_state",
+            "summarizeBy": "none"
+          },
+          {
+            "name": "conversation_score",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "double",
+            "formatString": "0.0",
+            "lineageTag": "conversation_score",
+            "sourceColumn": "conversation_score",
+            "summarizeBy": "average"
+          },
+          {
+            "name": "persona_assigned",
+            "annotations": [
+              {
+                "name": "SummarizationSetBy",
+                "value": "Automatic"
+              }
+            ],
+            "dataType": "string",
+            "lineageTag": "persona_assigned",
+            "sourceColumn": "persona_assigned",
+            "summarizeBy": "none"
+          }
+        ],
+        "lineageTag": "fact_transactions",
+        "measures": [
+          {
+            "name": "Total Revenue",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"currencyCulture\":\"en-PH\"}"
+              }
+            ],
+            "expression": "SUM(fact_transactions[transaction_value])",
+            "formatString": "₱#,0.00;(₱#,0.00);₱#,0.00",
+            "lineageTag": "Total Revenue"
+          },
+          {
+            "name": "Transaction Count",
+            "expression": "COUNTROWS(fact_transactions)",
+            "formatString": "#,0",
+            "lineageTag": "Transaction Count"
+          },
+          {
+            "name": "Average Transaction Value",
+            "annotations": [
+              {
+                "name": "PBI_FormatHint",
+                "value": "{\"currencyCulture\":\"en-PH\"}"
+              }
+            ],
+            "expression": "AVERAGE(fact_transactions[transaction_value])",
+            "formatString": "₱#,0.00;(₱#,0.00);₱#,0.00",
+            "lineageTag": "Average Transaction Value"
+          },
+          {
+            "name": "Unique Customers",
+            "expression": "DISTINCTCOUNT(fact_transactions[facial_id])",
+            "formatString": "#,0",
+            "lineageTag": "Unique Customers"
+          },
+          {
+            "name": "Average Basket Size",
+            "expression": "AVERAGE(fact_transactions[basket_size])",
+            "formatString": "0.0",
+            "lineageTag": "Average Basket Size"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "fact_transactions",
+            "mode": "import",
+            "source": {
+              "expression": [
+                "let",
+                "    Source = Sql.Database(\"<WAREHOUSE_SQL_NAME>\", \"<WAREHOUSE_NAME>\"),",
+                "    gold_fact_transactions_ref = Source{[Schema=\"gold\",Item=\"fact_transactions_ref\"]}[Data]",
+                "in",
+                "    gold_fact_transactions_ref"
+              ],
+              "type": "m"
+            }
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "fact_transactions-dim_date",
+        "annotations": [
+          {
+            "name": "PBI_CrossFilterDirection",
+            "value": "SingleDirection"
+          },
+          {
+            "name": "PBI_JoinCardinality",
+            "value": "ManyToOne"
+          }
+        ],
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "fromColumn": "date_key",
+        "fromTable": "fact_transactions",
+        "toCardinality": "one",
+        "toColumn": "date_key",
+        "toTable": "dim_date"
+      },
+      {
+        "name": "fact_transactions-dim_time",
+        "annotations": [
+          {
+            "name": "PBI_CrossFilterDirection",
+            "value": "SingleDirection"
+          },
+          {
+            "name": "PBI_JoinCardinality",
+            "value": "ManyToOne"
+          }
+        ],
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "fromColumn": "time_key",
+        "fromTable": "fact_transactions",
+        "toCardinality": "one",
+        "toColumn": "time_key",
+        "toTable": "dim_time"
+      },
+      {
+        "name": "fact_transactions-dim_store",
+        "annotations": [
+          {
+            "name": "PBI_CrossFilterDirection",
+            "value": "SingleDirection"
+          },
+          {
+            "name": "PBI_JoinCardinality",
+            "value": "ManyToOne"
+          }
+        ],
+        "crossFilteringBehavior": "oneDirection",
+        "fromCardinality": "many",
+        "fromColumn": "store_id",
+        "fromTable": "fact_transactions",
+        "toCardinality": "one",
+        "toColumn": "store_id",
+        "toTable": "dim_store"
+      }
+    ]
+  }
+}

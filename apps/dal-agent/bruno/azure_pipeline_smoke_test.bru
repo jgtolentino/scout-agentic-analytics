@@ -1,0 +1,77 @@
+meta {
+  name: Azure Pipeline Smoke Test
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://api.github.com/repos/jgtolentino/scout-agentic-analytics/actions/workflows/export-validation.yml/dispatches
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{GITHUB_TOKEN}}
+}
+
+headers {
+  Accept: application/vnd.github.v3+json
+  User-Agent: Bruno/Scout-v7-Pipeline
+}
+
+body:json {
+  {
+    "ref": "main",
+    "inputs": {
+      "strict_mode": "true",
+      "date_from": "",
+      "date_to": "",
+      "ncr_only": "true"
+    }
+  }
+}
+
+vars:pre-request {
+  // Azure SQL Connection Details
+  AZ_SQL_SERVER: sqltbwaprojectscoutserver.database.windows.net
+  AZ_SQL_DB: SQL-TBWA-ProjectScout-Reporting-Prod
+}
+
+script:pre-request {
+  // Validate that secrets are available in environment
+  const requiredVars = ['AZ_SQL_UID', 'AZ_SQL_PWD', 'GITHUB_TOKEN'];
+
+  for (const varName of requiredVars) {
+    if (!bru.getEnvVar(varName)) {
+      throw new Error(`Missing required environment variable: ${varName}`);
+    }
+  }
+
+  console.log('✅ All required secrets validated');
+  console.log('🚀 Triggering Azure Pipeline Smoke Test...');
+}
+
+script:post-response {
+  if (res.status === 204) {
+    console.log('✅ GitHub Actions workflow triggered successfully');
+    console.log('📊 Monitor workflow at: https://github.com/jgtolentino/scout-agentic-analytics/actions');
+
+    // Set environment variables for verification
+    bru.setVar('workflow_triggered', 'true');
+    bru.setVar('trigger_time', new Date().toISOString());
+  } else {
+    console.log('❌ Failed to trigger workflow');
+    console.log('Response:', res.body);
+    throw new Error(`Workflow trigger failed with status: ${res.status}`);
+  }
+}
+
+tests {
+  test("Workflow dispatch successful", function() {
+    expect(res.status).to.equal(204);
+  });
+
+  test("Response headers valid", function() {
+    expect(res.headers['server']).to.contain('GitHub.com');
+  });
+}

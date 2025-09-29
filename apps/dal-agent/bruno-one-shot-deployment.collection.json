@@ -1,0 +1,156 @@
+{
+  "version": "1",
+  "name": "Scout Analytics - Complete Azure Deployment",
+  "type": "collection",
+  "items": [
+    {
+      "name": "1. Build Functions Container",
+      "type": "http",
+      "seq": 1,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/build-container",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🐳 Building Scout Analytics Functions Container with ODBC18'\n\n# Build and push container\ncd azure-functions\ndocker build -t scout-analytics-func:latest .\n\n# Tag for ACR\nACR_NAME=\"${RESOURCE_GROUP}acr\"\ndocker tag scout-analytics-func:latest ${ACR_NAME}.azurecr.io/scout-analytics-func:latest\n\n# Push to ACR\naz acr login --name $ACR_NAME\ndocker push ${ACR_NAME}.azurecr.io/scout-analytics-func:latest\n\necho '✅ Container built and pushed to ACR'\necho \"Container: ${ACR_NAME}.azurecr.io/scout-analytics-func:latest\""
+        }
+      }
+    },
+    {
+      "name": "2. Provision Azure Infrastructure",
+      "type": "http",
+      "seq": 2,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/provision-azure",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🏗️ Provisioning Scout Analytics Azure Infrastructure'\n\n# Configuration\nRESOURCE_GROUP=\"rg-scout-analytics\"\nLOCATION=\"eastus\"\nACR_NAME=\"${RESOURCE_GROUP}acr\"\nFUNCTION_APP_NAME=\"scout-analytics-func\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\nAI_SEARCH_NAME=\"search-scout-analytics\"\nOPENAI_NAME=\"openai-scout-analytics\"\nSTORAGE_ACCOUNT=\"scoutanalytics$(date +%s)\"\nDATA_FACTORY_NAME=\"df-scout-analytics\"\nAPP_INSIGHTS_NAME=\"ai-scout-analytics\"\n\n# Get subscription ID\nSUBSCRIPTION_ID=$(az account show --query id -o tsv)\n\n# Create resource group\necho '📦 Creating resource group...'\naz group create --name $RESOURCE_GROUP --location $LOCATION\n\n# Create Container Registry\necho '🐳 Creating Container Registry...'\naz acr create --resource-group $RESOURCE_GROUP --name $ACR_NAME --sku Basic --admin-enabled true\n\n# Create Key Vault\necho '🔑 Creating Key Vault...'\naz keyvault create --name $KEY_VAULT_NAME --resource-group $RESOURCE_GROUP --location $LOCATION --sku standard\n\n# Create Storage Account\necho '💾 Creating Storage Account...'\naz storage account create --name $STORAGE_ACCOUNT --resource-group $RESOURCE_GROUP --location $LOCATION --sku Standard_LRS\n\n# Create Application Insights\necho '📊 Creating Application Insights...'\naz monitor app-insights component create --app $APP_INSIGHTS_NAME --location $LOCATION --resource-group $RESOURCE_GROUP --kind web\n\n# Create Azure AI Search\necho '🔍 Creating Azure AI Search...'\naz search service create --name $AI_SEARCH_NAME --resource-group $RESOURCE_GROUP --location $LOCATION --sku Basic\n\n# Create Azure OpenAI\necho '🤖 Creating Azure OpenAI...'\naz cognitiveservices account create --name $OPENAI_NAME --resource-group $RESOURCE_GROUP --location $LOCATION --kind OpenAI --sku S0 --custom-domain $OPENAI_NAME\n\n# Create Data Factory\necho '🏭 Creating Azure Data Factory...'\naz datafactory create --factory-name $DATA_FACTORY_NAME --resource-group $RESOURCE_GROUP --location $LOCATION\n\necho '✅ Azure infrastructure provisioned successfully'\necho \"Resource Group: $RESOURCE_GROUP\"\necho \"Key Vault: $KEY_VAULT_NAME\"\necho \"AI Search: $AI_SEARCH_NAME\"\necho \"OpenAI: $OPENAI_NAME\""
+        }
+      }
+    },
+    {
+      "name": "3. Configure Secrets & Keys",
+      "type": "http",
+      "seq": 3,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/configure-secrets",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🔐 Configuring secrets and access keys'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\nAI_SEARCH_NAME=\"search-scout-analytics\"\nOPENAI_NAME=\"openai-scout-analytics\"\nSTORAGE_ACCOUNT=$(az storage account list --resource-group $RESOURCE_GROUP --query '[0].name' -o tsv)\nAPP_INSIGHTS_NAME=\"ai-scout-analytics\"\n\n# Get service keys\necho '🔑 Retrieving service keys...'\nSTORAGE_CONN_STR=$(az storage account show-connection-string --name $STORAGE_ACCOUNT --resource-group $RESOURCE_GROUP --query connectionString -o tsv)\nSEARCH_KEY=$(az search admin-key show --service-name $AI_SEARCH_NAME --resource-group $RESOURCE_GROUP --query primaryKey -o tsv)\nOPENAI_ENDPOINT=$(az cognitiveservices account show --name $OPENAI_NAME --resource-group $RESOURCE_GROUP --query properties.endpoint -o tsv)\nOPENAI_KEY=$(az cognitiveservices account keys list --name $OPENAI_NAME --resource-group $RESOURCE_GROUP --query key1 -o tsv)\nAPP_INSIGHTS_CONN_STR=$(az monitor app-insights component show --app $APP_INSIGHTS_NAME --resource-group $RESOURCE_GROUP --query connectionString -o tsv)\n\n# Store secrets in Key Vault\necho '🔐 Storing secrets in Key Vault...'\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"storage-connection\" --value \"$STORAGE_CONN_STR\"\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"search-endpoint\" --value \"https://${AI_SEARCH_NAME}.search.windows.net\"\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"search-key\" --value \"$SEARCH_KEY\"\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"openai-endpoint\" --value \"$OPENAI_ENDPOINT\"\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"openai-key\" --value \"$OPENAI_KEY\"\naz keyvault secret set --vault-name $KEY_VAULT_NAME --name \"appinsights-connection\" --value \"$APP_INSIGHTS_CONN_STR\"\n\n# Store SQL connection if provided\nif [ -n \"$AZURE_SQL_CONN_STR\" ]; then\n    az keyvault secret set --vault-name $KEY_VAULT_NAME --name \"sql-connection\" --value \"$AZURE_SQL_CONN_STR\"\n    echo '✅ SQL connection string stored'\nelse\n    echo '⚠️ AZURE_SQL_CONN_STR not set - add manually'\nfi\n\necho '✅ Secrets configured successfully'"
+        }
+      }
+    },
+    {
+      "name": "4. Deploy OpenAI Models",
+      "type": "http",
+      "seq": 4,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/deploy-openai-models",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🤖 Deploying OpenAI models'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nOPENAI_NAME=\"openai-scout-analytics\"\n\n# Deploy GPT-4 for SQL generation and insights\necho '📝 Deploying GPT-4 model...'\naz cognitiveservices account deployment create \\\n  --name $OPENAI_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --deployment-name gpt-4 \\\n  --model-name gpt-4 \\\n  --model-version 0613 \\\n  --model-format OpenAI \\\n  --scale-settings-scale-type Standard \\\n  --scale-settings-capacity 10\n\n# Deploy text-embedding-3-large for vector embeddings\necho '🔤 Deploying text-embedding-3-large model...'\naz cognitiveservices account deployment create \\\n  --name $OPENAI_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --deployment-name text-embedding-3-large \\\n  --model-name text-embedding-3-large \\\n  --model-version 1 \\\n  --model-format OpenAI \\\n  --scale-settings-scale-type Standard \\\n  --scale-settings-capacity 30\n\necho '✅ OpenAI models deployed successfully'\necho 'Available deployments:'\naz cognitiveservices account deployment list --name $OPENAI_NAME --resource-group $RESOURCE_GROUP --query '[].{Name:name,Model:properties.model.name,Status:properties.provisioningState}' -o table"
+        }
+      }
+    },
+    {
+      "name": "5. Create AI Search Index",
+      "type": "http",
+      "seq": 5,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/create-search-index",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🔍 Creating Azure AI Search index'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nAI_SEARCH_NAME=\"search-scout-analytics\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\n\n# Get search endpoint and key\nSEARCH_ENDPOINT=\"https://${AI_SEARCH_NAME}.search.windows.net\"\nSEARCH_KEY=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name \"search-key\" --query value -o tsv)\n\n# Create the search index using the JSON definition\necho '📋 Creating scout-rag index...'\ncurl -X POST \"${SEARCH_ENDPOINT}/indexes?api-version=2024-07-01-Preview\" \\\n  -H \"Content-Type: application/json\" \\\n  -H \"api-key: ${SEARCH_KEY}\" \\\n  -d @azure-ai-search-index.json\n\necho '✅ AI Search index created successfully'\necho \"Endpoint: $SEARCH_ENDPOINT\"\necho \"Index: scout-rag\""
+        }
+      }
+    },
+    {
+      "name": "6. Setup Managed Identity & SQL",
+      "type": "http",
+      "seq": 6,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/setup-managed-identity",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🔐 Setting up Managed Identity and SQL authentication'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nACR_NAME=\"${RESOURCE_GROUP}acr\"\nFUNCTION_APP_NAME=\"scout-analytics-func\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\n\n# Create Function App with container and managed identity\necho '⚡ Creating Function App with custom container...'\naz functionapp create \\\n  --resource-group $RESOURCE_GROUP \\\n  --plan-name \"${RESOURCE_GROUP}-plan\" \\\n  --name $FUNCTION_APP_NAME \\\n  --storage-account $(az storage account list --resource-group $RESOURCE_GROUP --query '[0].name' -o tsv) \\\n  --runtime python \\\n  --runtime-version 3.10 \\\n  --functions-version 4 \\\n  --deployment-container-image-name \"${ACR_NAME}.azurecr.io/scout-analytics-func:latest\" \\\n  --assign-identity\n\n# Get the managed identity principal ID\nFUNCTION_IDENTITY=$(az functionapp identity show --name $FUNCTION_APP_NAME --resource-group $RESOURCE_GROUP --query principalId -o tsv)\n\n# Grant Key Vault access\necho '🔑 Granting Key Vault access to Function App...'\naz keyvault set-policy \\\n  --name $KEY_VAULT_NAME \\\n  --object-id $FUNCTION_IDENTITY \\\n  --secret-permissions get list\n\n# Configure Function App settings with Key Vault references\necho '⚙️ Configuring Function App settings...'\naz functionapp config appsettings set \\\n  --name $FUNCTION_APP_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --settings \\\n    FUNCTIONS_WORKER_RUNTIME=python \\\n    WEBSITE_RUN_FROM_PACKAGE=1 \\\n    SQL_SERVER=\"sqltbwaprojectscoutserver\" \\\n    SQL_DB=\"SQL-TBWA-ProjectScout-Reporting-Prod\" \\\n    AZSEARCH_INDEX=\"scout-rag\" \\\n    AZOPENAI_DEPLOYMENT=\"gpt-4\" \\\n    AZURE_SQL_CONN_STR=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/sql-connection/)\" \\\n    AZURE_SEARCH_ENDPOINT=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/search-endpoint/)\" \\\n    AZURE_SEARCH_KEY=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/search-key/)\" \\\n    AZURE_OPENAI_ENDPOINT=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/openai-endpoint/)\" \\\n    AZURE_OPENAI_KEY=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/openai-key/)\" \\\n    APPINSIGHTS_CONNECTION_STRING=\"@Microsoft.KeyVault(SecretUri=https://${KEY_VAULT_NAME}.vault.azure.net/secrets/appinsights-connection/)\"\n\necho '✅ Managed Identity and Function App configured'\necho \"Function App: $FUNCTION_APP_NAME\"\necho \"Identity: $FUNCTION_IDENTITY\"\necho \"\"\necho '📋 Next: Run SQL script to create AAD contained user'\necho 'Execute sql-managed-identity-setup.sql on your SQL server with Function App identity name: scout-func-mi'"
+        }
+      }
+    },
+    {
+      "name": "7. Deploy Data Factory Pipeline",
+      "type": "http",
+      "seq": 7,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/deploy-data-factory",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🏭 Deploying Azure Data Factory components'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nDATA_FACTORY_NAME=\"df-scout-analytics\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\nFUNCTION_APP_NAME=\"scout-analytics-func\"\n\n# Get Function App URL for pipeline integration\nFUNCTION_URL=\"https://${FUNCTION_APP_NAME}.azurewebsites.net\"\n\n# Create linked services\necho '🔗 Creating linked services...'\n\n# SQL linked service\naz datafactory linked-service create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --linked-service-name \"ls_sql_scout\" \\\n  --properties @azure-data-factory/linkedService_sql.json\n\n# Blob storage linked service\naz datafactory linked-service create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --linked-service-name \"ls_blob_bronze\" \\\n  --properties @azure-data-factory/linkedService_blob.json\n\n# Create datasets\necho '📊 Creating datasets...'\n\n# SQL dataset\naz datafactory dataset create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --dataset-name \"ds_sql_gold_v_transactions_flat\" \\\n  --properties @azure-data-factory/ds_sql_gold_v_transactions_flat.json\n\n# Blob dataset\naz datafactory dataset create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --dataset-name \"ds_blob_gold_curated\" \\\n  --properties @azure-data-factory/ds_blob_gold_curated.json\n\n# Create pipeline\necho '⚡ Creating ETL pipeline...'\naz datafactory pipeline create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --pipeline-name \"scout-etl-main\" \\\n  --pipeline @azure-data-factory/pipeline-scout-etl.json\n\n# Create trigger for daily execution\necho '⏰ Creating daily trigger...'\naz datafactory trigger create \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --trigger-name \"daily-scout-etl\" \\\n  --properties '{\n    \"type\": \"ScheduleTrigger\",\n    \"typeProperties\": {\n      \"recurrence\": {\n        \"frequency\": \"Day\",\n        \"interval\": 1,\n        \"startTime\": \"2024-01-01T02:00:00Z\",\n        \"timeZone\": \"UTC\"\n      }\n    },\n    \"pipelines\": [\n      {\n        \"pipelineReference\": {\n          \"referenceName\": \"scout-etl-main\",\n          \"type\": \"PipelineReference\"\n        }\n      }\n    ]\n  }'\n\necho '✅ Data Factory pipeline deployed successfully'\necho \"Data Factory: $DATA_FACTORY_NAME\"\necho \"Pipeline: scout-etl-main\"\necho \"Trigger: daily-scout-etl\""
+        }
+      }
+    },
+    {
+      "name": "8. Seed AI Search Index",
+      "type": "http",
+      "seq": 8,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/seed-search-index",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🌱 Seeding AI Search index with production data'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nAI_SEARCH_NAME=\"search-scout-analytics\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\nOPENAI_NAME=\"openai-scout-analytics\"\n\n# Get service endpoints and keys\nSEARCH_ENDPOINT=\"https://${AI_SEARCH_NAME}.search.windows.net\"\nSEARCH_KEY=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name \"search-key\" --query value -o tsv)\nOPENAI_ENDPOINT=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name \"openai-endpoint\" --query value -o tsv)\nOPENAI_KEY=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name \"openai-key\" --query value -o tsv)\n\n# Create Python script to seed the index\ncat > seed_search_index.py << 'EOF'\nimport requests\nimport json\nimport os\nimport sys\nfrom datetime import datetime\n\n# Configuration\nsearch_endpoint = os.environ['SEARCH_ENDPOINT']\nsearch_key = os.environ['SEARCH_KEY']\nopenai_endpoint = os.environ['OPENAI_ENDPOINT']\nopenai_key = os.environ['OPENAI_KEY']\n\n# Sample documents to seed (in production, this would come from gold.v_docs_rag)\nsample_docs = [\n    {\n        \"doc_id\": \"brand_001\",\n        \"text\": \"Coca-Cola is a leading beverage brand in the Philippines sari-sari store market with high sales volume and consistent customer demand.\",\n        \"store\": \"Mang Juan Sari-Sari Store\",\n        \"brand\": \"Coca-Cola\",\n        \"category\": \"Beverages\",\n        \"region\": \"NCR\",\n        \"value\": 25.50,\n        \"transaction_date\": \"2024-01-15T10:30:00Z\"\n    },\n    {\n        \"doc_id\": \"brand_002\", \n        \"text\": \"Lucky Me instant noodles represent the top-selling food category with strong performance across all regions and store types.\",\n        \"store\": \"Aling Rosa Store\",\n        \"brand\": \"Lucky Me\",\n        \"category\": \"Food\",\n        \"region\": \"NCR\",\n        \"value\": 12.00,\n        \"transaction_date\": \"2024-01-15T11:15:00Z\"\n    },\n    {\n        \"doc_id\": \"brand_003\",\n        \"text\": \"Pantene shampoo shows consistent sales in personal care category with regular customer repeat purchases and brand loyalty.\",\n        \"store\": \"Kuya Ben Store\",\n        \"brand\": \"Pantene\",\n        \"category\": \"Personal Care\",\n        \"region\": \"Region IV-A\",\n        \"value\": 89.75,\n        \"transaction_date\": \"2024-01-15T14:20:00Z\"\n    }\n]\n\nprint(\"🌱 Generating embeddings and seeding search index...\")\n\n# Generate embeddings using Azure OpenAI\nfor i, doc in enumerate(sample_docs):\n    print(f\"Processing document {i+1}/{len(sample_docs)}: {doc['brand']}\")\n    \n    # Generate embedding for the text\n    embedding_response = requests.post(\n        f\"{openai_endpoint}/openai/deployments/text-embedding-3-large/embeddings?api-version=2024-06-01\",\n        headers={\n            \"Content-Type\": \"application/json\",\n            \"api-key\": openai_key\n        },\n        json={\n            \"input\": doc[\"text\"]\n        }\n    )\n    \n    if embedding_response.status_code == 200:\n        embedding = embedding_response.json()[\"data\"][0][\"embedding\"]\n        doc[\"embedding\"] = embedding\n        print(f\"  ✅ Generated embedding (dim: {len(embedding)})\")\n    else:\n        print(f\"  ❌ Failed to generate embedding: {embedding_response.text}\")\n        continue\n\n# Upload documents to search index\nupload_payload = {\n    \"value\": [\n        {\"@search.action\": \"upload\", **doc}\n        for doc in sample_docs if \"embedding\" in doc\n    ]\n}\n\nprint(f\"\\n📤 Uploading {len(upload_payload['value'])} documents to search index...\")\n\nupload_response = requests.post(\n    f\"{search_endpoint}/indexes/scout-rag/docs/index?api-version=2024-07-01-Preview\",\n    headers={\n        \"Content-Type\": \"application/json\",\n        \"api-key\": search_key\n    },\n    json=upload_payload\n)\n\nif upload_response.status_code in [200, 201]:\n    result = upload_response.json()\n    successful = sum(1 for r in result[\"value\"] if r[\"status\"])\n    print(f\"✅ Successfully uploaded {successful} documents\")\nelse:\n    print(f\"❌ Upload failed: {upload_response.text}\")\n    sys.exit(1)\n\n# Test search functionality\nprint(\"\\n🧪 Testing search functionality...\")\ntest_response = requests.post(\n    f\"{search_endpoint}/indexes/scout-rag/docs/search?api-version=2024-07-01-Preview\",\n    headers={\n        \"Content-Type\": \"application/json\",\n        \"api-key\": search_key\n    },\n    json={\n        \"search\": \"beverages\",\n        \"top\": 3,\n        \"select\": \"doc_id,brand,category,text\"\n    }\n)\n\nif test_response.status_code == 200:\n    results = test_response.json()\n    print(f\"📊 Search test returned {results['@odata.count']} results\")\n    for result in results[\"value\"]:\n        print(f\"  - {result['brand']} ({result['category']}): {result['text'][:50]}...\")\nelse:\n    print(f\"❌ Search test failed: {test_response.text}\")\n\nprint(\"\\n✅ AI Search index seeding complete!\")\nEOF\n\n# Run the seeding script\necho '🐍 Running index seeding script...'\nSEARCH_ENDPOINT=\"$SEARCH_ENDPOINT\" \\\nSEARCH_KEY=\"$SEARCH_KEY\" \\\nOPENAI_ENDPOINT=\"$OPENAI_ENDPOINT\" \\\nOPENAI_KEY=\"$OPENAI_KEY\" \\\npython3 seed_search_index.py\n\n# Cleanup\nrm seed_search_index.py\n\necho '✅ AI Search index seeded successfully'"
+        }
+      }
+    },
+    {
+      "name": "9. Configure Monitoring & Alerts",
+      "type": "http",
+      "seq": 9,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/configure-monitoring",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '📊 Configuring monitoring and alerts'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nFUNCTION_APP_NAME=\"scout-analytics-func\"\nAPP_INSIGHTS_NAME=\"ai-scout-analytics\"\nDATA_FACTORY_NAME=\"df-scout-analytics\"\n\n# Get Application Insights instrumentation key\nINSTRUMENTATION_KEY=$(az monitor app-insights component show --app $APP_INSIGHTS_NAME --resource-group $RESOURCE_GROUP --query instrumentationKey -o tsv)\n\n# Create alert rules\necho '🚨 Creating alert rules...'\n\n# Function App error rate alert\naz monitor metrics alert create \\\n  --name \"Scout-Analytics-Function-Errors\" \\\n  --resource-group $RESOURCE_GROUP \\\n  --scopes \"/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$FUNCTION_APP_NAME\" \\\n  --condition \"avg Http5xx > 5\" \\\n  --window-size 5m \\\n  --evaluation-frequency 1m \\\n  --severity 2 \\\n  --description \"Alert when Function App has high error rate\"\n\n# Function App response time alert\naz monitor metrics alert create \\\n  --name \"Scout-Analytics-Function-ResponseTime\" \\\n  --resource-group $RESOURCE_GROUP \\\n  --scopes \"/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Web/sites/$FUNCTION_APP_NAME\" \\\n  --condition \"avg AverageResponseTime > 5000\" \\\n  --window-size 10m \\\n  --evaluation-frequency 5m \\\n  --severity 3 \\\n  --description \"Alert when Function App response time is high\"\n\n# Data Factory pipeline failure alert\naz monitor metrics alert create \\\n  --name \"Scout-Analytics-Pipeline-Failures\" \\\n  --resource-group $RESOURCE_GROUP \\\n  --scopes \"/subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.DataFactory/factories/$DATA_FACTORY_NAME\" \\\n  --condition \"total PipelineFailedRuns > 0\" \\\n  --window-size 15m \\\n  --evaluation-frequency 5m \\\n  --severity 1 \\\n  --description \"Alert when Data Factory pipeline fails\"\n\n# Create Application Insights dashboard\necho '📈 Creating Application Insights dashboard...'\ncat > dashboard.json << EOF\n{\n  \"lenses\": {\n    \"0\": {\n      \"order\": 0,\n      \"parts\": {\n        \"0\": {\n          \"position\": {\"x\": 0, \"y\": 0, \"rowSpan\": 4, \"colSpan\": 6},\n          \"metadata\": {\n            \"inputs\": [{\n              \"name\": \"resourceTypeMode\",\n              \"isOptional\": true\n            }, {\n              \"name\": \"ComponentId\",\n              \"value\": {\n                \"SubscriptionId\": \"$(az account show --query id -o tsv)\",\n                \"ResourceGroup\": \"$RESOURCE_GROUP\",\n                \"Name\": \"$APP_INSIGHTS_NAME\"\n              }\n            }],\n            \"type\": \"Extension/AppInsightsExtension/PartType/AppMapGalPt\"\n          }\n        },\n        \"1\": {\n          \"position\": {\"x\": 6, \"y\": 0, \"rowSpan\": 4, \"colSpan\": 6},\n          \"metadata\": {\n            \"inputs\": [{\n              \"name\": \"ComponentId\",\n              \"value\": {\n                \"SubscriptionId\": \"$(az account show --query id -o tsv)\",\n                \"ResourceGroup\": \"$RESOURCE_GROUP\",\n                \"Name\": \"$APP_INSIGHTS_NAME\"\n              }\n            }],\n            \"type\": \"Extension/AppInsightsExtension/PartType/ProactiveDetectionAsyncPt\"\n          }\n        }\n      }\n    }\n  },\n  \"metadata\": {\n    \"model\": {\n      \"timeRange\": {\n        \"value\": {\n          \"relative\": {\n            \"duration\": 24,\n            \"timeUnit\": 1\n          }\n        },\n        \"type\": \"MsPortalFx.Composition.Configuration.ValueTypes.TimeRange\"\n      }\n    }\n  }\n}\nEOF\n\naz portal dashboard create \\\n  --resource-group $RESOURCE_GROUP \\\n  --name \"Scout Analytics Dashboard\" \\\n  --input-path dashboard.json\n\nrm dashboard.json\n\necho '✅ Monitoring and alerts configured successfully'\necho \"Application Insights: $APP_INSIGHTS_NAME\"\necho \"Instrumentation Key: $INSTRUMENTATION_KEY\"\necho \"Dashboard created for comprehensive monitoring\""
+        }
+      }
+    },
+    {
+      "name": "10. Deployment Verification",
+      "type": "http",
+      "seq": 10,
+      "request": {
+        "method": "POST",
+        "url": "{{BRUNO_EXEC_URL}}/verify-deployment",
+        "body": {
+          "type": "shell",
+          "shell": "#!/bin/bash\nset -e\necho '🧪 Verifying complete Scout Analytics deployment'\n\nRESOURCE_GROUP=\"rg-scout-analytics\"\nFUNCTION_APP_NAME=\"scout-analytics-func\"\nAI_SEARCH_NAME=\"search-scout-analytics\"\nDATA_FACTORY_NAME=\"df-scout-analytics\"\nKEY_VAULT_NAME=\"kv-scout-analytics\"\n\n# Get Function App URL\nFUNCTION_URL=\"https://${FUNCTION_APP_NAME}.azurewebsites.net\"\n\n# Test Function App health\necho '🏥 Testing Function App health...'\nHEALTH_RESPONSE=$(curl -s \"$FUNCTION_URL/api/health\" || echo '{\"error\":\"connection_failed\"}')\necho \"Health check response: $HEALTH_RESPONSE\"\n\n# Test AI Search\necho '🔍 Testing AI Search...'\nSEARCH_ENDPOINT=\"https://${AI_SEARCH_NAME}.search.windows.net\"\nSEARCH_KEY=$(az keyvault secret show --vault-name $KEY_VAULT_NAME --name \"search-key\" --query value -o tsv)\n\nSEARCH_RESPONSE=$(curl -s -H \"api-key: $SEARCH_KEY\" \\\n  \"$SEARCH_ENDPOINT/indexes/scout-rag/docs/\\$count?api-version=2024-07-01-Preview\" || echo \"0\")\necho \"Search index document count: $SEARCH_RESPONSE\"\n\n# Test Data Factory\necho '🏭 Testing Data Factory...'\nPIPELINE_STATUS=$(az datafactory pipeline show \\\n  --factory-name $DATA_FACTORY_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --pipeline-name \"scout-etl-main\" \\\n  --query \"name\" -o tsv 2>/dev/null || echo \"not_found\")\necho \"Pipeline status: $PIPELINE_STATUS\"\n\n# Test OpenAI deployments\necho '🤖 Testing OpenAI deployments...'\nOPENAI_NAME=\"openai-scout-analytics\"\nOPENAI_DEPLOYMENTS=$(az cognitiveservices account deployment list \\\n  --name $OPENAI_NAME \\\n  --resource-group $RESOURCE_GROUP \\\n  --query \"length([])\" -o tsv 2>/dev/null || echo \"0\")\necho \"OpenAI deployments: $OPENAI_DEPLOYMENTS\"\n\n# Generate deployment summary\necho \"\"\necho \"🎉 Scout Analytics Deployment Summary\"\necho \"====================================\"\necho \"Resource Group: $RESOURCE_GROUP\"\necho \"Function App: $FUNCTION_URL\"\necho \"AI Search: $SEARCH_ENDPOINT\"\necho \"Data Factory: $DATA_FACTORY_NAME\"\necho \"Key Vault: $KEY_VAULT_NAME\"\necho \"\"\necho \"🎯 Available Endpoints:\"\necho \"  Health: $FUNCTION_URL/api/health\"\necho \"  Query: $FUNCTION_URL/api/query?q=<query>\"\necho \"  Analyze: $FUNCTION_URL/api/analyze?mode=summary\"\necho \"  Insights: $FUNCTION_URL/api/insights\"\necho \"\"\necho \"🧪 Test Commands:\"\necho \"  curl '$FUNCTION_URL/api/health'\"\necho \"  curl '$FUNCTION_URL/api/query?q=top 5 brands'\"\necho \"  curl '$FUNCTION_URL/api/analyze?mode=summary'\"\necho \"  curl '$FUNCTION_URL/api/insights'\"\necho \"\"\necho \"📋 Next Steps:\"\necho \"  1. Run sql-managed-identity-setup.sql on your SQL server\"\necho \"  2. Update baseline UI to point to: $FUNCTION_URL\"\necho \"  3. Test all endpoints and ETL pipeline\"\necho \"  4. Configure monitoring alerts and dashboards\"\necho \"\"\nif [[ \"$HEALTH_RESPONSE\" == *\"healthy\"* ]]; then\n    echo \"✅ Deployment verification: SUCCESS\"\nelse\n    echo \"⚠️ Deployment verification: PARTIAL (check logs)\"\nfi"
+        }
+      }
+    }
+  ],
+  "environments": [
+    {
+      "name": "Azure Production",
+      "variables": [
+        {
+          "name": "BRUNO_EXEC_URL",
+          "value": "http://localhost:9000"
+        },
+        {
+          "name": "RESOURCE_GROUP",
+          "value": "rg-scout-analytics"
+        },
+        {
+          "name": "AZURE_SQL_CONN_STR",
+          "value": "{{AZURE_SQL_CONN_STR}}"
+        }
+      ]
+    }
+  ]
+}

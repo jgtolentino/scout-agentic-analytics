@@ -1,0 +1,429 @@
+// =====================================================
+// Scout Analytics - DAX Measures Collection
+// Microsoft Fabric Power BI Semantic Model
+// =====================================================
+
+// =====================================================
+// CORE TRANSACTION METRICS
+// =====================================================
+
+// Basic Revenue Metrics
+Total Revenue =
+SUM(fact_transactions[transaction_value])
+
+Revenue Yesterday =
+CALCULATE(
+    [Total Revenue],
+    DATEADD(dim_date[full_date], -1, DAY)
+)
+
+Revenue MTD =
+TOTALMTD([Total Revenue], dim_date[full_date])
+
+Revenue YTD =
+TOTALYTD([Total Revenue], dim_date[full_date])
+
+Revenue Previous Month =
+CALCULATE(
+    [Total Revenue],
+    DATEADD(dim_date[full_date], -1, MONTH)
+)
+
+Revenue Growth MoM =
+DIVIDE([Total Revenue] - [Revenue Previous Month], [Revenue Previous Month], 0)
+
+Revenue Growth MoM % =
+FORMAT([Revenue Growth MoM], "0.0%")
+
+// Transaction Volume Metrics
+Transaction Count =
+COUNTROWS(fact_transactions)
+
+Transaction Count Yesterday =
+CALCULATE(
+    [Transaction Count],
+    DATEADD(dim_date[full_date], -1, DAY)
+)
+
+Transaction Growth Daily =
+DIVIDE([Transaction Count] - [Transaction Count Yesterday], [Transaction Count Yesterday], 0)
+
+Average Transaction Value =
+DIVIDE([Total Revenue], [Transaction Count], 0)
+
+Average Transaction Value Target = 150 // PHP 150 target ATV
+
+ATV vs Target =
+[Average Transaction Value] - [Average Transaction Value Target]
+
+ATV Performance =
+IF([ATV vs Target] >= 0, "Above Target", "Below Target")
+
+// =====================================================
+// CUSTOMER METRICS
+// =====================================================
+
+Unique Customers =
+DISTINCTCOUNT(fact_transactions[facial_id])
+
+Customer Penetration =
+DIVIDE([Unique Customers], [Transaction Count], 0)
+
+Average Spend Per Customer =
+DIVIDE([Total Revenue], [Unique Customers], 0)
+
+Customer Frequency =
+DIVIDE([Transaction Count], [Unique Customers], 0)
+
+New Customers =
+CALCULATE(
+    DISTINCTCOUNT(fact_transactions[facial_id]),
+    FILTER(
+        fact_transactions,
+        fact_transactions[transaction_date] =
+        CALCULATE(MIN(fact_transactions[transaction_date]), ALLEXCEPT(fact_transactions, fact_transactions[facial_id]))
+    )
+)
+
+Returning Customers =
+[Unique Customers] - [New Customers]
+
+Customer Retention Rate =
+DIVIDE([Returning Customers], [Unique Customers], 0)
+
+// =====================================================
+// BASKET ANALYSIS
+// =====================================================
+
+Average Basket Size =
+AVERAGE(fact_transactions[basket_size])
+
+Basket Size Target = 2.5  // Target 2.5 items per basket
+
+Basket Performance =
+IF([Average Basket Size] >= [Basket Size Target], "Above Target", "Below Target")
+
+Total Units Sold =
+SUM(fact_transactions[basket_size])
+
+Units Per Transaction =
+[Average Basket Size]
+
+// =====================================================
+// STORE PERFORMANCE METRICS
+// =====================================================
+
+Active Stores =
+DISTINCTCOUNT(fact_transactions[store_id])
+
+Revenue Per Store =
+DIVIDE([Total Revenue], [Active Stores], 0)
+
+Transactions Per Store =
+DIVIDE([Transaction Count], [Active Stores], 0)
+
+Top Performing Store =
+CALCULATE(
+    SELECTEDVALUE(dim_store[store_name]),
+    TOPN(1, VALUES(dim_store[store_id]), [Total Revenue])
+)
+
+Store Performance Rank =
+RANKX(ALL(dim_store[store_name]), [Total Revenue], , DESC, DENSE)
+
+Store Efficiency Score =
+([Revenue Per Store] / 10000) * 0.6 + ([Transactions Per Store] / 100) * 0.4
+
+// =====================================================
+// TIME-BASED ANALYTICS
+// =====================================================
+
+Peak Hour =
+CALCULATE(
+    SELECTEDVALUE(dim_time[hour_24]),
+    TOPN(1, VALUES(dim_time[hour_24]), [Transaction Count])
+)
+
+Peak Day Revenue =
+CALCULATE(
+    MAX([Total Revenue]),
+    ALLEXCEPT(dim_date, dim_date[full_date])
+)
+
+Weekday Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_date[is_weekend] = FALSE
+)
+
+Weekend Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_date[is_weekend] = TRUE
+)
+
+Weekend vs Weekday =
+DIVIDE([Weekend Revenue], [Weekday Revenue], 0)
+
+Morning Sales (6AM-12PM) =
+CALCULATE(
+    [Total Revenue],
+    dim_time[time_of_day_category] = "Morning"
+)
+
+Afternoon Sales (12PM-6PM) =
+CALCULATE(
+    [Total Revenue],
+    dim_time[time_of_day_category] = "Afternoon"
+)
+
+Evening Sales (6PM-12AM) =
+CALCULATE(
+    [Total Revenue],
+    dim_time[time_of_day_category] = "Evening"
+)
+
+Night Sales (12AM-6AM) =
+CALCULATE(
+    [Total Revenue],
+    dim_time[time_of_day_category] = "Night"
+)
+
+Business Hours Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_time[business_time_period] IN {"Peak Hours", "Business Hours"}
+)
+
+// =====================================================
+// GEOGRAPHICAL ANALYTICS
+// =====================================================
+
+Top Region Revenue =
+CALCULATE(
+    SELECTEDVALUE(dim_store[region_name]),
+    TOPN(1, VALUES(dim_store[region_name]), [Total Revenue])
+)
+
+NCR Revenue Share =
+DIVIDE(
+    CALCULATE([Total Revenue], dim_store[region_name] = "NCR"),
+    [Total Revenue],
+    0
+)
+
+Provincial Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_store[region_name] <> "NCR"
+)
+
+Regional Diversity =
+DISTINCTCOUNT(dim_store[region_name])
+
+Province Performance =
+CALCULATE(
+    CONCATENATEX(
+        TOPN(3, VALUES(dim_store[province_name]), [Total Revenue]),
+        dim_store[province_name] & " (₱" & FORMAT([Total Revenue] / 1000, "0") & "K)",
+        ", "
+    )
+)
+
+// =====================================================
+// PRODUCT & BRAND ANALYTICS
+// =====================================================
+
+Top Brand Revenue =
+CALCULATE(
+    SELECTEDVALUE(dim_brand[brand_name]),
+    TOPN(1, VALUES(dim_brand[brand_name]), [Total Revenue])
+)
+
+Premium Brand Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_brand[is_premium] = TRUE
+)
+
+Premium Share =
+DIVIDE([Premium Brand Revenue], [Total Revenue], 0)
+
+Tobacco Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_brand[nielsen_l1_category] = "Tobacco Products"
+)
+
+Tobacco Share =
+DIVIDE([Tobacco Revenue], [Total Revenue], 0)
+
+Laundry Revenue =
+CALCULATE(
+    [Total Revenue],
+    dim_brand[nielsen_l2_category] = "Laundry Care"
+)
+
+Category Diversity =
+DISTINCTCOUNT(dim_brand[nielsen_l1_category])
+
+// =====================================================
+// ADVANCED ANALYTICS & KPIs
+// =====================================================
+
+Revenue Velocity =
+DIVIDE([Total Revenue], DISTINCTCOUNT(dim_date[full_date]), 0)
+
+Customer Lifetime Value =
+AVERAGEX(
+    VALUES(fact_transactions[facial_id]),
+    CALCULATE(SUM(fact_transactions[transaction_value]))
+)
+
+Market Penetration Score =
+([Unique Customers] / 10000) * 0.4 +
+([Active Stores] / 100) * 0.3 +
+([Regional Diversity] / 20) * 0.3
+
+Business Health Score =
+([Revenue Growth MoM] + 1) * 0.3 +
+([Customer Retention Rate]) * 0.3 +
+([ATV vs Target] / 100 + 1) * 0.2 +
+([Average Basket Size] / [Basket Size Target]) * 0.2
+
+Performance Status =
+SWITCH(
+    TRUE(),
+    [Business Health Score] >= 1.2, "Excellent",
+    [Business Health Score] >= 1.0, "Good",
+    [Business Health Score] >= 0.8, "Fair",
+    "Needs Improvement"
+)
+
+// =====================================================
+// CONDITIONAL FORMATTING MEASURES
+// =====================================================
+
+Revenue Trend Color =
+IF([Revenue Growth MoM] > 0, "Green", "Red")
+
+ATV Color =
+IF([Average Transaction Value] >= [Average Transaction Value Target], "Green", "Orange")
+
+Customer Growth Color =
+IF([New Customers] > [Returning Customers] * 0.1, "Green", "Orange")
+
+Store Performance Color =
+SWITCH(
+    TRUE(),
+    [Store Performance Rank] <= 3, "Green",
+    [Store Performance Rank] <= 10, "Yellow",
+    "Red"
+)
+
+// =====================================================
+// NIELSEN CATEGORY ANALYSIS
+// =====================================================
+
+Nielsen L1 Performance =
+CALCULATE(
+    CONCATENATEX(
+        TOPN(5, VALUES(dim_brand[nielsen_l1_category]), [Total Revenue]),
+        dim_brand[nielsen_l1_category] & ": ₱" & FORMAT([Total Revenue] / 1000, "0") & "K",
+        " | "
+    )
+)
+
+Category Growth Rate =
+CALCULATE(
+    [Revenue Growth MoM],
+    ALLEXCEPT(dim_brand, dim_brand[nielsen_l1_category])
+)
+
+Cross-Category Penetration =
+DISTINCTCOUNT(dim_brand[nielsen_l1_category])
+
+// =====================================================
+// EMOTIONAL & CONVERSATION ANALYTICS
+// =====================================================
+
+Average Conversation Score =
+AVERAGE(fact_transactions[conversation_score])
+
+Positive Interactions =
+CALCULATE(
+    [Transaction Count],
+    fact_transactions[emotional_state] IN {"Happy", "Satisfied", "Excited"}
+)
+
+Positive Interaction Rate =
+DIVIDE([Positive Interactions], [Transaction Count], 0)
+
+High Engagement Transactions =
+CALCULATE(
+    [Transaction Count],
+    fact_transactions[conversation_score] >= 7
+)
+
+Engagement Rate =
+DIVIDE([High Engagement Transactions], [Transaction Count], 0)
+
+// =====================================================
+// FORECASTING MEASURES (Time Intelligence)
+// =====================================================
+
+Revenue Forecast Next Month =
+[Total Revenue] * (1 + [Revenue Growth MoM])
+
+Annual Revenue Projection =
+[Revenue MTD] * (12 / MONTH(TODAY()))
+
+Target Achievement =
+DIVIDE([Revenue YTD], [Annual Revenue Projection], 0)
+
+Days to Month End =
+DAY(EOMONTH(TODAY(), 0)) - DAY(TODAY())
+
+Projected Month End Revenue =
+[Revenue MTD] + ([Revenue Velocity] * [Days to Month End])
+
+// =====================================================
+// COMPARATIVE MEASURES
+// =====================================================
+
+Revenue vs Last Year =
+[Total Revenue] - CALCULATE([Total Revenue], SAMEPERIODLASTYEAR(dim_date[full_date]))
+
+YoY Growth Rate =
+DIVIDE([Revenue vs Last Year], CALCULATE([Total Revenue], SAMEPERIODLASTYEAR(dim_date[full_date])), 0)
+
+Market Share (Estimated) =
+[Total Revenue] / 50000000  // Estimated market size ₱50M
+
+Competitive Position =
+IF([Market Share (Estimated)] >= 0.05, "Market Leader",
+   IF([Market Share (Estimated)] >= 0.02, "Strong Player", "Niche Player"))
+
+// =====================================================
+// OPERATIONAL EFFICIENCY
+// =====================================================
+
+Transactions Per Hour =
+DIVIDE([Transaction Count],
+       CALCULATE(DISTINCTCOUNT(dim_time[hour_24]), dim_time[hour_24] >= 6 && dim_time[hour_24] <= 22), 0)
+
+Revenue Per Hour =
+DIVIDE([Total Revenue],
+       CALCULATE(DISTINCTCOUNT(dim_time[hour_24]), dim_time[hour_24] >= 6 && dim_time[hour_24] <= 22), 0)
+
+Peak vs Off-Peak Ratio =
+DIVIDE(
+    CALCULATE([Total Revenue], dim_time[business_time_period] = "Peak Hours"),
+    CALCULATE([Total Revenue], dim_time[business_time_period] = "Off Hours"),
+    0
+)
+
+Operational Score =
+([Transactions Per Hour] / 100) * 0.4 +
+([Revenue Per Hour] / 5000) * 0.4 +
+([Peak vs Off-Peak Ratio] / 2) * 0.2

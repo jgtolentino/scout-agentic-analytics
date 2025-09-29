@@ -1,0 +1,124 @@
+{
+  "name": "Scout Lakehouse Model",
+  "description": "Scout Analytics - Medallion Architecture Power BI Model",
+  "version": "1.0",
+  "compatibilityLevel": 1600,
+  "tables": [
+    {
+      "name": "dim_store",
+      "source": "gold.dim_store",
+      "columns": [
+        {"name": "store_id", "dataType": "int64", "isKey": true},
+        {"name": "store_name", "dataType": "string"},
+        {"name": "region_name", "dataType": "string"},
+        {"name": "province_name", "dataType": "string"},
+        {"name": "municipality_name", "dataType": "string"},
+        {"name": "latitude", "dataType": "double"},
+        {"name": "longitude", "dataType": "double"}
+      ]
+    },
+    {
+      "name": "dim_brand",
+      "source": "gold.dim_brand",
+      "columns": [
+        {"name": "brand_id", "dataType": "int64", "isKey": true},
+        {"name": "brand_name", "dataType": "string"},
+        {"name": "nielsen_l1_category", "dataType": "string"},
+        {"name": "nielsen_l2_category", "dataType": "string"},
+        {"name": "nielsen_l3_category", "dataType": "string"},
+        {"name": "is_premium", "dataType": "boolean"},
+        {"name": "is_tobacco", "dataType": "boolean"},
+        {"name": "is_laundry", "dataType": "boolean"}
+      ]
+    },
+    {
+      "name": "dim_category",
+      "source": "gold.dim_category",
+      "columns": [
+        {"name": "category_id", "dataType": "int64", "isKey": true},
+        {"name": "category_name", "dataType": "string"},
+        {"name": "nielsen_mapping", "dataType": "string"}
+      ]
+    },
+    {
+      "name": "fact_tx",
+      "source": "gold.fact_transactions",
+      "columns": [
+        {"name": "canonical_tx_id", "dataType": "string", "isKey": true},
+        {"name": "store_id", "dataType": "int64"},
+        {"name": "facial_id", "dataType": "string"},
+        {"name": "transaction_date", "dataType": "dateTime"},
+        {"name": "transaction_value", "dataType": "decimal"},
+        {"name": "basket_size", "dataType": "int64"},
+        {"name": "customer_age", "dataType": "int64"},
+        {"name": "customer_gender", "dataType": "string"},
+        {"name": "hour_24", "dataType": "int64"},
+        {"name": "time_of_day_category", "dataType": "string"},
+        {"name": "persona_assigned", "dataType": "string"}
+      ]
+    },
+    {
+      "name": "mart_tx",
+      "source": "gold.mart_transactions",
+      "columns": [
+        {"name": "canonical_tx_id", "dataType": "string", "isKey": true},
+        {"name": "store_id", "dataType": "int64"},
+        {"name": "transaction_date", "dataType": "dateTime"},
+        {"name": "transaction_value", "dataType": "decimal"},
+        {"name": "basket_size", "dataType": "int64"},
+        {"name": "region_name", "dataType": "string"},
+        {"name": "province_name", "dataType": "string"},
+        {"name": "weekday_vs_weekend", "dataType": "string"},
+        {"name": "transaction_value_category", "dataType": "string"},
+        {"name": "age_group", "dataType": "string"}
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "name": "fact_tx_to_dim_store",
+      "fromTable": "fact_tx",
+      "fromColumn": "store_id",
+      "toTable": "dim_store",
+      "toColumn": "store_id",
+      "cardinality": "ManyToOne",
+      "crossFilterDirection": "Single"
+    },
+    {
+      "name": "mart_tx_to_dim_store",
+      "fromTable": "mart_tx",
+      "fromColumn": "store_id",
+      "toTable": "dim_store",
+      "toColumn": "store_id",
+      "cardinality": "ManyToOne",
+      "crossFilterDirection": "Single"
+    }
+  ],
+  "measures": [
+    {
+      "name": "Total Revenue",
+      "expression": "SUM(mart_tx[transaction_value])",
+      "formatString": "₱#,0.00"
+    },
+    {
+      "name": "Transaction Count",
+      "expression": "COUNTROWS(mart_tx)",
+      "formatString": "#,0"
+    },
+    {
+      "name": "Average Transaction Value",
+      "expression": "AVERAGE(mart_tx[transaction_value])",
+      "formatString": "₱#,0.00"
+    },
+    {
+      "name": "Unique Customers",
+      "expression": "DISTINCTCOUNT(fact_tx[facial_id])",
+      "formatString": "#,0"
+    },
+    {
+      "name": "Average Basket Size",
+      "expression": "AVERAGE(mart_tx[basket_size])",
+      "formatString": "0.0"
+    }
+  ]
+}

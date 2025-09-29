@@ -1,0 +1,297 @@
+{
+  "fabric_configuration": {
+    "deployment": {
+      "lakehouse_sql_name": "<LAKEHOUSE_SQL_NAME>",
+      "warehouse_name": "<WAREHOUSE_NAME>",
+      "workspace_name": "<WORKSPACE_NAME>",
+      "subscription_id": "<AZURE_SUBSCRIPTION_ID>",
+      "resource_group": "<RESOURCE_GROUP>",
+      "region": "Southeast Asia"
+    },
+    "data_sources": {
+      "azure_sql": {
+        "server": "sqltbwaprojectscoutserver.database.windows.net",
+        "database": "SQL-TBWA-ProjectScout-Reporting-Prod",
+        "port": 1433,
+        "authentication": "ActiveDirectoryMSI",
+        "source_tables": [
+          "canonical.SalesInteractionFact",
+          "dbo.PayloadTransactions",
+          "dbo.Stores",
+          "dbo.Brands",
+          "dbo.Categories"
+        ]
+      }
+    },
+    "medallion_architecture": {
+      "bronze": {
+        "location": "Lakehouse",
+        "format": "Delta",
+        "schema": "bronze",
+        "description": "Raw data ingestion from source systems",
+        "tables": [
+          "sales_interactions_raw",
+          "payload_transactions_raw",
+          "stores_raw",
+          "brands_raw",
+          "categories_raw"
+        ]
+      },
+      "silver": {
+        "location": "Lakehouse",
+        "format": "Delta",
+        "schema": "silver",
+        "description": "Cleansed and transformed data with business rules applied",
+        "tables": [
+          "transactions",
+          "transaction_items",
+          "dim_store",
+          "dim_brand",
+          "dim_category",
+          "dim_date",
+          "dim_time"
+        ]
+      },
+      "gold": {
+        "location": "Warehouse",
+        "format": "Views referencing Silver Delta tables",
+        "schema": "gold",
+        "description": "Analytics-ready dimensional model for reporting",
+        "views": [
+          "fact_transactions_ref",
+          "fact_transaction_items_ref",
+          "dim_store_ref",
+          "dim_brand_ref",
+          "dim_category_ref",
+          "dim_date_ref",
+          "dim_time_ref"
+        ]
+      },
+      "platinum": {
+        "location": "Warehouse",
+        "format": "Tables",
+        "schema": "platinum",
+        "description": "ML models, predictions, and advanced analytics",
+        "tables": [
+          "model_registry",
+          "model_versions",
+          "predictions",
+          "insights",
+          "experiments",
+          "feature_store",
+          "ml_metadata"
+        ]
+      }
+    },
+    "etl_configuration": {
+      "bronze_ingestion": {
+        "notebook": "01_bronze_ingestion.ipynb",
+        "schedule": "Daily at 2:00 AM",
+        "mode": "Full refresh",
+        "parallelism": 4,
+        "timeout_minutes": 60
+      },
+      "silver_transformation": {
+        "notebook": "02_silver_transformation.ipynb",
+        "schedule": "Daily at 3:00 AM",
+        "mode": "Incremental with full refresh weekly",
+        "parallelism": 6,
+        "timeout_minutes": 90
+      },
+      "gold_aggregations": {
+        "notebook": "03_gold_aggregations.ipynb",
+        "schedule": "Daily at 4:00 AM",
+        "mode": "Incremental",
+        "parallelism": 8,
+        "timeout_minutes": 120
+      }
+    },
+    "data_quality": {
+      "validation_script": "validation/data_quality_checks.sql",
+      "schedule": "Daily at 5:00 AM",
+      "alert_thresholds": {
+        "data_freshness_days": 2,
+        "missing_transactions_percent": 5,
+        "revenue_variance_percent": 10,
+        "cross_layer_consistency_percent": 95
+      },
+      "notification_channels": [
+        "email",
+        "teams"
+      ]
+    },
+    "power_bi": {
+      "semantic_model": "powerbi/semantic_model.json",
+      "measures": "powerbi/measures.dax",
+      "refresh_schedule": "Every 4 hours",
+      "capacity_sku": "F64",
+      "max_memory_percentage": 80
+    }
+  },
+  "business_rules": {
+    "data_governance": {
+      "single_date_authority": "canonical.SalesInteractionFact.transaction_date",
+      "canonical_transaction_source": "canonical.SalesInteractionFact",
+      "item_explosion_source": "dbo.PayloadTransactions.payload_json",
+      "retention_policy_days": 2555,
+      "pii_handling": "Facial ID anonymization required"
+    },
+    "quality_gates": {
+      "minimum_transaction_value": 1,
+      "maximum_transaction_value": 50000,
+      "minimum_basket_size": 1,
+      "maximum_basket_size": 50,
+      "valid_age_range": [13, 120],
+      "valid_genders": ["Male", "Female", "Unknown"],
+      "required_fields": [
+        "canonical_tx_id",
+        "transaction_date",
+        "store_id"
+      ]
+    },
+    "nielsen_categories": {
+      "l1_mapping_required": true,
+      "tobacco_identification": "Nielsen L1 = 'Tobacco Products'",
+      "laundry_identification": "Nielsen L2 = 'Laundry Care'",
+      "default_category": "Unclassified"
+    }
+  },
+  "monitoring": {
+    "key_metrics": [
+      "Total Revenue",
+      "Transaction Count",
+      "Unique Customers",
+      "Average Transaction Value",
+      "Data Freshness",
+      "ETL Success Rate"
+    ],
+    "alerting": {
+      "data_pipeline_failure": "Critical",
+      "data_quality_degradation": "High",
+      "business_metric_anomaly": "Medium",
+      "performance_degradation": "Low"
+    },
+    "dashboards": [
+      "Executive Summary",
+      "Store Performance",
+      "Customer Analytics",
+      "Product Intelligence",
+      "Data Quality Monitor"
+    ]
+  },
+  "security": {
+    "access_control": {
+      "bronze_layer": "Data Engineers",
+      "silver_layer": "Data Engineers + Analysts",
+      "gold_layer": "All Authorized Users",
+      "platinum_layer": "Data Scientists + ML Engineers"
+    },
+    "data_classification": {
+      "facial_id": "Personal Data",
+      "transaction_data": "Business Confidential",
+      "store_location": "Internal Use",
+      "aggregated_metrics": "General Business"
+    },
+    "compliance": {
+      "data_protection_act": "Implemented",
+      "gdpr_consideration": "Applied",
+      "audit_trail": "Enabled"
+    }
+  },
+  "deployment_checklist": [
+    {
+      "step": 1,
+      "task": "Create Fabric Workspace",
+      "owner": "Infrastructure Team",
+      "estimated_hours": 2
+    },
+    {
+      "step": 2,
+      "task": "Create Lakehouse and configure permissions",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 4
+    },
+    {
+      "step": 3,
+      "task": "Create Warehouse and configure access",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 3
+    },
+    {
+      "step": 4,
+      "task": "Execute Warehouse DDL scripts",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 2
+    },
+    {
+      "step": 5,
+      "task": "Configure Azure SQL connection with Managed Identity",
+      "owner": "Infrastructure Team",
+      "estimated_hours": 6
+    },
+    {
+      "step": 6,
+      "task": "Deploy and test Bronze ingestion notebook",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 8
+    },
+    {
+      "step": 7,
+      "task": "Deploy and test Silver transformation notebook",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 10
+    },
+    {
+      "step": 8,
+      "task": "Deploy and test Gold aggregations notebook",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 8
+    },
+    {
+      "step": 9,
+      "task": "Execute data quality validation",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 4
+    },
+    {
+      "step": 10,
+      "task": "Configure ETL scheduling and monitoring",
+      "owner": "Data Engineering Team",
+      "estimated_hours": 6
+    },
+    {
+      "step": 11,
+      "task": "Deploy Power BI semantic model",
+      "owner": "Analytics Team",
+      "estimated_hours": 8
+    },
+    {
+      "step": 12,
+      "task": "Create Power BI reports and dashboards",
+      "owner": "Analytics Team",
+      "estimated_hours": 16
+    },
+    {
+      "step": 13,
+      "task": "User acceptance testing",
+      "owner": "Business Users",
+      "estimated_hours": 12
+    },
+    {
+      "step": 14,
+      "task": "Production deployment and go-live",
+      "owner": "All Teams",
+      "estimated_hours": 8
+    }
+  ],
+  "estimated_timeline": {
+    "total_hours": 97,
+    "total_days": 12,
+    "phases": {
+      "infrastructure_setup": "3 days",
+      "data_engineering": "5 days",
+      "analytics_development": "3 days",
+      "testing_deployment": "1 day"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{ "bindings": [
+  { "authLevel":"Anonymous","type":"httpTrigger","direction":"in","name":"req","methods":["get"],"route":"scout/transactions" },
+  { "type":"http","direction":"out","name":"$return" }
+]}

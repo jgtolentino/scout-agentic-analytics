@@ -1,0 +1,60 @@
+{
+  "name": "complete_canonical_export_45",
+  "description": "ALL payload TX + persona + canonical dims (45 columns, no sex)",
+  "column_order_strict": true,
+  "columns": [
+    {"name":"canonical_tx_id","type":"string"},
+    {"name":"canonical_tx_id_norm","type":"string"},
+    {"name":"canonical_tx_id_payload","type":"string"},
+
+    {"name":"transaction_date","type":"date"},
+    {"name":"year_number","type":"int"},
+    {"name":"month_number","type":"int"},
+    {"name":"month_name","type":"string"},
+    {"name":"quarter_number","type":"int"},
+    {"name":"day_name","type":"string"},
+    {"name":"weekday_vs_weekend","type":"string"},
+    {"name":"iso_week","type":"int"},
+
+    {"name":"amount","type":"decimal"},
+    {"name":"transaction_value","type":"decimal"},
+    {"name":"basket_size","type":"int"},
+    {"name":"was_substitution","type":"int"},
+
+    {"name":"store_id","type":"string"},
+    {"name":"product_id","type":"string"},
+    {"name":"barangay","type":"string"},
+
+    {"name":"age","type":"int"},
+    {"name":"gender","type":"string"},
+    {"name":"emotional_state","type":"string"},
+    {"name":"facial_id","type":"string"},
+    {"name":"role_id","type":"string"},
+
+    {"name":"persona_id","type":"string"},
+    {"name":"persona_confidence","type":"decimal"},
+    {"name":"persona_alternative_roles","type":"string"},
+    {"name":"persona_rule_source","type":"string"},
+
+    {"name":"primary_brand","type":"string"},
+    {"name":"secondary_brand","type":"string"},
+    {"name":"primary_brand_confidence","type":"decimal"},
+    {"name":"all_brands_mentioned","type":"string"},
+    {"name":"brand_switching_indicator","type":"string"},
+    {"name":"transcription_text","type":"string"},
+    {"name":"co_purchase_patterns","type":"string"},
+
+    {"name":"device_id","type":"string"},
+    {"name":"session_id","type":"string"},
+    {"name":"interaction_id","type":"string"},
+    {"name":"data_source_type","type":"string"},
+    {"name":"payload_data_status","type":"string"},
+    {"name":"payload_json_truncated","type":"string"},
+    {"name":"transaction_date_original","type":"datetime"},
+    {"name":"created_date","type":"datetime"},
+
+    {"name":"transaction_type","type":"string"},
+    {"name":"time_of_day_category","type":"string"},
+    {"name":"customer_segment","type":"string"}
+  ]
+}
