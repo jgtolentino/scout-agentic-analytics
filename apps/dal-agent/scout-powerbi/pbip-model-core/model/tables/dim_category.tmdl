@@ -1,0 +1,119 @@
+table "dim_category"
+    lineageTag: dim_category
+
+    partition "dim_category"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    category_id as [CategoryID],
+                    category_l1 as [CategoryL1],
+                    category_l1_code as [CategoryL1Code],
+                    category_l2 as [CategoryL2],
+                    category_l2_code as [CategoryL2Code],
+                    category_l3 as [CategoryL3],
+                    category_l3_code as [CategoryL3Code],
+                    nielsen_classification as [NielsenClassification],
+                    is_tobacco as [IsTobacco],
+                    is_laundry as [IsLaundry],
+                    is_premium as [IsPremium],
+                    is_active as [IsActive]
+                FROM gold.dim_category
+                WHERE is_active = 1
+
+    column "CategoryID"
+        dataType: int64
+        isKey: true
+        lineageTag: CategoryID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL1"
+        dataType: string
+        lineageTag: CategoryL1
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL1Code"
+        dataType: string
+        lineageTag: CategoryL1Code
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL2"
+        dataType: string
+        lineageTag: CategoryL2
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL2Code"
+        dataType: string
+        lineageTag: CategoryL2Code
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL3"
+        dataType: string
+        lineageTag: CategoryL3
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL3Code"
+        dataType: string
+        lineageTag: CategoryL3Code
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "NielsenClassification"
+        dataType: string
+        lineageTag: NielsenClassification
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "IsTobacco"
+        dataType: boolean
+        lineageTag: IsTobacco
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsLaundry"
+        dataType: boolean
+        lineageTag: IsLaundry
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsPremium"
+        dataType: boolean
+        lineageTag: IsPremium
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsActive"
+        dataType: boolean
+        lineageTag: IsActive
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    hierarchy "Nielsen Category Hierarchy"
+        lineageTag: NielsenCategoryHierarchy
+
+        level "Category L1"
+            lineageTag: NielsenCategoryHierarchy.L1
+            column: "CategoryL1"
+
+        level "Category L2"
+            lineageTag: NielsenCategoryHierarchy.L2
+            column: "CategoryL2"
+
+        level "Category L3"
+            lineageTag: NielsenCategoryHierarchy.L3
+            column: "CategoryL3"
+
+    annotation PBI_ResultType = Table

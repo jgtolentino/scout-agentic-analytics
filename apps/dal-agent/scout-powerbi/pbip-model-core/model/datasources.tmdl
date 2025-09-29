@@ -1,0 +1,6 @@
+dataSource "FabricWarehouse"
+    type: structured
+    connectionString: "Provider=MSOLEDBSQL;Data Source=<FAB_SQL_SERVER>;Initial Catalog=<FAB_SQL_DB>;Authentication=ActiveDirectoryIntegrated;Encrypt=yes;TrustServerCertificate=no"
+
+    annotation ConnectionType = "FabricWarehouse"
+    annotation PBI_ResultType = "Table"

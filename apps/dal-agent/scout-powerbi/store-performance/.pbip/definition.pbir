@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "name": "scout-store-performance",
+  "description": "Store Performance - Individual store metrics and comparisons",
+  "artifactKind": "report",
+  "folder": "../report",
+  "datasetReference": {
+    "byPath": "../pbip-model-core"
+  },
+  "annotations": [
+    {
+      "name": "reportType",
+      "value": "StorePerformance"
+    },
+    {
+      "name": "targetAudience",
+      "value": "Store Managers, Regional Managers"
+    },
+    {
+      "name": "refreshFrequency",
+      "value": "Daily"
+    },
+    {
+      "name": "accessLevel",
+      "value": "Store"
+    }
+  ]
+}

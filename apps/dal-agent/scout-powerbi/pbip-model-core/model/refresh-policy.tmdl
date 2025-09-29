@@ -1,0 +1,48 @@
+refreshPolicy "mart_tx_incremental"
+    mode: import
+    source:
+        type: policyRange
+        table: "mart_tx"
+        column: "TransactionDate"
+
+    policyRange:
+        incrementalPeriodCount: 30
+        incrementalGranularity: day
+        rollingWindowPeriodCount: 730
+        rollingWindowGranularity: day
+
+    refreshGranularity: day
+    sourceExpression: [TransactionDate]
+
+    annotation Description = "Incremental refresh for transaction data - keeps 2 years rolling window, refreshes last 30 days"
+    annotation RefreshSchedule = "Daily at 6:00 AM GMT+8"
+    annotation DataRetention = "2 years rolling window"
+
+refreshPolicy "platinum_predictions_incremental"
+    mode: import
+    source:
+        type: policyRange
+        table: "platinum_predictions"
+        column: "PredictionDate"
+
+    policyRange:
+        incrementalPeriodCount: 7
+        incrementalGranularity: day
+        rollingWindowPeriodCount: 365
+        rollingWindowGranularity: day
+
+    refreshGranularity: day
+    sourceExpression: [PredictionDate]
+
+    annotation Description = "Incremental refresh for predictions - keeps 1 year rolling window, refreshes last 7 days"
+    annotation RefreshSchedule = "Daily at 7:00 AM GMT+8"
+    annotation DataRetention = "1 year rolling window"
+
+refreshPolicy "dimensions_standard"
+    mode: import
+    source:
+        type: table
+
+    annotation Description = "Standard refresh for dimension tables - full refresh weekly"
+    annotation RefreshSchedule = "Weekly on Sunday at 5:00 AM GMT+8"
+    annotation Tables = "dim_date, dim_store, dim_brand, dim_category"

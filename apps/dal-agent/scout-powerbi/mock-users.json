@@ -1,0 +1,323 @@
+{
+  "mockUsers": {
+    "description": "Mock users for testing Scout Power BI RLS roles",
+    "version": "1.0",
+    "testScenarios": [
+      {
+        "category": "Regional Managers",
+        "users": [
+          {
+            "username": "maria.santos@scout.com",
+            "displayName": "Maria Santos",
+            "role": "Regional Manager - NCR",
+            "description": "NCR Regional Manager",
+            "expectedAccess": {
+              "regions": ["NCR"],
+              "stores": "All NCR stores",
+              "dataScope": "NCR region only"
+            },
+            "testQueries": [
+              "Total Sales should show NCR only",
+              "Store list should exclude provincial stores",
+              "Regional filter should be locked to NCR"
+            ]
+          },
+          {
+            "username": "juan.dela.cruz@scout.com",
+            "displayName": "Juan dela Cruz",
+            "role": "Regional Manager - Luzon",
+            "description": "Luzon Regional Manager (excluding NCR)",
+            "expectedAccess": {
+              "regions": ["Central Luzon", "CALABARZON", "Ilocos Region", "Cagayan Valley", "Bicol Region"],
+              "stores": "All Luzon stores except NCR",
+              "dataScope": "Luzon provinces only"
+            },
+            "testQueries": [
+              "Should see Central Luzon, CALABARZON, etc.",
+              "Should NOT see NCR data",
+              "Regional breakdown should show Luzon provinces"
+            ]
+          },
+          {
+            "username": "ana.reyes@scout.com",
+            "displayName": "Ana Reyes",
+            "role": "Regional Manager - Visayas",
+            "description": "Visayas Regional Manager",
+            "expectedAccess": {
+              "regions": ["Western Visayas", "Central Visayas", "Eastern Visayas"],
+              "stores": "All Visayas stores",
+              "dataScope": "Visayas region only"
+            },
+            "testQueries": [
+              "Should see Cebu, Iloilo, Tacloban stores",
+              "Regional performance shows Visayas only",
+              "No Luzon or Mindanao data visible"
+            ]
+          },
+          {
+            "username": "carlos.garcia@scout.com",
+            "displayName": "Carlos Garcia",
+            "role": "Regional Manager - Mindanao",
+            "description": "Mindanao Regional Manager",
+            "expectedAccess": {
+              "regions": ["Northern Mindanao", "Southern Mindanao", "Davao Region", "SOCCSKSARGEN", "ARMM"],
+              "stores": "All Mindanao stores",
+              "dataScope": "Mindanao region only"
+            },
+            "testQueries": [
+              "Should see Davao, Cagayan de Oro stores",
+              "Regional map shows Mindanao only",
+              "Performance metrics for Mindanao region"
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Store Managers",
+        "users": [
+          {
+            "username": "store.manager.1001@scout.com",
+            "displayName": "Lisa Tan",
+            "role": "Store Manager",
+            "description": "Store Manager for Store ID 1001 (NCR)",
+            "expectedAccess": {
+              "stores": ["1001"],
+              "dataScope": "Single store only",
+              "filterLogic": "StoreID = 1001 (extracted from username suffix)"
+            },
+            "testQueries": [
+              "Should only see Store 1001 data",
+              "Store comparison charts show single store",
+              "No access to other store performance"
+            ]
+          },
+          {
+            "username": "store.manager.2045@scout.com",
+            "displayName": "Roberto Cruz",
+            "role": "Store Manager",
+            "description": "Store Manager for Store ID 2045 (Cebu)",
+            "expectedAccess": {
+              "stores": ["2045"],
+              "dataScope": "Single store only",
+              "filterLogic": "StoreID = 2045 (extracted from username suffix)"
+            },
+            "testQueries": [
+              "Should only see Store 2045 data",
+              "Regional context shows Cebu location",
+              "Individual store performance metrics"
+            ]
+          },
+          {
+            "username": "store.manager.3022@scout.com",
+            "displayName": "Grace Villanueva",
+            "role": "Store Manager",
+            "description": "Store Manager for Store ID 3022 (Davao)",
+            "expectedAccess": {
+              "stores": ["3022"],
+              "dataScope": "Single store only",
+              "filterLogic": "StoreID = 3022 (extracted from username suffix)"
+            },
+            "testQueries": [
+              "Should only see Store 3022 data",
+              "Mindanao regional context",
+              "Store-specific KPIs and trends"
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Category Managers",
+        "users": [
+          {
+            "username": "tobacco.manager@scout.com",
+            "displayName": "Miguel Torres",
+            "role": "Category Manager - Tobacco",
+            "description": "Tobacco Category Manager",
+            "expectedAccess": {
+              "categories": "Tobacco products only",
+              "brands": "IsTobacco = TRUE",
+              "dataScope": "All stores, tobacco category only"
+            },
+            "testQueries": [
+              "Product list shows tobacco brands only",
+              "Category breakdown shows tobacco only",
+              "Sales metrics for tobacco across all regions"
+            ]
+          },
+          {
+            "username": "laundry.manager@scout.com",
+            "displayName": "Sofia Mendoza",
+            "role": "Category Manager - Laundry",
+            "description": "Laundry Category Manager",
+            "expectedAccess": {
+              "categories": "Laundry products only",
+              "brands": "IsLaundry = TRUE",
+              "dataScope": "All stores, laundry category only"
+            },
+            "testQueries": [
+              "Product list shows laundry brands only",
+              "Category performance for detergents, fabric softeners",
+              "Nationwide laundry sales trends"
+            ]
+          },
+          {
+            "username": "premium.manager@scout.com",
+            "displayName": "Patricia Aquino",
+            "role": "Premium Brand Manager",
+            "description": "Premium Brand Manager",
+            "expectedAccess": {
+              "categories": "Premium products only",
+              "brands": "IsPremium = TRUE",
+              "dataScope": "All stores, premium brands only"
+            },
+            "testQueries": [
+              "Brand list shows premium products only",
+              "Premium vs standard comparison",
+              "High-value product performance metrics"
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Analysts & Leadership",
+        "users": [
+          {
+            "username": "data.analyst@scout.com",
+            "displayName": "Mark Santiago",
+            "role": "Data Analyst",
+            "description": "Data Analyst with read-only access",
+            "expectedAccess": {
+              "dataScope": "All data, read-only",
+              "permissions": "No refresh capabilities",
+              "reports": "All reports accessible"
+            },
+            "testQueries": [
+              "Full access to all regions and categories",
+              "Complete dataset for analysis",
+              "Cannot trigger data refresh"
+            ]
+          },
+          {
+            "username": "bi.lead@scout.com",
+            "displayName": "Jennifer Lim",
+            "role": "Business Intelligence",
+            "description": "BI Lead with refresh permissions",
+            "expectedAccess": {
+              "dataScope": "All data, read + refresh",
+              "permissions": "Dataset refresh capabilities",
+              "reports": "All reports + admin functions"
+            },
+            "testQueries": [
+              "Full data access across all dimensions",
+              "Can trigger manual refresh",
+              "Admin view of dataset health"
+            ]
+          },
+          {
+            "username": "finance.director@scout.com",
+            "displayName": "Richard Morales",
+            "role": "Finance Team",
+            "description": "Finance Director",
+            "expectedAccess": {
+              "dataScope": "Financial metrics focus",
+              "reports": "P&L, profitability, cost analysis",
+              "restrictions": "Finance-relevant data only"
+            },
+            "testQueries": [
+              "Gross margin and profitability metrics",
+              "Cost of goods sold analysis",
+              "Financial performance by region/category"
+            ]
+          },
+          {
+            "username": "ceo@scout.com",
+            "displayName": "Antonio Rodriguez",
+            "role": "Executive Dashboard",
+            "description": "CEO - Executive Summary",
+            "expectedAccess": {
+              "dataScope": "High-level summary, recent data",
+              "reports": "Executive dashboard only",
+              "timeRange": "Last 12 months focus"
+            },
+            "testQueries": [
+              "Strategic KPIs and trends",
+              "High-level regional performance",
+              "Executive summary metrics only"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "testingScenarios": {
+    "regionalAccess": {
+      "description": "Test regional data isolation",
+      "steps": [
+        "Login as maria.santos@scout.com (NCR)",
+        "Verify only NCR stores appear in visualizations",
+        "Check regional filter is locked to NCR",
+        "Confirm no Luzon/Visayas/Mindanao data visible"
+      ]
+    },
+    "storeAccess": {
+      "description": "Test store-level access control",
+      "steps": [
+        "Login as store.manager.1001@scout.com",
+        "Verify only Store 1001 data appears",
+        "Check store selector shows single store only",
+        "Confirm store performance metrics are isolated"
+      ]
+    },
+    "categoryAccess": {
+      "description": "Test category-based filtering",
+      "steps": [
+        "Login as tobacco.manager@scout.com",
+        "Verify product list shows tobacco brands only",
+        "Check category breakdown shows tobacco category",
+        "Confirm no laundry or other category data visible"
+      ]
+    },
+    "executiveAccess": {
+      "description": "Test executive summary access",
+      "steps": [
+        "Login as ceo@scout.com",
+        "Verify high-level KPIs are visible",
+        "Check recent data focus (last 12 months)",
+        "Confirm executive-appropriate aggregation level"
+      ]
+    }
+  },
+  "fabricConfiguration": {
+    "userMapping": {
+      "description": "How to set up these users in Microsoft Fabric",
+      "steps": [
+        "Go to Fabric Workspace → Manage Access",
+        "Add each mock user email",
+        "Assign appropriate workspace role (Viewer/Contributor)",
+        "Configure RLS role mapping in dataset security",
+        "Test with 'View as' functionality"
+      ]
+    },
+    "roleAssignment": {
+      "description": "Map users to RLS roles",
+      "mapping": {
+        "Regional Manager - NCR": ["maria.santos@scout.com"],
+        "Regional Manager - Luzon": ["juan.dela.cruz@scout.com"],
+        "Regional Manager - Visayas": ["ana.reyes@scout.com"],
+        "Regional Manager - Mindanao": ["carlos.garcia@scout.com"],
+        "Store Manager": [
+          "store.manager.1001@scout.com",
+          "store.manager.2045@scout.com",
+          "store.manager.3022@scout.com"
+        ],
+        "Category Manager - Tobacco": ["tobacco.manager@scout.com"],
+        "Category Manager - Laundry": ["laundry.manager@scout.com"],
+        "Premium Brand Manager": ["premium.manager@scout.com"],
+        "Data Analyst": ["data.analyst@scout.com"],
+        "Business Intelligence": ["bi.lead@scout.com"],
+        "Finance Team": ["finance.director@scout.com"],
+        "Executive Dashboard": ["ceo@scout.com"]
+      }
+    }
+  }
+}

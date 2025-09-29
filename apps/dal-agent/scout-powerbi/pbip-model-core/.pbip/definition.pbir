@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "name": "scout-core-dataset",
+  "description": "Scout Analytics - Shared semantic model for all reports",
+  "artifactKind": "dataset",
+  "folder": "../model",
+  "annotations": [
+    {
+      "name": "sourceProject",
+      "value": "Scout Lakehouse Fabric Bundle"
+    },
+    {
+      "name": "modelType",
+      "value": "SharedDataset"
+    },
+    {
+      "name": "dataSource",
+      "value": "FabricWarehouse"
+    }
+  ]
+}

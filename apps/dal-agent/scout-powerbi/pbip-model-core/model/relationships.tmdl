@@ -1,0 +1,63 @@
+relationship "mart_tx-dim_date"
+    fromColumn: mart_tx[TransactionDate]
+    toColumn: dim_date[Date]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "mart_tx-dim_store"
+    fromColumn: mart_tx[StoreID]
+    toColumn: dim_store[StoreID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "mart_tx-dim_brand"
+    fromColumn: mart_tx[BrandID]
+    toColumn: dim_brand[BrandID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "mart_tx-dim_category"
+    fromColumn: mart_tx[CategoryID]
+    toColumn: dim_category[CategoryID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "platinum_predictions-dim_date"
+    fromColumn: platinum_predictions[PredictionDate]
+    toColumn: dim_date[Date]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "platinum_predictions-dim_store"
+    fromColumn: platinum_predictions[StoreID]
+    toColumn: dim_store[StoreID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "platinum_predictions-dim_brand"
+    fromColumn: platinum_predictions[BrandID]
+    toColumn: dim_brand[BrandID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false
+
+relationship "platinum_predictions-dim_category"
+    fromColumn: platinum_predictions[CategoryID]
+    toColumn: dim_category[CategoryID]
+    crossFilteringBehavior: oneToMany
+    isActive: true
+    cardinality: manyToOne
+    relyOnReferentialIntegrity: false

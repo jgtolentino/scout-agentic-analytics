@@ -1,0 +1,180 @@
+# Scout Power BI PBIP/TMDL Pipeline
+name: PowerBI-$(Date:yyyyMMdd)-$(Rev:r)
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+    - feature/*
+  paths:
+    include:
+    - scout-powerbi/**
+
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - scout-powerbi/**
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: powerbiPath
+    value: 'scout-powerbi'
+  - name: shouldDeploy
+    value: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/main') }}
+
+stages:
+- stage: Validate
+  displayName: 'Validate Power BI Assets'
+  jobs:
+  - job: ValidateStructure
+    displayName: 'PBIP Structure Validation'
+    steps:
+    - checkout: self
+      displayName: 'Checkout Repository'
+
+    - script: |
+        echo "🔍 Validating Power BI PBIP/TMDL structure..."
+        cd $(powerbiPath)
+        chmod +x validate-pbip.sh
+        ./validate-pbip.sh
+      displayName: 'Run PBIP Validation'
+      failOnStderr: false
+
+    - script: |
+        echo "🎨 Validating Scout theme..."
+        cd $(powerbiPath)
+        if jq empty scout-theme.json; then
+          echo "✅ Scout theme JSON is valid"
+        else
+          echo "❌ Invalid theme JSON"
+          exit 1
+        fi
+      displayName: 'Validate Theme JSON'
+
+    - script: |
+        echo "📊 Counting DAX measures..."
+        cd $(powerbiPath)
+        measure_count=$(grep -c "^measure " pbip-model-core/model/measures.tmdl || echo "0")
+        echo "Found $measure_count DAX measures"
+
+        if [ $measure_count -ge 60 ]; then
+          echo "✅ Sufficient DAX measures ($measure_count/60+)"
+        else
+          echo "⚠️ Warning: Only $measure_count measures found (target: 60+)"
+        fi
+      displayName: 'Count DAX Measures'
+
+    - script: |
+        echo "🔒 Validating RLS roles..."
+        cd $(powerbiPath)
+        role_count=$(grep -c "^role " pbip-model-core/model/roles.tmdl || echo "0")
+        echo "Found $role_count RLS roles"
+
+        if [ $role_count -ge 3 ]; then
+          echo "✅ Sufficient RLS roles ($role_count/3+)"
+        else
+          echo "⚠️ Warning: Only $role_count roles found (target: 3+)"
+        fi
+      displayName: 'Validate RLS Roles'
+
+    - script: |
+        echo "🗃️ Validating security assignments table..."
+        cd $(powerbiPath)
+        if [ -f "pbip-model-core/model/tables/security_assignments.tmdl" ]; then
+          echo "✅ Security assignments table found"
+          if grep -q "security.assignments" pbip-model-core/model/tables/security_assignments.tmdl; then
+            echo "✅ Security table query is correct"
+          else
+            echo "❌ Security table query is incorrect"
+            exit 1
+          fi
+        else
+          echo "❌ Security assignments table missing"
+          exit 1
+        fi
+      displayName: 'Validate Security Table'
+
+    - script: |
+        echo "📋 Generating validation report..."
+        cd $(powerbiPath)
+
+        echo "# Scout Power BI Validation Report" > validation-report.md
+        echo "Generated: $(date)" >> validation-report.md
+        echo "" >> validation-report.md
+
+        echo "## Structure Summary" >> validation-report.md
+        echo "- Shared Dataset: $(ls -1 pbip-model-core/model/tables/*.tmdl | wc -l) tables" >> validation-report.md
+        echo "- Report Templates: $(ls -1d */ | grep -v pbip-model-core | grep -v .azure-pipelines | wc -l) reports" >> validation-report.md
+        echo "- DAX Measures: $(grep -c "^measure " pbip-model-core/model/measures.tmdl) measures" >> validation-report.md
+        echo "- RLS Roles: $(grep -c "^role " pbip-model-core/model/roles.tmdl) roles" >> validation-report.md
+
+        echo "" >> validation-report.md
+        echo "## Mock Users Available" >> validation-report.md
+        echo "- Regional Managers: maria.santos@scout.com, juan.dela.cruz@scout.com" >> validation-report.md
+        echo "- Store Managers: store.manager.1001@scout.com, store.manager.2045@scout.com" >> validation-report.md
+        echo "- Category Managers: tobacco.manager@scout.com, laundry.manager@scout.com" >> validation-report.md
+        echo "- Test Users: alice@mock.local, bob@mock.local, carol@mock.local, dave@mock.local" >> validation-report.md
+
+        echo "" >> validation-report.md
+        echo "## Next Steps" >> validation-report.md
+        echo "1. Run setup-security-table.sql in Fabric Warehouse" >> validation-report.md
+        echo "2. Sync repository to Fabric workspace via Git integration" >> validation-report.md
+        echo "3. Test RLS using 'View as' feature with mock users" >> validation-report.md
+        echo "4. Assign real users to RLS roles for production" >> validation-report.md
+
+        cat validation-report.md
+      displayName: 'Generate Validation Report'
+
+    - publishBuildArtifacts:
+        pathToPublish: '$(powerbiPath)'
+        artifactName: 'PowerBI-Assets'
+        displayName: 'Publish Power BI Artifacts'
+
+- stage: Deploy
+  displayName: 'Deploy to Fabric'
+  dependsOn: Validate
+  condition: and(succeeded(), eq(variables.shouldDeploy, true))
+  jobs:
+  - deployment: DeployToFabric
+    displayName: 'Deploy to Microsoft Fabric'
+    environment: 'Scout-Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: PowerBI-Assets
+            displayName: 'Download Power BI Assets'
+
+          - script: |
+              echo "🚀 Deploying Scout Power BI to Microsoft Fabric"
+              echo "Repository: https://s2246703040568@dev.azure.com/s2246703040568/scout/_git/scout"
+              echo "Branch: $(Build.SourceBranch)"
+              echo "Commit: $(Build.SourceVersion)"
+              echo ""
+              echo "📁 Fabric will sync from /powerbi directory"
+              echo "🔄 Auto-deployment via Git integration"
+              echo ""
+              echo "🔒 Security Setup Required:"
+              echo "1. Run setup-security-table.sql in Fabric Warehouse"
+              echo "2. Configure mock users for testing"
+              echo "3. Assign real users to RLS roles"
+              echo ""
+              echo "📊 Available Mock Users:"
+              echo "- Regional: maria.santos@scout.com (NCR)"
+              echo "- Store: store.manager.1001@scout.com (Store 1001)"
+              echo "- Category: tobacco.manager@scout.com (Tobacco)"
+              echo "- Test: alice@mock.local, bob@mock.local"
+              echo ""
+              echo "🧪 Testing Instructions:"
+              echo "1. Use 'View as' feature in Fabric dataset"
+              echo "2. Select appropriate RLS role"
+              echo "3. Enter mock user email"
+              echo "4. Verify data filtering works correctly"
+            displayName: 'Deployment Information'

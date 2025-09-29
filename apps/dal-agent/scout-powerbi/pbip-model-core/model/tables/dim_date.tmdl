@@ -1,0 +1,129 @@
+table "dim_date"
+    lineageTag: dim_date
+
+    partition "dim_date"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    full_date as [Date],
+                    year as [Year],
+                    quarter as [Quarter],
+                    month as [Month],
+                    month_name as [MonthName],
+                    day_of_month as [Day],
+                    day_name as [DayName],
+                    day_of_week as [DayOfWeek],
+                    is_weekend as [IsWeekend],
+                    is_holiday as [IsHoliday],
+                    fiscal_year as [FiscalYear],
+                    fiscal_quarter as [FiscalQuarter],
+                    fiscal_month as [FiscalMonth]
+                FROM gold.dim_date
+                ORDER BY full_date
+
+    column "Date"
+        dataType: dateTime
+        isKey: false
+        lineageTag: Date
+        summarizeBy: none
+        isDataTypeInferred: false
+        isNameInferred: false
+        formatString: Short Date
+        annotation SummarizationSetBy = Automatic
+
+    column "Year"
+        dataType: int64
+        lineageTag: Year
+        summarizeBy: none
+        isDataTypeInferred: false
+        formatString: 0
+
+    column "Quarter"
+        dataType: int64
+        lineageTag: Quarter
+        summarizeBy: none
+        formatString: 0
+
+    column "Month"
+        dataType: int64
+        lineageTag: Month
+        summarizeBy: none
+        formatString: 0
+
+    column "MonthName"
+        dataType: string
+        lineageTag: MonthName
+        summarizeBy: none
+        isDataTypeInferred: false
+
+    column "Day"
+        dataType: int64
+        lineageTag: Day
+        summarizeBy: none
+        formatString: 0
+
+    column "DayName"
+        dataType: string
+        lineageTag: DayName
+        summarizeBy: none
+
+    column "DayOfWeek"
+        dataType: int64
+        lineageTag: DayOfWeek
+        summarizeBy: none
+        formatString: 0
+
+    column "IsWeekend"
+        dataType: boolean
+        lineageTag: IsWeekend
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+
+    column "IsHoliday"
+        dataType: boolean
+        lineageTag: IsHoliday
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+
+    column "FiscalYear"
+        dataType: int64
+        lineageTag: FiscalYear
+        summarizeBy: none
+        formatString: 0
+
+    column "FiscalQuarter"
+        dataType: int64
+        lineageTag: FiscalQuarter
+        summarizeBy: none
+        formatString: 0
+
+    column "FiscalMonth"
+        dataType: int64
+        lineageTag: FiscalMonth
+        summarizeBy: none
+        formatString: 0
+
+    hierarchy "Calendar Hierarchy"
+        lineageTag: CalendarHierarchy
+
+        level "Year"
+            lineageTag: CalendarHierarchy.Year
+            column: "Year"
+
+        level "Quarter"
+            lineageTag: CalendarHierarchy.Quarter
+            column: "Quarter"
+
+        level "Month"
+            lineageTag: CalendarHierarchy.Month
+            column: "MonthName"
+
+        level "Day"
+            lineageTag: CalendarHierarchy.Day
+            column: "Day"
+
+    annotation PBI_ResultType = Table
+    annotation PBI_NavigationStepName = Navigation

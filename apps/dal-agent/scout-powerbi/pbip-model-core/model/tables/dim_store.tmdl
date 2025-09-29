@@ -1,0 +1,112 @@
+table "dim_store"
+    lineageTag: dim_store
+
+    partition "dim_store"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    store_id as [StoreID],
+                    store_name as [StoreName],
+                    region_name as [RegionName],
+                    province_name as [ProvinceName],
+                    municipality_name as [MunicipalityName],
+                    barangay_name as [BarangayName],
+                    store_type as [StoreType],
+                    latitude as [Latitude],
+                    longitude as [Longitude],
+                    is_active as [IsActive]
+                FROM gold.dim_store
+                WHERE is_active = 1
+
+    column "StoreID"
+        dataType: int64
+        isKey: true
+        lineageTag: StoreID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "StoreName"
+        dataType: string
+        lineageTag: StoreName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "RegionName"
+        dataType: string
+        lineageTag: RegionName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "ProvinceName"
+        dataType: string
+        lineageTag: ProvinceName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "MunicipalityName"
+        dataType: string
+        lineageTag: MunicipalityName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "BarangayName"
+        dataType: string
+        lineageTag: BarangayName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "StoreType"
+        dataType: string
+        lineageTag: StoreType
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "Latitude"
+        dataType: double
+        lineageTag: Latitude
+        summarizeBy: average
+        formatString: 0.000000
+        annotation SummarizationSetBy = Automatic
+
+    column "Longitude"
+        dataType: double
+        lineageTag: Longitude
+        summarizeBy: average
+        formatString: 0.000000
+        annotation SummarizationSetBy = Automatic
+
+    column "IsActive"
+        dataType: boolean
+        lineageTag: IsActive
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    hierarchy "Geographic Hierarchy"
+        lineageTag: GeographicHierarchy
+
+        level "Region"
+            lineageTag: GeographicHierarchy.Region
+            column: "RegionName"
+
+        level "Province"
+            lineageTag: GeographicHierarchy.Province
+            column: "ProvinceName"
+
+        level "Municipality"
+            lineageTag: GeographicHierarchy.Municipality
+            column: "MunicipalityName"
+
+        level "Barangay"
+            lineageTag: GeographicHierarchy.Barangay
+            column: "BarangayName"
+
+        level "Store"
+            lineageTag: GeographicHierarchy.Store
+            column: "StoreName"
+
+    annotation PBI_ResultType = Table

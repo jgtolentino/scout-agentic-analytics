@@ -1,0 +1,32 @@
+model "Scout Analytics Model"
+    defaultPowerBIDataSourceVersion: powerBI_V3
+
+    annotation PBI_QueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments"]
+    annotation PBI_ProxyQueryOrder = ["dim_date","dim_store","dim_brand","dim_category","mart_tx","platinum_predictions","security_assignments"]
+    annotation __PBI_TimeIntelligenceEnabled = 1
+    annotation PBIDesktopVersion = 2.125.1467.0 (24.01)
+    annotation PBI_DataAccessOptions = "legacyRedirects,returnErrorValuesAsNull"
+    annotation SourceProject = "Scout Lakehouse Fabric Bundle"
+    annotation ModelType = "SharedDataset"
+    annotation Author = "TBWA Data Team"
+    annotation Version = "1.0"
+    annotation LastModified = "2025-01-02"
+
+    culture: "en-US"
+
+    // Primary date table for time intelligence
+    annotation PBI_DateTable = "dim_date"
+    annotation PBI_DateTableColumn = "Date"
+
+    // Include all model components
+    include "tables/dim_date.tmdl"
+    include "tables/dim_store.tmdl"
+    include "tables/dim_brand.tmdl"
+    include "tables/dim_category.tmdl"
+    include "tables/mart_tx.tmdl"
+    include "tables/platinum_predictions.tmdl"
+    include "tables/security_assignments.tmdl"
+    include "relationships.tmdl"
+    include "measures.tmdl"
+    include "roles.tmdl"
+    include "refresh-policy.tmdl"

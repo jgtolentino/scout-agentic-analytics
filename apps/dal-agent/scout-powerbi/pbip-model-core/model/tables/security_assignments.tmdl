@@ -1,0 +1,73 @@
+table "security_assignments"
+    lineageTag: security_assignments
+
+    partition "security_assignments"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    email as [Email],
+                    role_name as [RoleName],
+                    region_name as [RegionName],
+                    province_name as [ProvinceName],
+                    municipality_name as [MunicipalityName],
+                    store_id as [StoreID],
+                    category_filter as [CategoryFilter],
+                    is_active as [IsActive]
+                FROM security.assignments
+                WHERE is_active = 1
+
+    column "Email"
+        dataType: string
+        lineageTag: Email
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "RoleName"
+        dataType: string
+        lineageTag: RoleName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "RegionName"
+        dataType: string
+        lineageTag: RegionName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "ProvinceName"
+        dataType: string
+        lineageTag: ProvinceName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "MunicipalityName"
+        dataType: string
+        lineageTag: MunicipalityName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "StoreID"
+        dataType: int64
+        lineageTag: StoreID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryFilter"
+        dataType: string
+        lineageTag: CategoryFilter
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "IsActive"
+        dataType: boolean
+        lineageTag: IsActive
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    annotation PBI_ResultType = Table
+    annotation Description = "Security assignments for dynamic RLS filtering"

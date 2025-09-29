@@ -1,0 +1,207 @@
+table "platinum_predictions"
+    lineageTag: platinum_predictions
+
+    partition "platinum_predictions"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    prediction_id as [PredictionID],
+                    prediction_date as [PredictionDate],
+                    store_id as [StoreID],
+                    brand_id as [BrandID],
+                    category_id as [CategoryID],
+                    persona_segment as [PersonaSegment],
+                    predicted_sales as [PredictedSales],
+                    actual_sales as [ActualSales],
+                    prediction_accuracy as [PredictionAccuracy],
+                    confidence_score as [ConfidenceScore],
+                    model_version as [ModelVersion],
+                    feature_importance as [FeatureImportance],
+                    market_trend as [MarketTrend],
+                    seasonal_factor as [SeasonalFactor],
+                    promotional_impact as [PromotionalImpact],
+                    weather_impact as [WeatherImpact],
+                    economic_indicator as [EconomicIndicator],
+                    competitor_activity as [CompetitorActivity],
+                    customer_sentiment as [CustomerSentiment],
+                    demand_volatility as [DemandVolatility],
+                    supply_chain_risk as [SupplyChainRisk],
+                    price_elasticity as [PriceElasticity],
+                    cross_category_effect as [CrossCategoryEffect],
+                    recommendation_score as [RecommendationScore],
+                    action_priority as [ActionPriority]
+                FROM platinum.predictions
+                WHERE prediction_date >= DATEADD(month, -6, GETDATE())
+
+    column "PredictionID"
+        dataType: string
+        isKey: true
+        lineageTag: PredictionID
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "PredictionDate"
+        dataType: dateTime
+        lineageTag: PredictionDate
+        summarizeBy: none
+        formatString: Short Date
+        annotation SummarizationSetBy = Automatic
+
+    column "StoreID"
+        dataType: int64
+        lineageTag: StoreID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "BrandID"
+        dataType: int64
+        lineageTag: BrandID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryID"
+        dataType: int64
+        lineageTag: CategoryID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "PersonaSegment"
+        dataType: string
+        lineageTag: PersonaSegment
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "PredictedSales"
+        dataType: decimal
+        lineageTag: PredictedSales
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "ActualSales"
+        dataType: decimal
+        lineageTag: ActualSales
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "PredictionAccuracy"
+        dataType: double
+        lineageTag: PredictionAccuracy
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "ConfidenceScore"
+        dataType: double
+        lineageTag: ConfidenceScore
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "ModelVersion"
+        dataType: string
+        lineageTag: ModelVersion
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "FeatureImportance"
+        dataType: string
+        lineageTag: FeatureImportance
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "MarketTrend"
+        dataType: string
+        lineageTag: MarketTrend
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "SeasonalFactor"
+        dataType: double
+        lineageTag: SeasonalFactor
+        summarizeBy: average
+        formatString: 0.000
+        annotation SummarizationSetBy = Automatic
+
+    column "PromotionalImpact"
+        dataType: double
+        lineageTag: PromotionalImpact
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "WeatherImpact"
+        dataType: double
+        lineageTag: WeatherImpact
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "EconomicIndicator"
+        dataType: double
+        lineageTag: EconomicIndicator
+        summarizeBy: average
+        formatString: 0.000
+        annotation SummarizationSetBy = Automatic
+
+    column "CompetitorActivity"
+        dataType: string
+        lineageTag: CompetitorActivity
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CustomerSentiment"
+        dataType: double
+        lineageTag: CustomerSentiment
+        summarizeBy: average
+        formatString: 0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "DemandVolatility"
+        dataType: double
+        lineageTag: DemandVolatility
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "SupplyChainRisk"
+        dataType: string
+        lineageTag: SupplyChainRisk
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "PriceElasticity"
+        dataType: double
+        lineageTag: PriceElasticity
+        summarizeBy: average
+        formatString: 0.000
+        annotation SummarizationSetBy = Automatic
+
+    column "CrossCategoryEffect"
+        dataType: double
+        lineageTag: CrossCategoryEffect
+        summarizeBy: average
+        formatString: 0.00%
+        annotation SummarizationSetBy = Automatic
+
+    column "RecommendationScore"
+        dataType: double
+        lineageTag: RecommendationScore
+        summarizeBy: average
+        formatString: 0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "ActionPriority"
+        dataType: string
+        lineageTag: ActionPriority
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    annotation PBI_ResultType = Table

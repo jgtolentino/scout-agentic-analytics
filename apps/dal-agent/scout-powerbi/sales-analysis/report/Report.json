@@ -1,0 +1,283 @@
+{
+  "version": "1.0",
+  "name": "Sales Analysis",
+  "description": "Comprehensive sales performance analysis",
+  "pages": [
+    {
+      "name": "SalesTrends",
+      "displayName": "Sales Trends",
+      "ordinal": 0,
+      "width": 1280,
+      "height": 720,
+      "config": {
+        "layouts": [
+          {
+            "id": "monthly-trend",
+            "displayName": "Monthly Sales Trend",
+            "ordinal": 0,
+            "position": {
+              "x": 20,
+              "y": 20,
+              "width": 1240,
+              "height": 300
+            },
+            "visualType": "lineChart",
+            "config": {
+              "x": "dim_date[Date]",
+              "y": ["Total Sales", "Sales MTD", "Sales QTD"],
+              "title": "Sales Trend Analysis",
+              "formatting": {
+                "xAxis": {
+                  "title": "Date",
+                  "labelFormat": "MMM yyyy"
+                },
+                "yAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "daily-pattern",
+            "displayName": "Daily Sales Pattern",
+            "ordinal": 1,
+            "position": {
+              "x": 20,
+              "y": 340,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "columnChart",
+            "config": {
+              "x": "mart_tx[DayOfWeek]",
+              "y": "Total Sales",
+              "title": "Sales by Day of Week",
+              "formatting": {
+                "yAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "hourly-pattern",
+            "displayName": "Hourly Sales Pattern",
+            "ordinal": 2,
+            "position": {
+              "x": 440,
+              "y": 340,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "columnChart",
+            "config": {
+              "x": "mart_tx[TimeOfDay]",
+              "y": "Total Sales",
+              "title": "Sales by Time of Day",
+              "formatting": {
+                "yAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "weekend-comparison",
+            "displayName": "Weekend vs Weekday",
+            "ordinal": 3,
+            "position": {
+              "x": 860,
+              "y": 340,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "pieChart",
+            "config": {
+              "values": "Total Sales",
+              "legend": "mart_tx[IsWeekend]",
+              "title": "Weekend vs Weekday Sales",
+              "formatting": {
+                "dataLabels": {
+                  "show": true,
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProductAnalysis",
+      "displayName": "Product Analysis",
+      "ordinal": 1,
+      "width": 1280,
+      "height": 720,
+      "config": {
+        "layouts": [
+          {
+            "id": "brand-performance",
+            "displayName": "Brand Performance",
+            "ordinal": 0,
+            "position": {
+              "x": 20,
+              "y": 20,
+              "width": 600,
+              "height": 320
+            },
+            "visualType": "clusteredBarChart",
+            "config": {
+              "x": "Total Sales",
+              "y": "dim_brand[BrandName]",
+              "title": "Top Performing Brands",
+              "topN": 15,
+              "formatting": {
+                "xAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "category-hierarchy",
+            "displayName": "Category Hierarchy",
+            "ordinal": 1,
+            "position": {
+              "x": 640,
+              "y": 20,
+              "width": 620,
+              "height": 320
+            },
+            "visualType": "treemap",
+            "config": {
+              "values": "Total Sales",
+              "group": "dim_category[CategoryL1]",
+              "details": "dim_category[CategoryL2]",
+              "title": "Sales by Category Hierarchy",
+              "formatting": {
+                "dataLabels": {
+                  "show": true,
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "premium-analysis",
+            "displayName": "Premium vs Standard",
+            "ordinal": 2,
+            "position": {
+              "x": 20,
+              "y": 360,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "stackedColumnChart",
+            "config": {
+              "x": "dim_date[MonthName]",
+              "y": ["Premium Sales", "Total Sales"],
+              "title": "Premium Brand Performance",
+              "formatting": {
+                "yAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "tobacco-laundry",
+            "displayName": "Key Categories",
+            "ordinal": 3,
+            "position": {
+              "x": 440,
+              "y": 360,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "lineChart",
+            "config": {
+              "x": "dim_date[Date]",
+              "y": ["Tobacco Sales", "Laundry Sales"],
+              "title": "Tobacco vs Laundry Trends",
+              "formatting": {
+                "yAxis": {
+                  "title": "Sales (₱)",
+                  "labelFormat": "₱#,0,.0M"
+                }
+              }
+            }
+          },
+          {
+            "id": "product-velocity",
+            "displayName": "Product Velocity",
+            "ordinal": 4,
+            "position": {
+              "x": 860,
+              "y": 360,
+              "width": 400,
+              "height": 300
+            },
+            "visualType": "scatterChart",
+            "config": {
+              "x": "Total Units Sold",
+              "y": "Average Unit Price",
+              "size": "Total Sales",
+              "legend": "dim_category[CategoryL1]",
+              "title": "Product Price vs Volume",
+              "formatting": {
+                "xAxis": {
+                  "title": "Units Sold",
+                  "labelFormat": "#,0"
+                },
+                "yAxis": {
+                  "title": "Average Price (₱)",
+                  "labelFormat": "₱#,0"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "filters": [
+    {
+      "table": "dim_date",
+      "column": "Date",
+      "type": "relativeDateRange",
+      "config": {
+        "defaultPeriod": "last3Months",
+        "allowedPeriods": ["last1Month", "last3Months", "last6Months", "last12Months"]
+      }
+    },
+    {
+      "table": "dim_store",
+      "column": "RegionName",
+      "type": "multiSelect",
+      "config": {
+        "allowSelectAll": true,
+        "defaultSelection": "all"
+      }
+    },
+    {
+      "table": "dim_category",
+      "column": "CategoryL1",
+      "type": "multiSelect",
+      "config": {
+        "allowSelectAll": true,
+        "defaultSelection": "all"
+      }
+    }
+  ],
+  "theme": "scout-theme",
+  "annotations": {
+    "lastRefresh": "Auto",
+    "dataSource": "Scout Lakehouse",
+    "owner": "Sales Team"
+  }
+}

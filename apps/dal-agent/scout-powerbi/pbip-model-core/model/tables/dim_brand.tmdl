@@ -1,0 +1,117 @@
+table "dim_brand"
+    lineageTag: dim_brand
+
+    partition "dim_brand"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    brand_id as [BrandID],
+                    brand_name as [BrandName],
+                    manufacturer as [Manufacturer],
+                    category_l1 as [CategoryL1],
+                    category_l2 as [CategoryL2],
+                    category_l3 as [CategoryL3],
+                    is_tobacco as [IsTobacco],
+                    is_laundry as [IsLaundry],
+                    is_premium as [IsPremium],
+                    is_active as [IsActive],
+                    created_date as [CreatedDate]
+                FROM gold.dim_brand
+                WHERE is_active = 1
+
+    column "BrandID"
+        dataType: int64
+        isKey: true
+        lineageTag: BrandID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "BrandName"
+        dataType: string
+        lineageTag: BrandName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "Manufacturer"
+        dataType: string
+        lineageTag: Manufacturer
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL1"
+        dataType: string
+        lineageTag: CategoryL1
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL2"
+        dataType: string
+        lineageTag: CategoryL2
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryL3"
+        dataType: string
+        lineageTag: CategoryL3
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "IsTobacco"
+        dataType: boolean
+        lineageTag: IsTobacco
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsLaundry"
+        dataType: boolean
+        lineageTag: IsLaundry
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsPremium"
+        dataType: boolean
+        lineageTag: IsPremium
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsActive"
+        dataType: boolean
+        lineageTag: IsActive
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "CreatedDate"
+        dataType: dateTime
+        lineageTag: CreatedDate
+        summarizeBy: none
+        formatString: Short Date
+        annotation SummarizationSetBy = Automatic
+
+    hierarchy "Category Hierarchy"
+        lineageTag: CategoryHierarchy
+
+        level "Category L1"
+            lineageTag: CategoryHierarchy.L1
+            column: "CategoryL1"
+
+        level "Category L2"
+            lineageTag: CategoryHierarchy.L2
+            column: "CategoryL2"
+
+        level "Category L3"
+            lineageTag: CategoryHierarchy.L3
+            column: "CategoryL3"
+
+        level "Brand"
+            lineageTag: CategoryHierarchy.Brand
+            column: "BrandName"
+
+    annotation PBI_ResultType = Table

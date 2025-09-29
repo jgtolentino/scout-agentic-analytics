@@ -1,0 +1,206 @@
+role "Dynamic Regional Manager"
+    modelPermission: read
+    annotation Description = "Dynamic access to regions based on security assignments table"
+
+    tablePermission "dim_store" =
+        [RegionName] IN CALCULATETABLE(
+            VALUES(security_assignments[RegionName]),
+            FILTER(
+                security_assignments,
+                security_assignments[Email] = USERPRINCIPALNAME() &&
+                security_assignments[RoleName] = "region_manager" &&
+                NOT(ISBLANK(security_assignments[RegionName]))
+            )
+        )
+
+    tablePermission "mart_tx" =
+        [StoreID] IN CALCULATETABLE(
+            VALUES(dim_store[StoreID]),
+            FILTER(
+                dim_store,
+                dim_store[RegionName] IN CALCULATETABLE(
+                    VALUES(security_assignments[RegionName]),
+                    FILTER(
+                        security_assignments,
+                        security_assignments[Email] = USERPRINCIPALNAME() &&
+                        security_assignments[RoleName] = "region_manager"
+                    )
+                )
+            )
+        )
+
+    tablePermission "platinum_predictions" =
+        [StoreID] IN CALCULATETABLE(
+            VALUES(dim_store[StoreID]),
+            FILTER(
+                dim_store,
+                dim_store[RegionName] IN CALCULATETABLE(
+                    VALUES(security_assignments[RegionName]),
+                    FILTER(
+                        security_assignments,
+                        security_assignments[Email] = USERPRINCIPALNAME() &&
+                        security_assignments[RoleName] = "region_manager"
+                    )
+                )
+            )
+        )
+
+role "Dynamic Store Manager"
+    modelPermission: read
+    annotation Description = "Dynamic access to specific stores based on security assignments table"
+
+    tablePermission "dim_store" =
+        [StoreID] IN CALCULATETABLE(
+            VALUES(security_assignments[StoreID]),
+            FILTER(
+                security_assignments,
+                security_assignments[Email] = USERPRINCIPALNAME() &&
+                security_assignments[RoleName] = "store_manager" &&
+                NOT(ISBLANK(security_assignments[StoreID]))
+            )
+        )
+
+    tablePermission "mart_tx" =
+        [StoreID] IN CALCULATETABLE(
+            VALUES(security_assignments[StoreID]),
+            FILTER(
+                security_assignments,
+                security_assignments[Email] = USERPRINCIPALNAME() &&
+                security_assignments[RoleName] = "store_manager"
+            )
+        )
+
+    tablePermission "platinum_predictions" =
+        [StoreID] IN CALCULATETABLE(
+            VALUES(security_assignments[StoreID]),
+            FILTER(
+                security_assignments,
+                security_assignments[Email] = USERPRINCIPALNAME() &&
+                security_assignments[RoleName] = "store_manager"
+            )
+        )
+
+role "Dynamic Category Manager"
+    modelPermission: read
+    annotation Description = "Dynamic access to categories based on security assignments table"
+
+    tablePermission "dim_brand" =
+        IF(
+            HASONEVALUE(security_assignments[CategoryFilter]) &&
+            SELECTEDVALUE(security_assignments[CategoryFilter]) = "tobacco",
+            [IsTobacco] = TRUE,
+            IF(
+                HASONEVALUE(security_assignments[CategoryFilter]) &&
+                SELECTEDVALUE(security_assignments[CategoryFilter]) = "laundry",
+                [IsLaundry] = TRUE,
+                IF(
+                    HASONEVALUE(security_assignments[CategoryFilter]) &&
+                    SELECTEDVALUE(security_assignments[CategoryFilter]) = "premium",
+                    [IsPremium] = TRUE,
+                    FALSE()
+                )
+            )
+        )
+
+    tablePermission "dim_category" =
+        IF(
+            COUNTROWS(
+                FILTER(
+                    security_assignments,
+                    security_assignments[Email] = USERPRINCIPALNAME() &&
+                    security_assignments[RoleName] = "category_manager" &&
+                    security_assignments[CategoryFilter] = "tobacco"
+                )
+            ) > 0,
+            [IsTobacco] = TRUE,
+            IF(
+                COUNTROWS(
+                    FILTER(
+                        security_assignments,
+                        security_assignments[Email] = USERPRINCIPALNAME() &&
+                        security_assignments[RoleName] = "category_manager" &&
+                        security_assignments[CategoryFilter] = "laundry"
+                    )
+                ) > 0,
+                [IsLaundry] = TRUE,
+                IF(
+                    COUNTROWS(
+                        FILTER(
+                            security_assignments,
+                            security_assignments[Email] = USERPRINCIPALNAME() &&
+                            security_assignments[RoleName] = "category_manager" &&
+                            security_assignments[CategoryFilter] = "premium"
+                        )
+                    ) > 0,
+                    [IsPremium] = TRUE,
+                    FALSE()
+                )
+            )
+        )
+
+    tablePermission "mart_tx" =
+        [BrandID] IN CALCULATETABLE(
+            VALUES(dim_brand[BrandID]),
+            FILTER(
+                dim_brand,
+                IF(
+                    COUNTROWS(
+                        FILTER(
+                            security_assignments,
+                            security_assignments[Email] = USERPRINCIPALNAME() &&
+                            security_assignments[RoleName] = "category_manager" &&
+                            security_assignments[CategoryFilter] = "tobacco"
+                        )
+                    ) > 0,
+                    dim_brand[IsTobacco] = TRUE,
+                    IF(
+                        COUNTROWS(
+                            FILTER(
+                                security_assignments,
+                                security_assignments[Email] = USERPRINCIPALNAME() &&
+                                security_assignments[RoleName] = "category_manager" &&
+                                security_assignments[CategoryFilter] = "laundry"
+                            )
+                        ) > 0,
+                        dim_brand[IsLaundry] = TRUE,
+                        IF(
+                            COUNTROWS(
+                                FILTER(
+                                    security_assignments,
+                                    security_assignments[Email] = USERPRINCIPALNAME() &&
+                                    security_assignments[RoleName] = "category_manager" &&
+                                    security_assignments[CategoryFilter] = "premium"
+                                )
+                            ) > 0,
+                            dim_brand[IsPremium] = TRUE,
+                            FALSE()
+                        )
+                    )
+                )
+            )
+        )
+
+role "Data Analyst"
+    modelPermission: read
+    annotation Description = "Read-only access to all data for analysis"
+
+role "Business Intelligence"
+    modelPermission: readRefresh
+    annotation Description = "Full read access plus data refresh capabilities"
+
+role "Finance Team"
+    modelPermission: read
+    annotation Description = "Access to financial metrics and profitability data"
+
+    tablePermission "mart_tx" = TRUE
+    tablePermission "dim_date" = TRUE
+    tablePermission "dim_store" = TRUE
+    tablePermission "dim_brand" = TRUE
+    tablePermission "dim_category" = TRUE
+
+role "Executive Dashboard"
+    modelPermission: read
+    annotation Description = "High-level summary access for executives"
+
+    tablePermission "mart_tx" = [TransactionDate] >= DATE(YEAR(TODAY())-1, 1, 1)
+    tablePermission "platinum_predictions" = [PredictionDate] >= DATE(YEAR(TODAY()), 1, 1)

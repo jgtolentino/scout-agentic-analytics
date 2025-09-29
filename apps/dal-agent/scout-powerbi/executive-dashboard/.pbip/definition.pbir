@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "name": "scout-executive-dashboard",
+  "description": "Executive Dashboard - High-level KPIs and strategic insights",
+  "artifactKind": "report",
+  "folder": "../report",
+  "datasetReference": {
+    "byPath": "../pbip-model-core"
+  },
+  "annotations": [
+    {
+      "name": "reportType",
+      "value": "ExecutiveDashboard"
+    },
+    {
+      "name": "targetAudience",
+      "value": "C-Suite, Senior Management"
+    },
+    {
+      "name": "refreshFrequency",
+      "value": "Daily"
+    },
+    {
+      "name": "accessLevel",
+      "value": "Executive"
+    }
+  ]
+}

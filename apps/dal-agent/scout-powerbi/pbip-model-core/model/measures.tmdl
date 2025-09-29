@@ -1,0 +1,334 @@
+// Sales Measures
+measure "Total Sales" = SUM(mart_tx[NetAmount])
+formatString: "₱"#,0
+
+measure "Total Units Sold" = SUM(mart_tx[QuantitySold])
+formatString: #,0
+
+measure "Average Transaction Value" =
+    DIVIDE([Total Sales], DISTINCTCOUNT(mart_tx[TransactionID]), 0)
+formatString: "₱"#,0.00
+
+measure "Total Transactions" = DISTINCTCOUNT(mart_tx[TransactionID])
+formatString: #,0
+
+measure "Gross Sales" = SUM(mart_tx[TotalAmount])
+formatString: "₱"#,0
+
+measure "Total Discounts" = SUM(mart_tx[DiscountAmount])
+formatString: "₱"#,0
+
+measure "Discount Rate" =
+    DIVIDE([Total Discounts], [Gross Sales], 0)
+formatString: 0.00%
+
+// Profitability Measures
+measure "Gross Profit" = SUM(mart_tx[GrossProfit])
+formatString: "₱"#,0
+
+measure "Gross Margin %" =
+    DIVIDE([Gross Profit], [Total Sales], 0)
+formatString: 0.00%
+
+measure "Cost of Goods Sold" = SUM(mart_tx[CostOfGoods])
+formatString: "₱"#,0
+
+measure "Average Unit Price" =
+    DIVIDE(SUM(mart_tx[TotalAmount]), SUM(mart_tx[QuantitySold]), 0)
+formatString: "₱"#,0.00
+
+measure "Average Cost per Unit" =
+    DIVIDE(SUM(mart_tx[CostOfGoods]), SUM(mart_tx[QuantitySold]), 0)
+formatString: "₱"#,0.00
+
+// Time Intelligence Measures
+measure "Sales Last Year" =
+    CALCULATE([Total Sales], SAMEPERIODLASTYEAR(dim_date[Date]))
+formatString: "₱"#,0
+
+measure "Sales YoY Growth" =
+    DIVIDE([Total Sales] - [Sales Last Year], [Sales Last Year], 0)
+formatString: 0.00%
+
+measure "Sales YoY Growth ₱" = [Total Sales] - [Sales Last Year]
+formatString: "₱"#,0
+
+measure "Sales MTD" =
+    CALCULATE([Total Sales], DATESMTD(dim_date[Date]))
+formatString: "₱"#,0
+
+measure "Sales QTD" =
+    CALCULATE([Total Sales], DATESQTD(dim_date[Date]))
+formatString: "₱"#,0
+
+measure "Sales YTD" =
+    CALCULATE([Total Sales], DATESYTD(dim_date[Date]))
+formatString: "₱"#,0
+
+measure "Sales Previous Month" =
+    CALCULATE([Total Sales], PREVIOUSMONTH(dim_date[Date]))
+formatString: "₱"#,0
+
+measure "Sales MoM Growth %" =
+    DIVIDE([Sales MTD] - [Sales Previous Month], [Sales Previous Month], 0)
+formatString: 0.00%
+
+measure "Sales 12 Month Moving Average" =
+    AVERAGEX(
+        DATESINPERIOD(dim_date[Date], LASTDATE(dim_date[Date]), -12, MONTH),
+        [Total Sales]
+    )
+formatString: "₱"#,0
+
+// Store Performance Measures
+measure "Sales per Store" =
+    DIVIDE([Total Sales], DISTINCTCOUNT(mart_tx[StoreID]), 0)
+formatString: "₱"#,0
+
+measure "Active Stores" =
+    CALCULATE(DISTINCTCOUNT(dim_store[StoreID]), dim_store[IsActive] = TRUE)
+formatString: #,0
+
+measure "Top Performing Store Sales" =
+    MAXX(
+        SUMMARIZE(mart_tx, mart_tx[StoreID], "Store Sales", [Total Sales]),
+        [Store Sales]
+    )
+formatString: "₱"#,0
+
+measure "Stores Above Average" =
+    SUMX(
+        SUMMARIZE(mart_tx, mart_tx[StoreID], "Store Sales", [Total Sales]),
+        IF([Store Sales] > [Sales per Store], 1, 0)
+    )
+formatString: #,0
+
+// Product & Brand Measures
+measure "Active Brands" =
+    CALCULATE(DISTINCTCOUNT(dim_brand[BrandID]), dim_brand[IsActive] = TRUE)
+formatString: #,0
+
+measure "Active Categories" =
+    CALCULATE(DISTINCTCOUNT(dim_category[CategoryID]), dim_category[IsActive] = TRUE)
+formatString: #,0
+
+measure "Unique Products Sold" = DISTINCTCOUNT(mart_tx[ProductCode])
+formatString: #,0
+
+measure "Tobacco Sales" =
+    CALCULATE([Total Sales], dim_brand[IsTobacco] = TRUE)
+formatString: "₱"#,0
+
+measure "Laundry Sales" =
+    CALCULATE([Total Sales], dim_brand[IsLaundry] = TRUE)
+formatString: "₱"#,0
+
+measure "Premium Sales" =
+    CALCULATE([Total Sales], dim_brand[IsPremium] = TRUE)
+formatString: "₱"#,0
+
+measure "Tobacco Sales %" =
+    DIVIDE([Tobacco Sales], [Total Sales], 0)
+formatString: 0.00%
+
+measure "Premium Sales %" =
+    DIVIDE([Premium Sales], [Total Sales], 0)
+formatString: 0.00%
+
+// Customer & Transaction Measures
+measure "Transactions per Day" =
+    DIVIDE([Total Transactions], DISTINCTCOUNT(mart_tx[TransactionDate]), 0)
+formatString: #,0.0
+
+measure "Weekend Sales" =
+    CALCULATE([Total Sales], mart_tx[IsWeekend] = TRUE)
+formatString: "₱"#,0
+
+measure "Weekday Sales" =
+    CALCULATE([Total Sales], mart_tx[IsWeekend] = FALSE)
+formatString: "₱"#,0
+
+measure "Holiday Sales" =
+    CALCULATE([Total Sales], mart_tx[IsHoliday] = TRUE)
+formatString: "₱"#,0
+
+measure "Weekend Sales %" =
+    DIVIDE([Weekend Sales], [Total Sales], 0)
+formatString: 0.00%
+
+measure "Cash Transactions" =
+    CALCULATE([Total Transactions], mart_tx[PaymentMethod] = "Cash")
+formatString: #,0
+
+measure "Digital Payment %" =
+    DIVIDE(
+        CALCULATE([Total Transactions], mart_tx[PaymentMethod] <> "Cash"),
+        [Total Transactions], 0
+    )
+formatString: 0.00%
+
+// Regional Performance Measures
+measure "NCR Sales" =
+    CALCULATE([Total Sales], dim_store[RegionName] = "NCR")
+formatString: "₱"#,0
+
+measure "Provincial Sales" =
+    CALCULATE([Total Sales], dim_store[RegionName] <> "NCR")
+formatString: "₱"#,0
+
+measure "NCR Sales %" =
+    DIVIDE([NCR Sales], [Total Sales], 0)
+formatString: 0.00%
+
+measure "Top Region Sales" =
+    MAXX(
+        SUMMARIZE(dim_store, dim_store[RegionName], "Region Sales", [Total Sales]),
+        [Region Sales]
+    )
+formatString: "₱"#,0
+
+// Inventory & Stock Measures
+measure "Stock Velocity" =
+    DIVIDE([Total Units Sold], DISTINCTCOUNT(mart_tx[ProductCode]), 0)
+formatString: #,0.0
+
+measure "Fast Moving Products" =
+    SUMX(
+        SUMMARIZE(mart_tx, mart_tx[ProductCode], "Product Units", SUM(mart_tx[QuantitySold])),
+        IF([Product Units] > [Stock Velocity], 1, 0)
+    )
+formatString: #,0
+
+// Seasonal & Weather Measures
+measure "Hot Weather Sales" =
+    CALCULATE([Total Sales], mart_tx[Temperature] > 30)
+formatString: "₱"#,0
+
+measure "Rainy Day Sales" =
+    CALCULATE([Total Sales], mart_tx[WeatherCondition] = "Rainy")
+formatString: "₱"#,0
+
+measure "Seasonal Factor Impact" =
+    AVERAGEX(
+        FILTER(platinum_predictions, platinum_predictions[SeasonalFactor] <> BLANK()),
+        platinum_predictions[SeasonalFactor]
+    )
+formatString: 0.000
+
+// Prediction & Analytics Measures
+measure "Prediction Accuracy" =
+    AVERAGE(platinum_predictions[PredictionAccuracy])
+formatString: 0.00%
+
+measure "Average Confidence Score" =
+    AVERAGE(platinum_predictions[ConfidenceScore])
+formatString: 0.00%
+
+measure "Predicted vs Actual Variance" =
+    DIVIDE(
+        SUM(platinum_predictions[PredictedSales]) - SUM(platinum_predictions[ActualSales]),
+        SUM(platinum_predictions[ActualSales]), 0
+    )
+formatString: 0.00%
+
+measure "High Priority Actions" =
+    CALCULATE(
+        DISTINCTCOUNT(platinum_predictions[PredictionID]),
+        platinum_predictions[ActionPriority] = "High"
+    )
+formatString: #,0
+
+measure "Market Trend Score" =
+    CALCULATE(
+        COUNTROWS(platinum_predictions),
+        platinum_predictions[MarketTrend] = "Positive"
+    )
+formatString: #,0
+
+// Performance Ratios
+measure "Sales per Square Meter" =
+    DIVIDE([Total Sales], DISTINCTCOUNT(dim_store[StoreID]) * 100, 0)
+formatString: "₱"#,0
+
+measure "Profit Margin Trend" =
+    [Gross Margin %] -
+    CALCULATE([Gross Margin %], PREVIOUSMONTH(dim_date[Date]))
+formatString: 0.00%
+
+measure "Category Penetration" =
+    DIVIDE(DISTINCTCOUNT(mart_tx[CategoryID]), [Active Categories], 0)
+formatString: 0.00%
+
+measure "Brand Loyalty Index" =
+    DIVIDE(
+        SUMX(
+            SUMMARIZE(mart_tx, mart_tx[BrandID], "Brand Frequency", COUNT(mart_tx[TransactionID])),
+            IF([Brand Frequency] > 1, [Brand Frequency], 0)
+        ),
+        [Total Transactions], 0
+    )
+formatString: 0.00%
+
+// Promotional Impact
+measure "Promoted Sales" =
+    CALCULATE([Total Sales], NOT(ISBLANK(mart_tx[PromotionID])))
+formatString: "₱"#,0
+
+measure "Promotion Effectiveness %" =
+    DIVIDE([Promoted Sales], [Total Sales], 0)
+formatString: 0.00%
+
+measure "Promotional Lift" =
+    AVERAGEX(
+        FILTER(platinum_predictions, platinum_predictions[PromotionalImpact] <> BLANK()),
+        platinum_predictions[PromotionalImpact]
+    )
+formatString: 0.00%
+
+// Risk & Opportunity Measures
+measure "Demand Volatility Score" =
+    AVERAGE(platinum_predictions[DemandVolatility])
+formatString: 0.00%
+
+measure "Supply Chain Risk Level" =
+    CALCULATE(
+        COUNTROWS(platinum_predictions),
+        platinum_predictions[SupplyChainRisk] = "High"
+    )
+formatString: #,0
+
+measure "Price Elasticity Average" =
+    AVERAGE(platinum_predictions[PriceElasticity])
+formatString: 0.000
+
+measure "Cross Category Impact" =
+    AVERAGE(platinum_predictions[CrossCategoryEffect])
+formatString: 0.00%
+
+// Ranking Measures
+measure "Store Sales Rank" =
+    RANKX(
+        ALL(dim_store[StoreName]),
+        [Total Sales],
+        ,
+        DESC
+    )
+formatString: #,0
+
+measure "Brand Sales Rank" =
+    RANKX(
+        ALL(dim_brand[BrandName]),
+        [Total Sales],
+        ,
+        DESC
+    )
+formatString: #,0
+
+measure "Category Sales Rank" =
+    RANKX(
+        ALL(dim_category[CategoryL1]),
+        [Total Sales],
+        ,
+        DESC
+    )
+formatString: #,0

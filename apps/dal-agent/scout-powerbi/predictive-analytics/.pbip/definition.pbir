@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "name": "scout-predictive-analytics",
+  "description": "Predictive Analytics - ML predictions and forecasting insights",
+  "artifactKind": "report",
+  "folder": "../report",
+  "datasetReference": {
+    "byPath": "../pbip-model-core"
+  },
+  "annotations": [
+    {
+      "name": "reportType",
+      "value": "PredictiveAnalytics"
+    },
+    {
+      "name": "targetAudience",
+      "value": "Data Scientists, Business Analysts"
+    },
+    {
+      "name": "refreshFrequency",
+      "value": "Daily"
+    },
+    {
+      "name": "accessLevel",
+      "value": "Analytics"
+    }
+  ]
+}

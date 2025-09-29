@@ -1,0 +1,187 @@
+{
+  "name": "Scout Theme",
+  "version": "1.0",
+  "description": "TBWA Scout Analytics custom Power BI theme",
+  "colors": {
+    "primary": "#0066CC",
+    "secondary": "#FF6B35",
+    "accent": "#4ECDC4",
+    "neutral": "#F7F9FC",
+    "success": "#28A745",
+    "warning": "#FFC107",
+    "danger": "#DC3545",
+    "info": "#17A2B8",
+    "light": "#F8F9FA",
+    "dark": "#212529"
+  },
+  "palette": {
+    "dataColors": [
+      "#0066CC",
+      "#FF6B35",
+      "#4ECDC4",
+      "#95E1D3",
+      "#F8B500",
+      "#E74C3C",
+      "#9B59B6",
+      "#1ABC9C",
+      "#34495E",
+      "#F39C12"
+    ],
+    "diverging": [
+      "#DC3545",
+      "#E74C3C",
+      "#F39C12",
+      "#F8B500",
+      "#FFC107",
+      "#28A745",
+      "#1ABC9C",
+      "#4ECDC4",
+      "#0066CC",
+      "#9B59B6"
+    ],
+    "sentiment": {
+      "negative": "#DC3545",
+      "neutral": "#6C757D",
+      "positive": "#28A745"
+    }
+  },
+  "visualStyles": {
+    "page": {
+      "background": "#FFFFFF",
+      "outspace": "#F7F9FC",
+      "outspacePane": "#FFFFFF"
+    },
+    "header": {
+      "fontSize": 16,
+      "fontColor": "#212529",
+      "fontFamily": "\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif",
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #DEE2E6"
+    },
+    "card": {
+      "fontSize": 12,
+      "fontColor": "#495057",
+      "fontFamily": "\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif",
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #DEE2E6",
+      "borderRadius": "4px",
+      "boxShadow": "0 2px 4px rgba(0,0,0,0.1)"
+    },
+    "kpi": {
+      "fontSize": 24,
+      "fontColor": "#212529",
+      "fontFamily": "\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif",
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #DEE2E6",
+      "borderRadius": "8px",
+      "boxShadow": "0 4px 8px rgba(0,0,0,0.1)"
+    },
+    "chart": {
+      "backgroundColor": "#FFFFFF",
+      "border": "1px solid #DEE2E6",
+      "borderRadius": "4px",
+      "gridLines": "#E9ECEF",
+      "axisColor": "#6C757D",
+      "labelColor": "#495057"
+    }
+  },
+  "typography": {
+    "fontFamily": "\"Segoe UI\", Tahoma, Geneva, Verdana, sans-serif",
+    "sizes": {
+      "title": 20,
+      "subtitle": 16,
+      "body": 12,
+      "caption": 10,
+      "kpi": 24
+    },
+    "weights": {
+      "light": 300,
+      "normal": 400,
+      "semibold": 600,
+      "bold": 700
+    }
+  },
+  "formatting": {
+    "currency": {
+      "symbol": "₱",
+      "position": "before",
+      "separator": ",",
+      "decimalPlaces": 2
+    },
+    "percentage": {
+      "decimalPlaces": 1,
+      "symbol": "%"
+    },
+    "numbers": {
+      "separator": ",",
+      "abbreviation": {
+        "thousands": "K",
+        "millions": "M",
+        "billions": "B"
+      }
+    },
+    "dates": {
+      "short": "M/d/yyyy",
+      "long": "MMMM d, yyyy",
+      "monthYear": "MMM yyyy"
+    }
+  },
+  "layout": {
+    "margins": {
+      "page": 20,
+      "visual": 10,
+      "title": 15
+    },
+    "spacing": {
+      "small": 5,
+      "medium": 10,
+      "large": 20
+    },
+    "grid": {
+      "columns": 12,
+      "gutterWidth": 20
+    }
+  },
+  "branding": {
+    "logo": {
+      "position": "top-right",
+      "size": "small",
+      "opacity": 0.8
+    },
+    "watermark": {
+      "text": "TBWA Scout Analytics",
+      "position": "bottom-right",
+      "opacity": 0.1,
+      "fontSize": 10
+    }
+  },
+  "accessibility": {
+    "colorBlindSafe": true,
+    "highContrast": true,
+    "screenReaderFriendly": true
+  },
+  "dataVisualization": {
+    "charts": {
+      "lineChart": {
+        "strokeWidth": 2,
+        "markerSize": 4,
+        "gridLines": true
+      },
+      "barChart": {
+        "borderRadius": 2,
+        "spacing": 0.2
+      },
+      "pieChart": {
+        "strokeWidth": 1,
+        "labelLines": true
+      }
+    }
+  },
+  "annotations": {
+    "createdBy": "TBWA Data Team",
+    "version": "1.0",
+    "lastModified": "2025-01-02",
+    "description": "Custom theme for Scout Analytics Power BI reports",
+    "tags": ["retail", "analytics", "philippines", "scout"]
+  }
+}

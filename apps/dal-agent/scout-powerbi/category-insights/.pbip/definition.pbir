@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "name": "scout-category-insights",
+  "description": "Category Insights - Deep dive into category and brand performance",
+  "artifactKind": "report",
+  "folder": "../report",
+  "datasetReference": {
+    "byPath": "../pbip-model-core"
+  },
+  "annotations": [
+    {
+      "name": "reportType",
+      "value": "CategoryInsights"
+    },
+    {
+      "name": "targetAudience",
+      "value": "Category Managers, Brand Managers"
+    },
+    {
+      "name": "refreshFrequency",
+      "value": "Daily"
+    },
+    {
+      "name": "accessLevel",
+      "value": "Category"
+    }
+  ]
+}

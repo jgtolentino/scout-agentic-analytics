@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "name": "scout-sales-analysis",
+  "description": "Sales Analysis - Detailed sales performance and trends",
+  "artifactKind": "report",
+  "folder": "../report",
+  "datasetReference": {
+    "byPath": "../pbip-model-core"
+  },
+  "annotations": [
+    {
+      "name": "reportType",
+      "value": "SalesAnalysis"
+    },
+    {
+      "name": "targetAudience",
+      "value": "Sales Managers, Regional Managers"
+    },
+    {
+      "name": "refreshFrequency",
+      "value": "Daily"
+    },
+    {
+      "name": "accessLevel",
+      "value": "Management"
+    }
+  ]
+}

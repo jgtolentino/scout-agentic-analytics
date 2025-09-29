@@ -1,0 +1,204 @@
+table "mart_tx"
+    lineageTag: mart_tx
+
+    partition "mart_tx"
+        mode: import
+        source:
+            type: query
+            dataSource: "FabricWarehouse"
+            query: |
+                SELECT
+                    transaction_id as [TransactionID],
+                    transaction_date as [TransactionDate],
+                    store_id as [StoreID],
+                    brand_id as [BrandID],
+                    category_id as [CategoryID],
+                    product_code as [ProductCode],
+                    product_name as [ProductName],
+                    unit_price as [UnitPrice],
+                    quantity_sold as [QuantitySold],
+                    total_amount as [TotalAmount],
+                    discount_amount as [DiscountAmount],
+                    net_amount as [NetAmount],
+                    cost_of_goods as [CostOfGoods],
+                    gross_profit as [GrossProfit],
+                    transaction_type as [TransactionType],
+                    payment_method as [PaymentMethod],
+                    promotion_id as [PromotionID],
+                    salesperson_id as [SalespersonID],
+                    customer_segment as [CustomerSegment],
+                    time_of_day as [TimeOfDay],
+                    day_of_week as [DayOfWeek],
+                    is_weekend as [IsWeekend],
+                    is_holiday as [IsHoliday],
+                    weather_condition as [WeatherCondition],
+                    temperature as [Temperature]
+                FROM gold.mart_tx
+                WHERE transaction_date >= DATEADD(year, -2, GETDATE())
+
+    column "TransactionID"
+        dataType: string
+        isKey: true
+        lineageTag: TransactionID
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "TransactionDate"
+        dataType: dateTime
+        lineageTag: TransactionDate
+        summarizeBy: none
+        formatString: Short Date
+        annotation SummarizationSetBy = Automatic
+
+    column "StoreID"
+        dataType: int64
+        lineageTag: StoreID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "BrandID"
+        dataType: int64
+        lineageTag: BrandID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "CategoryID"
+        dataType: int64
+        lineageTag: CategoryID
+        summarizeBy: none
+        formatString: 0
+        annotation SummarizationSetBy = Automatic
+
+    column "ProductCode"
+        dataType: string
+        lineageTag: ProductCode
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "ProductName"
+        dataType: string
+        lineageTag: ProductName
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "UnitPrice"
+        dataType: decimal
+        lineageTag: UnitPrice
+        summarizeBy: average
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "QuantitySold"
+        dataType: int64
+        lineageTag: QuantitySold
+        summarizeBy: sum
+        formatString: #,0
+        annotation SummarizationSetBy = Automatic
+
+    column "TotalAmount"
+        dataType: decimal
+        lineageTag: TotalAmount
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "DiscountAmount"
+        dataType: decimal
+        lineageTag: DiscountAmount
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "NetAmount"
+        dataType: decimal
+        lineageTag: NetAmount
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "CostOfGoods"
+        dataType: decimal
+        lineageTag: CostOfGoods
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "GrossProfit"
+        dataType: decimal
+        lineageTag: GrossProfit
+        summarizeBy: sum
+        formatString: "₱"#,0.00
+        annotation SummarizationSetBy = Automatic
+
+    column "TransactionType"
+        dataType: string
+        lineageTag: TransactionType
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "PaymentMethod"
+        dataType: string
+        lineageTag: PaymentMethod
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "PromotionID"
+        dataType: string
+        lineageTag: PromotionID
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "SalespersonID"
+        dataType: string
+        lineageTag: SalespersonID
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "CustomerSegment"
+        dataType: string
+        lineageTag: CustomerSegment
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "TimeOfDay"
+        dataType: string
+        lineageTag: TimeOfDay
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "DayOfWeek"
+        dataType: string
+        lineageTag: DayOfWeek
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "IsWeekend"
+        dataType: boolean
+        lineageTag: IsWeekend
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "IsHoliday"
+        dataType: boolean
+        lineageTag: IsHoliday
+        summarizeBy: none
+        formatString: "TRUE";"TRUE";"FALSE"
+        annotation SummarizationSetBy = Automatic
+
+    column "WeatherCondition"
+        dataType: string
+        lineageTag: WeatherCondition
+        summarizeBy: none
+        annotation SummarizationSetBy = Automatic
+
+    column "Temperature"
+        dataType: double
+        lineageTag: Temperature
+        summarizeBy: average
+        formatString: 0.0"°C"
+        annotation SummarizationSetBy = Automatic
+
+    annotation PBI_ResultType = Table
